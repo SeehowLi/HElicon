@@ -28,6 +28,12 @@ HElicon uses three layers:
 
 Project facts must stay in project packs. Direction-specific details should stay in direction packs unless they become stable cross-direction writing rules.
 
+## Distilled Source Bibliography
+
+The papers used as sources for HElicon distilled writing patterns are listed in [`provenance/distilled_sources.bib`](provenance/distilled_sources.bib).
+
+This BibTeX file is provenance only: it identifies which papers informed the reviewed distilled cards. It does not contain raw paper text, paper-card content, project facts, or extracted PDF text.
+
 ## Install
 
 User-level install:

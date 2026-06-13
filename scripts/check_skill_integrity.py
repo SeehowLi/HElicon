@@ -28,6 +28,8 @@ REQUIRED = [
     "scripts/check_core_contamination.py",
     "scripts/extract_pdf_text.py",
     "scripts/collect_fhe_papers.py",
+    "scripts/generate_distilled_bibtex.py",
+    "provenance/distilled_sources.bib",
 ]
 
 
