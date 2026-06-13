@@ -1,6 +1,6 @@
-# HElicon v1.0 Installation and Workflow
+# HElicon v1.1 Installation and Workflow
 
-This document describes how to install HElicon, build its long-term knowledge, and use it on NOMOS or future papers.
+This document describes how to install HElicon, build its long-term knowledge, and use it on external paper projects.
 
 ## 0. Important concept
 
@@ -172,16 +172,16 @@ HElicon/references/mentor_memory.md
 
 ## 6. Start a new project pack
 
-For NOMOS or any future paper:
+For any paper project:
 
 ```bash
-python ~/.agents/skills/HElicon/scripts/bootstrap_project_pack.py ~/HElicon_workspace/projects NOMOS
+python ~/.agents/skills/HElicon/scripts/bootstrap_project_pack.py ~/HElicon_workspace/projects <project_name>
 ```
 
 This creates:
 
 ```text
-~/HElicon_workspace/projects/NOMOS/
+~/HElicon_workspace/projects/<project_name>/
 ├── project_brief.yaml
 ├── storyline.md
 ├── evidence_map.csv
@@ -196,12 +196,12 @@ This creates:
 
 Project-specific facts stay here, not in HElicon core.
 
-## 7. Use HElicon on NOMOS as an external command
+## 7. Use HElicon on an external project
 
 ```text
 $HElicon
 
-我现在用 HElicon 修改 NOMOS。请注意：NOMOS 是外部项目，不是 HElicon skill 本身。
+我现在用 HElicon 修改一个外部论文项目。请注意：该项目不是 HElicon skill 本身。
 请先不要润色句子。
 
 请基于下面材料诊断：
@@ -224,12 +224,12 @@ $HElicon
 <粘贴>
 ```
 
-Then update the NOMOS project pack:
+Then update the project pack:
 
 ```text
-~/HElicon_workspace/projects/NOMOS/storyline.md
-~/HElicon_workspace/projects/NOMOS/evidence_map.csv
-~/HElicon_workspace/projects/NOMOS/local_glossary.md
+~/HElicon_workspace/projects/<project_name>/storyline.md
+~/HElicon_workspace/projects/<project_name>/evidence_map.csv
+~/HElicon_workspace/projects/<project_name>/local_glossary.md
 ```
 
 Only general lessons should be promoted into the core skill.

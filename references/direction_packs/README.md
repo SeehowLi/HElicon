@@ -28,14 +28,14 @@ If installed copies also exist under this directory, treat them as focused direc
 - FHE library/compiler/runtime paper: `fhe_systems` + `security_top_conference_writing` + optional `fhe_algorithm_optimization` if kernel design is central.
 - Encrypted database or hybrid query system: `fhe_systems` + `encrypted_knn_search` when ranking/retrieval is central + `security_top_conference_writing` for threat/evaluation framing.
 
-## NOMOS Combination Example
+## Project Combination Example
 
-NOMOS is treated here only as a conditional example, not as a source of project facts.
+A project name is treated here only as a routing placeholder, not as a source of project facts.
 
-- If NOMOS is framed as an HE/FHE algorithm or primitive paper, prioritize `fhe_algorithm_optimization` + `security_top_conference_writing`.
-- If NOMOS is framed as privacy-preserving inference or secure model serving, prioritize `private_llm_inference` + `security_top_conference_writing` + optional `fhe_algorithm_optimization`.
-- If NOMOS is framed around encrypted retrieval, ranking, or top-k, prioritize `encrypted_knn_search` + `fhe_algorithm_optimization` + `security_top_conference_writing`.
-- If NOMOS is framed as a system, compiler, runtime, or deployable framework, prioritize `fhe_systems` + `security_top_conference_writing`.
+- If the project is framed as an HE/FHE algorithm or primitive paper, prioritize `fhe_algorithm_optimization` + `security_top_conference_writing`.
+- If the project is framed as privacy-preserving inference or secure model serving, prioritize `private_llm_inference` + `security_top_conference_writing` + optional `fhe_algorithm_optimization`.
+- If the project is framed around encrypted retrieval, ranking, or top-k, prioritize `encrypted_knn_search` + `fhe_algorithm_optimization` + `security_top_conference_writing`.
+- If the project is framed as a system, compiler, runtime, or deployable framework, prioritize `fhe_systems` + `security_top_conference_writing`.
 
 ## Private LLM Inference Combination
 

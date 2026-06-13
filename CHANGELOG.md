@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.1
+
+- Promoted the project-aware short-command workflow to the official v1.1 snapshot.
+- Changed `H-SYNC` into a compact global synchronization command that rewrites current project state and deletes or archives stale, contradicted, superseded, or duplicated memory.
+- Bound confirmed `H-DECIDE` writes to a scoped `H-SYNC` plan so decision logs and trackers do not grow as append-only transcripts.
+- Kept `H-LOG` as a compatibility command name while making it execute scoped `H-SYNC` semantics instead of independent long-form logging.
+- Added compact project-memory structures for current decisions, open decisions, draft status, and sync archives.
+- Added personal-paper anti-overfitting rules so the user's papers can teach abstract style without importing paper-specific terminology, method names, experiment numbers, datasets, or title logic into core.
+- Added scripts for PDF text extraction, FHE/HE paper metadata and open-PDF collection, and core contamination checks.
+- Preserved the v1.0.1 boundary that project facts, raw paper text, single-paper details, ePrint IDs, and experiment numbers must not enter core memory.
+
 ## v1.1-rc1
 
 - Added project-aware `H-*` short-command dispatch to `SKILL.md`.
@@ -19,7 +30,7 @@
 ## v1.0-adjusted
 
 - Reframed HElicon as a long-term personal research-writing mentor.
-- Removed NOMOS from core memory.
+- Removed single-project facts from core memory.
 - Added external project-pack and direction-pack workflow.
 - Added unified paper-pattern distillation workflow.
 - Added bilingual continuity and terminology-control policy.

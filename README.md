@@ -4,7 +4,7 @@ HElicon is a long-term research-writing mentor skill for English security and sy
 
 This repository contains the HElicon skill core only. It does not contain project facts, raw PDFs, paper drafts, extracted paper text, or private project workspaces.
 
-Current snapshot: `HElicon v1.1-rc1`.
+Current snapshot: `HElicon v1.1`.
 
 ## What HElicon Does
 
@@ -15,6 +15,8 @@ Current snapshot: `HElicon v1.1-rc1`.
 - Maintains a controlled memory-patch loop for stable writing preferences and reusable lessons.
 - Separates reusable writing knowledge from direction-specific knowledge and project-specific facts.
 - Supports project-aware `H-*` short commands for discussion, decision logging, title/abstract/section iteration, patching, sync, repair, and reopening.
+- Keeps project memory compact through overwrite-style `H-SYNC`, where stale decisions and tracker entries are deleted or archived instead of appended forever.
+- Provides scripts for PDF text extraction, personal style pack preparation, FHE/HE corpus collection, and core contamination checks.
 
 ## Knowledge Layers
 
@@ -46,6 +48,7 @@ Check integrity:
 
 ```bash
 python ~/.agents/skills/HElicon/scripts/check_skill_integrity.py ~/.agents/skills/HElicon
+python ~/.agents/skills/HElicon/scripts/check_core_contamination.py ~/.agents/skills/HElicon
 ```
 
 Invoke in Codex:
@@ -68,7 +71,11 @@ HElicon_workspace/
 |-- distilled/
 |   |-- paper_cards/
 |   |-- unified_patterns/
-|   `-- style_cards/
+|   |-- style_cards/
+|   |-- fhe_2023_2026/
+|   `-- batch_logs/
+|-- personal_style_packs/
+|   `-- user_papers/
 |-- direction_packs/
 |   |-- private_llm_inference/
 |   |-- encrypted_knn_search/
@@ -85,7 +92,7 @@ Use `scripts/bootstrap_project_pack.py` to create a new project pack.
 
 Do not write these into HElicon core memory:
 
-- project-specific facts such as NOMOS details;
+- project-specific facts from any external paper;
 - raw PDF text or copied paper sentences;
 - single-paper cards as if they were general rules;
 - ePrint IDs, experimental numbers, or one-off benchmark claims;

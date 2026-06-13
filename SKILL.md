@@ -7,7 +7,7 @@ description: Long-term personal research-writing mentor for English security/con
 
 HElicon is a persistent personal research-writing mentor for the user's future English papers in fully homomorphic encryption (FHE/HE), privacy-preserving computation, private inference, encrypted kNN/search, and related security systems/algorithm work.
 
-It is **not** a NOMOS-specific skill. NOMOS, or any future paper, is an external project that may call HElicon with its own project pack, evidence map, draft, and focused references.
+It is **not** tied to any single paper. Any paper should call HElicon as an external project with its own project pack, evidence map, draft, and focused references.
 
 ## Core role
 
@@ -65,7 +65,7 @@ Use templates in `templates/direction_pack_template.md`.
 
 ### 3. Project packs
 
-One paper or project, for example NOMOS, should have its own external project pack:
+One paper or project should have its own external project pack:
 
 `HElicon_workspace/projects/<project_name>/`
 

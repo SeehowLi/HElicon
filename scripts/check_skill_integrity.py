@@ -22,7 +22,12 @@ REQUIRED = [
     "templates/paper_brief.yaml",
     "templates/project_pack_template.md",
     "templates/direction_pack_template.md",
+    "templates/project_first_use_prompt.md",
     "templates/evidence_map.csv",
+    "scripts/check_skill_integrity.py",
+    "scripts/check_core_contamination.py",
+    "scripts/extract_pdf_text.py",
+    "scripts/collect_fhe_papers.py",
 ]
 
 

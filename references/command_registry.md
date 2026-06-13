@@ -30,8 +30,8 @@ The command system is project-aware but project-agnostic. It was generalized fro
 |---|---|---|
 | `H-DECIDE` | Convert a discussion consensus into a scoped project decision. | Only after confirmation |
 | `H-PATCH` | Apply a confirmed version to an exact file location. | Yes, only specified target |
-| `H-LOG` | Record temporary discussion, confirmed decisions, or project state in the appropriate project file. | Only after confirmation |
-| `H-SYNC` | Synchronize manuscript, workbenches, decision log, tracker, and open issues after work. | Only after confirmation |
+| `H-LOG` | Compatibility alias for a scoped `H-SYNC`; use it to request synchronization of a specific discussion, decision, or tracker item. | Only through `H-SYNC` confirmation |
+| `H-SYNC` | Globally synchronize manuscript, workbenches, decision log, tracker, and open issues; rewrite current state and prune stale content. | Only after confirmation |
 | `H-SYNC-REPAIR` | Repair missed syncs after long conversations or unsynchronized patches. | Only after confirmation |
 | `H-REOPEN` | Reopen an earlier title, abstract, section, claim, or decision when evidence or scope changes. | No |
 
@@ -41,14 +41,28 @@ The command system is project-aware but project-agnostic. It was generalized fro
 2. Discussion commands do not patch manuscripts.
 3. `H-PATCH` must have an explicit target file, exact location, and confirmed text or version.
 4. After a successful `H-PATCH`, recommend `H-SYNC`.
-5. After stable consensus, recommend `H-DECIDE`.
+5. After stable consensus, recommend `H-DECIDE`; after confirmed `H-DECIDE`, run or recommend scoped `H-SYNC`.
 6. Track every strong claim with `SUPPORTED`, `PARTIAL`, `MISSING`, `RISKY`, `UNKNOWN`, `MISSING_EVIDENCE`, or `OVERCLAIM_RISK`.
 7. If evidence is incomplete, prefer scoped or conditional language over optimistic agreement.
 8. Project trackers should contain only confirmed and current project state, not temporary ideas.
-9. Decision logs should contain scoped decisions, evidence status, risks, and follow-up.
-10. Workbenches may store iterative candidates and reversible draft versions.
+9. Decision logs should contain scoped current decisions, evidence status, risks, and follow-up; old or contradicted decisions must be deleted or moved to archive.
+10. Workbenches may store iterative candidates and reversible draft versions, but `H-SYNC` should delete superseded candidates that no longer match the latest discussion.
 11. HElicon core is never updated automatically.
 12. Never write project facts, raw paper text, paper-specific numbers, review details, or single-paper card content into HElicon core.
+
+## Compact Memory Policy
+
+HElicon project memory is a live state cache, not an append-only transcript.
+
+When synchronizing project files:
+
+1. Keep only the latest confirmed state in trackers.
+2. Keep decision logs compact: current locked decisions first, open decisions second, short recent rationale third.
+3. Delete stale, contradicted, or superseded statements when the current discussion has made them false.
+4. Move historically useful but no longer active material to an archive section or archive file only when it may prevent future confusion.
+5. Do not preserve temporary debate merely because it occurred.
+6. Mark uncertain inferences as `OPEN` or `UNKNOWN`; never promote them to current state.
+7. Prefer rewriting a compact file over appending another long entry.
 
 ## Standard Output Footer
 
@@ -184,6 +198,8 @@ Required behavior:
 - wait for explicit user confirmation before editing decision logs or trackers;
 - scope what the decision applies to and does not apply to;
 - do not patch manuscript files.
+- after confirmed write-in, immediately perform a scoped `H-SYNC` plan for affected tracker, workbench, and open-decision entries;
+- remove or archive earlier decisions that conflict with the new decision.
 
 Output before writing:
 
@@ -205,7 +221,7 @@ Risks / conditions:
 - ...
 
 Sync needed:
-- YES / NO / LATER
+- YES, scoped `H-SYNC` after confirmation
 
 Need confirmation:
 - YES
@@ -325,10 +341,12 @@ Verification:
 
 ### H-LOG
 
-Purpose: record discussion, decisions, or project state in the correct project memory layer.
+Purpose: compatibility alias for scoped `H-SYNC`. Use `H-LOG` when the user wants to record a specific item, but execute the same compact sync discipline as `H-SYNC`.
 
 Required behavior:
-- distinguish temporary discussion, project fact, decision, and long-term reusable lesson;
+- translate `H-LOG: <content>` into `H-SYNC: synchronize <content>`;
+- distinguish temporary discussion, project fact, confirmed decision, and long-term reusable lesson;
+- do not append blindly;
 - do not write temporary ideas into the progress tracker;
 - do not write project facts into HElicon core;
 - ask for confirmation before writing unless the user explicitly instructs a target and content.
@@ -336,13 +354,16 @@ Required behavior:
 Output before writing:
 
 ```markdown
-Log target:
+Sync target:
 - iteration_log / decision_log / progress_tracker / project_pack / none
 
 Layer:
 - temporary discussion / project fact / confirmed decision / long-term lesson
 
-Write plan:
+Scoped sync plan:
+- ...
+
+Stale content to delete/archive:
 - ...
 
 Need confirmation:
@@ -351,7 +372,7 @@ Need confirmation:
 
 ### H-SYNC
 
-Purpose: synchronize current project state after patching, deciding, or iterating.
+Purpose: globally synchronize current project state after patching, deciding, or iterating. `H-SYNC` rewrites project memory into compact current state and deletes or archives stale content.
 
 Required behavior:
 - do not patch manuscript text;
@@ -359,12 +380,16 @@ Required behavior:
 - read project memory files when available;
 - identify unrecorded consensus, unrecorded patches, stale tracker items, and open decisions;
 - classify sync candidates.
+- rewrite target memory files around the latest confirmed state rather than appending long logs;
+- delete stale, contradicted, superseded, or duplicated items unless they are needed in an archive;
+- keep only short recent rationale for active decisions.
 
 Classification:
 - A. locked project status for progress tracker;
 - B. workbench iteration records;
 - C. temporary ideas for iteration log only;
-- D. stale or obsolete ideas that should not be preserved.
+- D. stale or obsolete ideas that should be deleted;
+- E. historical material worth moving to archive.
 
 Output before writing:
 
@@ -391,11 +416,14 @@ Sync classification:
 - A. Progress tracker candidates: ...
 - B. Workbench candidates: ...
 - C. Discussion log candidates: ...
-- D. Do-not-save stale ideas: ...
+- D. Delete stale/obsolete ideas: ...
+- E. Archive candidates: ...
 
-Write plan:
+Rewrite plan:
 - Target files: ...
-- Changes: ...
+- Current-state replacements: ...
+- Deletions: ...
+- Archive moves: ...
 
 Need confirmation:
 - YES
@@ -469,4 +497,4 @@ Recommended next command:
 | Project memory may be stale | `H-SYNC` | confirmation |
 | Previous work was not synchronized | `H-SYNC-REPAIR` | confirmation |
 | A prior decision may be wrong | `H-REOPEN` | `H-DISCUSS` or `H-DECIDE` |
-| Need to record without deciding | `H-LOG` | continue |
+| Need to record without deciding | `H-LOG` as scoped `H-SYNC` | confirmation |

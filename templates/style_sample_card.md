@@ -25,6 +25,14 @@ Use this to distill the user's personal style from their own writing, accepted p
 - Recurring weakness:
 - Reusable lesson:
 
+## Personal paper anti-overfitting guard
+
+- Do not promote paper-specific method names:
+- Do not promote experiment numbers or dataset names:
+- Do not promote title framing as a universal preference:
+- Do not preserve project-specific terminology:
+- Safe abstraction level:
+
 ## Patch destination
 
 - `references/personal_style_profile.md`

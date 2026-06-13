@@ -1,11 +1,11 @@
 # Version
 
-HElicon v1.1-rc1
+HElicon v1.1
 
-Status: release candidate for project-aware short-command workflow.
+Status: official v1.1 skill snapshot.
 
 Design principle: long-term personal writing mentor, not project-specific.
 
 Project-specific work stays in external project packs.
 
-v1.1 focus: executable `H-*` command routing, project-pack orchestration, direction-pack selection, claim-evidence-risk discipline, reviewer simulation, and sync/patch workflow boundaries.
+v1.1 focus: executable `H-*` command routing, compact overwrite-style project synchronization, project-pack orchestration, direction-pack selection, claim-evidence-risk discipline, reviewer simulation, personal style abstraction, and FHE/HE corpus collection support.
