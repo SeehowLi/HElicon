@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.1-rc1
+
+- Added project-aware `H-*` short-command dispatch to `SKILL.md`.
+- Added `references/command_registry.md` with command contracts for `H-HELP`, `H-LOAD`, `H-ONBOARD`, `H-DISCUSS`, `H-DECIDE`, `H-TITLE-ITERATE`, `H-ABSTRACT-ITERATE`, `H-SECTION-ITERATE`, `H-REVIEW`, `H-PATCH`, `H-LOG`, `H-SYNC`, `H-SYNC-REPAIR`, and `H-REOPEN`.
+- Generalized the short-command workflow from an external paper guide without copying project facts into HElicon core.
+- Distinguished discussion, iteration, decision, patching, logging, synchronization, repair, and reopening responsibilities.
+- Preserved the v1.0.1 boundary that project facts, raw paper text, single-paper details, ePrint IDs, and experiment numbers must not enter core memory.
+
 ## v1.0.1
 
 - Wrote confirmed cross-direction paper-writing guidance into core references.

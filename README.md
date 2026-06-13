@@ -4,7 +4,7 @@ HElicon is a long-term research-writing mentor skill for English security and sy
 
 This repository contains the HElicon skill core only. It does not contain project facts, raw PDFs, paper drafts, extracted paper text, or private project workspaces.
 
-Current snapshot: `HElicon v1.0.1`.
+Current snapshot: `HElicon v1.1-rc1`.
 
 ## What HElicon Does
 
@@ -14,6 +14,7 @@ Current snapshot: `HElicon v1.0.1`.
 - Distills selected papers into reusable writing patterns without copying source sentences.
 - Maintains a controlled memory-patch loop for stable writing preferences and reusable lessons.
 - Separates reusable writing knowledge from direction-specific knowledge and project-specific facts.
+- Supports project-aware `H-*` short commands for discussion, decision logging, title/abstract/section iteration, patching, sync, repair, and reopening.
 
 ## Knowledge Layers
 

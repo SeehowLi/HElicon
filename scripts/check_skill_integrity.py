@@ -15,6 +15,7 @@ REQUIRED = [
     "references/technical_framing.md",
     "references/unified_paper_patterns.md",
     "references/paper_pattern_bank.md",
+    "references/command_registry.md",
     "references/personal_style_profile.md",
     "references/mentor_memory.md",
     "references/review_gate.md",
