@@ -1,0 +1,6 @@
+interface:
+  display_name: "HElicon"
+  short_description: "Personal FHE/security-paper writing mentor for Chinese-to-English academic writing."
+  default_prompt: "$HElicon\n请先诊断 paper story、positioning、claim-evidence 和 terminology，再进行英文修改。"
+policy:
+  allow_implicit_invocation: true

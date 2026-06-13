@@ -1,0 +1,47 @@
+paper:
+  project_name:
+  working_title:
+  target_venues: [USENIX Security, NDSS, ACM CCS, IEEE S&P]
+  primary_venue:
+  paper_type: # algorithm optimization | system | private inference | encrypted search/kNN | hybrid | other
+
+problem:
+  application_or_task:
+  security_privacy_goal:
+  threat_model_summary:
+  why_this_problem_matters:
+  why_existing_solutions_are_insufficient:
+
+technical_core:
+  dominant_bottleneck:
+  key_insight:
+  method_summary:
+  fhe_scheme_or_crypto_stack:
+  parameters_known:
+  leakage_boundary:
+
+claims:
+  c1:
+  c2:
+  c3:
+
+experiments:
+  workloads:
+  baselines:
+  metrics:
+  ablations:
+  current_results:
+
+writing:
+  intended_story:
+  title_direction:
+  abstract_direction:
+  terminology_constraints:
+  known_weaknesses:
+
+risks:
+  novelty_risk:
+  evidence_risk:
+  threat_model_risk:
+  evaluation_risk:
+  terminology_risk:
