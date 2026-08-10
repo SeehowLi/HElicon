@@ -16,6 +16,8 @@ Never merge these objects. A target profile never enables a drift warning, and a
 
 Run `scripts/build_target_profile.py` before treating a final version as an exemplar. The screening is deterministic:
 
+Inputs are ordered `.tex`, `.md`, or `.txt` stages. Convert PDF stages to private `.txt` files with the existing `extract_pdf_text.py`; the target scripts remain stdlib-only and do not add a PDF dependency.
+
 1. compute P5 rule hits per 1000 words with `check_ai_tells.py`;
 2. compute all structural metrics with `style_fingerprint.py`;
 3. decide each dimension from fixed rule hits and sample-health checks;

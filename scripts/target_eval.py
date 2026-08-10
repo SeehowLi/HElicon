@@ -261,7 +261,13 @@ def main() -> int:
         payload = {**result, "output_report": str(report), "written": args.write}
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0 if result["passed"] else 1
-    except (OSError, UserError) as exc:
+    except (
+        OSError,
+        UserError,
+        style_fingerprint.UserError,
+        extract_revision_direction.UserError,
+        latex_guard.UserError,
+    ) as exc:
         if json_requested:
             print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False))
         else:

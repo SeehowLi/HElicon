@@ -58,7 +58,16 @@ def choose_target(directory: Path, explicit: str | None) -> Path:
             allowed = ", ".join(sorted(style_fingerprint.EXTENSIONS))
             raise UserError(f"target file must use one of: {allowed}")
         return target
-    files = style_fingerprint.input_files([str(directory)])
+    try:
+        files = style_fingerprint.input_files([str(directory)])
+    except style_fingerprint.UserError as exc:
+        pdfs = sorted(directory.rglob("*.pdf"))
+        if pdfs:
+            raise UserError(
+                "PDF stages are not parsed directly; extract each PDF to a private .txt file with "
+                "scripts/extract_pdf_text.py, then rerun on that text directory"
+            ) from exc
+        raise UserError(str(exc)) from exc
     return max(files, key=lambda path: (version_number(path), str(path).lower()))
 
 
@@ -367,7 +376,7 @@ def main() -> int:
         else:
             print_human(result, profile_path, screening_path, args.write)
         return 0
-    except (OSError, UserError) as exc:
+    except (OSError, UserError, style_fingerprint.UserError, extract_revision_direction.UserError) as exc:
         if json_requested:
             print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False))
         else:

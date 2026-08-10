@@ -87,7 +87,15 @@ python scripts/style_fingerprint.py baseline /private/style/paper-a-versions --p
 
 ### Prepare a three-stage target set
 
-Put ordered versions of the same paper in one private directory and record the provenance of every adjacent version pair. A common layout is v1→v2 author/advisor discussion and v2→v3 reviewer-driven revision. Mark reviewer-driven pairs explicitly: they remain visible in the report but are excluded from author-preference signals by default. The final version must be author-approved even if AI-assisted.
+Put ordered `.tex`, `.md`, or `.txt` versions of the same paper in one private directory and record the provenance of every adjacent version pair. A common layout is v1→v2 author/advisor discussion and v2→v3 reviewer-driven revision. Mark reviewer-driven pairs explicitly: they remain visible in the report but are excluded from author-preference signals by default. The final version must be author-approved even if AI-assisted.
+
+PDF stages are not parsed directly by the new stdlib-only target scripts. Extract each PDF into a separate private text directory first; the existing extractor keeps its optional `pdftotext`/`PyPDF2` fallback:
+
+```bash
+python scripts/extract_pdf_text.py /private/Paper-v1.pdf /private/stages/version1.txt
+python scripts/extract_pdf_text.py /private/Paper-v2.pdf /private/stages/version2.txt
+python scripts/extract_pdf_text.py /private/Paper-v3.pdf /private/stages/version3.txt
+```
 
 Before building the target, reserve several v1 paragraphs as hold-out data and exclude their corresponding v3 paragraphs from target construction. Then preview the mandatory screening and outputs:
 

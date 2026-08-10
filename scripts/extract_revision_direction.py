@@ -29,7 +29,16 @@ def stage_number(path: Path) -> int:
 
 
 def discover_versions(directory: Path) -> list[Path]:
-    files = style_fingerprint.input_files([str(directory)])
+    try:
+        files = style_fingerprint.input_files([str(directory)])
+    except style_fingerprint.UserError as exc:
+        pdfs = sorted(directory.rglob("*.pdf"))
+        if pdfs:
+            raise UserError(
+                "PDF stages are not parsed directly; extract each PDF to a private .txt file with "
+                "scripts/extract_pdf_text.py, then rerun on that text directory"
+            ) from exc
+        raise UserError(str(exc)) from exc
     files.sort(key=lambda path: (stage_number(path), str(path).lower()))
     if len(files) < 2:
         raise UserError(f"need at least two .tex, .md, or .txt stages in {directory}")
@@ -372,7 +381,7 @@ def main() -> int:
         payload = {**result, "output": str(output), "written": args.write}
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0
-    except (OSError, UserError) as exc:
+    except (OSError, UserError, style_fingerprint.UserError) as exc:
         if json_requested:
             print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False))
         else:
