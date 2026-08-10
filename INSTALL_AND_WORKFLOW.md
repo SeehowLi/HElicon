@@ -1,4 +1,4 @@
-# HElicon v1.1 Installation and Workflow
+# HElicon v1.2 Installation and Workflow
 
 This document describes how to install HElicon, build its long-term knowledge, and use it on external paper projects.
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.2
+
+- Distilled a new security-venue FHE systems batch in the external workspace.
+- Added an abstract `Security-Venue FHE Systems Paper` pattern to core without importing raw PDF text, single-paper claims, experiment numbers, or project facts.
+- Regenerated distilled-source provenance BibTeX from the reviewed registry.
+- Added Evidence-Driven Revision System project-pack files and command responsibilities.
+- Standardized the paper pipeline as `H-DISCUSS -> H-POSITION -> H-DRAFT -> H-PATCH -> H-SYNC`, with revision/rebuttal repeating the same loop through `H-REVIEW` and `H-REOPEN` when needed.
+
 ## v1.1
 
 - Promoted the project-aware short-command workflow to the official v1.1 snapshot.

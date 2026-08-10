@@ -113,6 +113,40 @@ The system defines roles, threat model, deployment boundary, and measurable secu
 - artifacts or reproducibility details;
 - limitations.
 
+## Pattern E: Security-Venue FHE Systems Paper
+
+### Typical problem move
+
+An FHE, HE, or secure-computation primitive can express the nominal task, but the real deployment workflow exposes a hidden bottleneck. Strong papers name that bottleneck as a reviewable obstacle such as tradeoff control, automation, abstraction boundaries, recurring workloads, or compound encrypted workflows.
+
+### Common bottleneck language
+
+- deployment bottleneck;
+- workflow-level functionality;
+- tradeoff surface;
+- application-visible consequence;
+- abstraction boundary;
+- recurring workload;
+- compound encrypted workflow;
+- utility/cost frontier;
+- end-to-end evidence.
+
+### Contribution move
+
+The paper identifies where the primitive-level abstraction is too narrow, then introduces a system, protocol, compiler, or workflow change that makes the real deployment path measurable. The best contribution lists align around one story: identify the hidden bottleneck, design the new abstraction or mechanism, enforce it in the system, and evaluate the resulting workflow.
+
+### Evaluation expectations
+
+- tradeoff claims need multiple points on the tradeoff surface;
+- automation claims need a defined design or search space;
+- boundary-change claims need evidence that the old boundary caused the cost;
+- recurring-workflow claims need separate setup and recurring-path measurements;
+- compound-workflow claims need every named stage evaluated.
+
+### Reusable writing principle
+
+Do not say only that FHE makes a task private. Say which real workflow remains unusable, which hidden cost or boundary causes the gap, and how the method makes that workflow deployable under the stated security model.
+
 ## Cross-direction writing moves
 
 Use these moves when a paper spans FHE algorithms, private inference, encrypted retrieval, or systems:

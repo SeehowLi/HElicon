@@ -10,11 +10,14 @@ Recommended files:
 project_brief.yaml
 storyline.md
 evidence_map.csv
+claim_ledger.md
+evidence_matrix.csv
+revision_queue.csv
+reviewer_risk_log.md
 local_glossary.md
 focused_references.md
 experiment_notes.md
 draft_status.md
-reviewer_risks.md
 accepted_phrasing.md
 decision_log.md
 sync_archive.md
@@ -52,6 +55,22 @@ Copy `templates/paper_brief.yaml` and fill project-specific facts.
 ## local_glossary.md
 
 Only project-specific terms and naming decisions.
+
+## claim_ledger.md
+
+Use `templates/claim_ledger.md`. Keep only current claims that the paper may actually make. Delete or archive stale claims during `H-SYNC`.
+
+## evidence_matrix.csv
+
+Use `templates/evidence_matrix.csv`. Map each claim to concrete evidence, status, gap, and next action. Do not use it as a notes dump.
+
+## revision_queue.csv
+
+Use `templates/revision_queue.csv`. Keep active revision tasks only. Completed, contradicted, or superseded tasks should be removed by `H-SYNC`.
+
+## reviewer_risk_log.md
+
+Use `templates/reviewer_risk_log.md`. Store current reviewer objections and mitigation status. Do not preserve resolved objections unless they prevent future confusion.
 
 ## focused_references.md
 
