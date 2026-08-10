@@ -5,6 +5,7 @@ Use this to distill the user's personal style from their own writing, accepted p
 ## Source
 
 - Paper/project:
+- Paper ID:
 - Section:
 - Version: original | revised | accepted | advisor-edited
 - Why selected:

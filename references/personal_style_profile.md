@@ -39,7 +39,9 @@ Append stable observations under these headings:
 
 ### Expressions the user likes
 
-- TBD.
+- Leave empty until the user supplies or explicitly approves an expression.
+- For each approved entry, record the expression, acceptable rhetorical context, and exclusions.
+- This is the only profile field that permits positive lexical imitation; all other fields are descriptive or restrictive.
 
 ### Expressions the user rejects
 
@@ -57,3 +59,12 @@ Append stable observations under these headings:
 
 - First decide the story and evidence boundary; then polish sentences.
 - Keep personal-paper style lessons abstract. Do not import project-specific terminology, method names, datasets, experiment numbers, or title logic into core memory.
+
+### Quantitative baseline
+
+- Store the local fingerprint at `<paper_dir>/.helicon/style/fingerprint.json`; never commit it to this skill repository.
+- Generate it with `scripts/style_fingerprint.py baseline` from the eligible section classes in `style_baseline_policy.md`; assign revisions of the same manuscript the same `paper_id`.
+- P4 reads sentence-length distribution, alternation, and opening structure.
+- P5 reads connective density, punctuation density, and terminology-variation candidates as warnings rather than rewrite instructions.
+- P6 reads section-matched baseline deviations and the baseline qualification status.
+- A thin baseline is directional only: it cannot produce a drift warning or refuse a pass.

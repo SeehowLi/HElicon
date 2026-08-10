@@ -1,2 +1,2 @@
-claim_id,section_or_claim,evidence_type,evidence_source,status,gap,risk,next_action,last_synced
-C1,,,,UNKNOWN,,,,
+claim_id,section_or_claim,evidence_type,evidence_source,status,citation_status,gap,risk,next_action,last_synced
+C1,,,,UNKNOWN,CITATION_UNVERIFIED,,,,

@@ -19,12 +19,30 @@ ALLOWED_PROJECT_MENTIONS = {
     "NOMOS": []
 }
 
-NUMERIC_FACT = re.compile(r"\b\d+(?:\.\d+)?\s*(?:x|X|%|ms|s|GB|MB|KB|bits?)\b")
+NUMERIC_FACT = re.compile(r"\b\d+(?:\.\d+)?\s*(?:x|X|%|ms|s|GB|MB|KB|bits?)(?![A-Za-z0-9])")
 EPRINT = re.compile(r"\b(?:20[0-2][0-9])/(?:[0-9]{3,5})\b|\b20[0-2][0-9]-[0-9]{3,5}\b")
+
+NUMERIC_OK_FILES = {
+    "references/pass_pipeline.md",
+    "references/language_polish.md",
+    "references/deadline_compression.md",
+    "references/style_baseline_policy.md",
+    "references/intent_router.md",
+}
+NUMERIC_PREFIXES = ("threshold:", "budget:", "target:", "limit:", "range:")
+NUMERIC_MARKER = "<!-- helicon:allow-numeric -->"
 
 
 def is_allowed_line(token: str, line: str) -> bool:
     return any(allowed in line for allowed in ALLOWED_PROJECT_MENTIONS.get(token, []))
+
+
+def allows_numeric_fact(rel: str, line: str) -> bool:
+    """Allow explicit policy thresholds without weakening other checks."""
+    if rel in NUMERIC_OK_FILES or NUMERIC_MARKER in line:
+        return True
+    normalized = re.sub(r"^\s*(?:[-*+]\s*)+", "", line).lstrip().lower()
+    return normalized.startswith(NUMERIC_PREFIXES)
 
 
 def scan_file(path: Path, root: Path) -> list[str]:
@@ -42,7 +60,11 @@ def scan_file(path: Path, root: Path) -> list[str]:
         for token in ALLOWED_PROJECT_MENTIONS:
             if token in line and not is_allowed_line(token, line):
                 findings.append(f"{rel}:{lineno}: project token {token!r}")
-        if rel.startswith("references/") and NUMERIC_FACT.search(line):
+        if (
+            rel.startswith("references/")
+            and not allows_numeric_fact(rel, line)
+            and NUMERIC_FACT.search(line)
+        ):
             findings.append(f"{rel}:{lineno}: numeric result-like token")
         if EPRINT.search(line):
             findings.append(f"{rel}:{lineno}: ePrint-like identifier")

@@ -1,111 +1,127 @@
 # HElicon Command Registry
 
-This file defines HElicon short commands. Treat these commands as executable workflow contracts when the user starts a message with `H-*`.
+Treat an `H-*` token as an executable workflow contract. Commands are project-aware but project-agnostic: project facts, manuscript text, review content, experiment results, paper identifiers, and local paths never enter HElicon core.
 
-The command system is project-aware but project-agnostic. It was generalized from an external paper workflow. Do not copy project facts, manuscript details, review text, experiment numbers, paper names, ePrint IDs, or local file paths from any project into HElicon core memory.
+## Contents
 
-## Command Families
+- [Choose by situation](#choose-by-situation)
+- [Entry modes](#entry-modes)
+- [Functional commands and aliases](#functional-commands-and-aliases)
+- [Global rules](#global-rules)
+- [Gates](#gates)
+- [Output footer](#output-footer)
+- [Command contracts](#command-contracts)
+- [Legacy v1.2 contracts](#legacy-v12-contracts)
 
-### Project Setup And Context
+## Choose by situation
 
-| Command | Responsibility | Writes files by default |
+`H-HELP` presents this situation-first view rather than an alphabetical inventory.
+
+| I am in this situation | Start with | Likely next |
 |---|---|---|
-| `H-HELP` | Show available commands and choose the right next command. | No |
-| `H-LOAD` | Load the relevant project pack, direction pack, tracker, decision log, and workbench files for the current task. | No |
-| `H-ONBOARD` | Start or repair a project pack for a new paper. | Only after confirmation |
+| I have a completed or partial draft to revise | `H-INTAKE [path]` | `H-PASS` or `H-SPOT` |
+| I am starting a paper from zero | `H-NEW <name>` | `H-POSITION`, then `H-DRAFT` |
+| I want one controlled revision stage | `H-PASS <Pn>` | the next numbered pass |
+| I want a small local edit now | `H-SPOT <selection>` | `H-PATCH` if accepted |
+| I want normal end-to-end language polishing | `H-POLISH` | `H-GATE` or `H-PATCH` |
+| I am over the page limit or near a deadline | `H-DEADLINE --pages N` | `H-GATE` |
+| I have reviewer comments | `H-REBUT` | `H-DRAFT`, then `H-PATCH` |
+| I doubt a citation | `H-CITE` | fix the evidence map or claim |
+| I want to build or inspect my style baseline | `H-STYLE` | `H-PASS P6` |
+| I want a submission-readiness audit | `H-GATE` | resolve blocking findings |
+| I need outside strategic advice | `H-EXPORT mode=advice` | external advisor, then `H-INGEST` |
+| I need to pressure-test an idea or claim | `H-DISCUSS` | `H-DECIDE` or gather evidence |
+| I need to lock story, venue, or contribution hierarchy | `H-POSITION` | `H-DECIDE` or `H-DRAFT` |
+| I have accepted text to write into a file | `H-PATCH` | `H-SYNC` |
+| Project memory is stale or incomplete | `H-SYNC` or `H-SYNC-REPAIR` | confirmation |
 
-### Interactive Revision
+## Entry modes
 
-| Command | Responsibility | Writes manuscript by default |
+Entry modes name the author's situation rather than an internal operation.
+
+| Command | Situation | Writes by default |
 |---|---|---|
-| `H-DISCUSS` | Pressure-test an idea, claim, experiment, framing choice, or reviewer risk. | No |
-| `H-POSITION` | Lock or revise paper positioning: story, target venue, contribution hierarchy, and claim boundary. | No |
-| `H-DRAFT` | Draft or iterate a section/paragraph/abstract candidate without patching the manuscript. | No |
-| `H-TITLE-ITERATE` | Generate or revise title candidates without changing the manuscript. | No |
-| `H-ABSTRACT-ITERATE` | Incrementally revise an abstract candidate without patching the manuscript. | No |
-| `H-SECTION-ITERATE` | Legacy alias for `H-DRAFT` with a section target. | No |
-| `H-REVIEW` | Simulate reviewers or audit a draft section against venue and evidence expectations. | No |
+| `H-NEW <name>` | Start a paper from zero; wraps `H-ONBOARD`. | After confirmation |
+| `H-INTAKE [path]` | Triage an existing draft once. | After confirmation, writes `draft_map.md` |
+| `H-PASS <Pn> [--section X]` | Run one revision pass. | No |
+| `H-SPOT <selection>` | Perform the smallest local surgery. | No |
+| `H-DEADLINE --pages N` | Compress under a page or time constraint. | No |
+| `H-REBUT` | Triage and answer reviewer feedback. | No |
 
-### State, Decisions, And Patching
+## Functional commands and aliases
 
-| Command | Responsibility | Writes files by default |
+| Command | Function | Writes by default |
 |---|---|---|
-| `H-DECIDE` | Convert a discussion consensus into a scoped project decision. | Only after confirmation |
-| `H-PATCH` | Apply a confirmed version to an exact file location. | Yes, only specified target |
-| `H-LOG` | Compatibility alias for a scoped `H-SYNC`; use it to request synchronization of a specific discussion, decision, or tracker item. | Only through `H-SYNC` confirmation |
-| `H-SYNC` | Globally synchronize manuscript, workbenches, decision log, tracker, and open issues; rewrite current state and prune stale content. | Only after confirmation |
-| `H-SYNC-REPAIR` | Repair missed syncs after long conversations or unsynchronized patches. | Only after confirmation |
-| `H-REOPEN` | Reopen an earlier title, abstract, section, claim, or decision when evidence or scope changes. | No |
+| `H-CITE` | Verify citation existence and attribution against an authorized external library. | No |
+| `H-STYLE` | Report, build, compare, or inspect drift for a local style fingerprint. | Only after a confirmed baseline target |
+| `H-GATE` | Run the pre-submission review gate and available machine checks. | No |
+| `H-EXPORT mode=<mode>` | Build a self-contained external-advisor handoff. | No |
+| `H-INGEST` | Compare returned advice with current state and propose a scoped patch plan. | No |
 
-## Global Command Rules
+Compatibility aliases:
 
-1. Chinese is the control language for discussion and diagnosis. English is for paper-facing prose.
-2. Discussion commands do not patch manuscripts.
-3. `H-PATCH` must have an explicit target file, exact location, and confirmed text or version.
-4. After a successful `H-PATCH`, recommend `H-SYNC`.
-5. After stable consensus, recommend `H-DECIDE`; after confirmed `H-DECIDE`, run or recommend scoped `H-SYNC`.
-6. Track every strong claim with `SUPPORTED`, `PARTIAL`, `MISSING`, `RISKY`, `UNKNOWN`, `MISSING_EVIDENCE`, or `OVERCLAIM_RISK`.
-7. If evidence is incomplete, prefer scoped or conditional language over optimistic agreement.
-8. Project trackers should contain only confirmed and current project state, not temporary ideas.
-9. Decision logs should contain scoped current decisions, evidence status, risks, and follow-up; old or contradicted decisions must be deleted or moved to archive.
-10. Workbenches may store iterative candidates and reversible draft versions, but `H-SYNC` should delete superseded candidates that no longer match the latest discussion.
+- `H-POLISH` orchestrates P3 → P4 → P5 → P6. It applies gates, never auto-runs P2 for a `STABLE` section, and reports every pass separately.
+- `H-COMPRESS` is `H-DEADLINE`.
+- `H-VOICE` is `H-STYLE`.
+- `H-TRIAGE` is `H-INTAKE`.
+
+The sixteen v1.2 commands remain valid with unchanged semantics: `H-HELP`, `H-LOAD`, `H-ONBOARD`, `H-DISCUSS`, `H-POSITION`, `H-DRAFT`, `H-DECIDE`, `H-TITLE-ITERATE`, `H-ABSTRACT-ITERATE`, `H-SECTION-ITERATE`, `H-REVIEW`, `H-PATCH`, `H-LOG`, `H-SYNC`, `H-SYNC-REPAIR`, and `H-REOPEN`.
+
+## Global rules
+
+1. Chinese is the control language; English is the default paper-facing language.
+2. Discussion, diagnosis, and iteration commands do not patch manuscripts.
+3. `H-PATCH` requires an explicit file, exact location, and confirmed text or version.
+4. Recommend `H-SYNC` after a successful patch and after a confirmed decision.
+5. Recommend `H-DECIDE` after stable consensus.
+6. Track material claims with `SUPPORTED`, `PARTIAL`, `MISSING`, `RISKY`, `UNKNOWN`, `MISSING_EVIDENCE`, or `OVERCLAIM_RISK`, and citations with `CITATION_UNVERIFIED` or `CITATION_MISATTRIBUTED` when applicable.
+7. Prefer scoped or conditional wording when evidence is incomplete.
+8. Trackers contain confirmed current state, not temporary ideas.
+9. Decision logs retain scoped current decisions, evidence state, risk, and follow-up; stale decisions are deleted or archived.
+10. Workbenches may keep reversible candidates; synchronization removes candidates superseded by confirmed state.
 11. HElicon core is never updated automatically.
-12. Never write project facts, raw paper text, paper-specific numbers, review details, or single-paper card content into HElicon core.
-13. Use `H-DISCUSS` for brainstorming; do not add a separate `H-BRAINSTORM` command.
-14. Use `H-POSITION` for storyline/positioning; do not add a separate `H-STORYLINE` command.
-15. Use `H-DRAFT` for section-level iteration; `H-TITLE-ITERATE`, `H-ABSTRACT-ITERATE`, and `H-SECTION-ITERATE` remain compatibility/specialized entry points.
+12. Project facts, unpublished prose, paper-specific results, reviews, and identifiers never enter HElicon core.
+13. Use `H-DISCUSS` for brainstorming; there is no separate brainstorm command.
+14. Use `H-POSITION` for story and positioning; there is no separate storyline command.
+15. Use `H-DRAFT` for general section iteration; specialized v1.2 entry points remain available.
+16. `H-PASS` runs one pass with one target. `H-POLISH` may orchestrate several passes but reports them separately.
+17. The immutable set outranks every style suggestion.
+18. Gate notices appear at most once per section per session.
+19. Without an explicit command, use `intent_router.md`.
+20. At session start, follow the bootstrap and context budget in `project_memory.md`.
 
-## Paper Pipeline
-
-HElicon paper work should follow this closed loop:
+The project loop remains:
 
 ```text
 H-DISCUSS -> H-POSITION -> H-DRAFT -> H-PATCH -> H-SYNC
-```
-
-Use `H-DISCUSS` to explore and pressure-test ideas. Use `H-POSITION` when the issue is the paper's story, venue fit, contribution hierarchy, or claim boundary. Use `H-DRAFT` for any section, paragraph, abstract, or response candidate that should not yet be written to the manuscript. Use `H-PATCH` only after the target text and file location are confirmed. Use `H-SYNC` after patching or deciding so project memory is compact and current.
-
-For revision or rebuttal, repeat the same loop with reviewer comments or new evidence as input:
-
-```text
 H-REVIEW -> H-REOPEN if needed -> H-DISCUSS/H-POSITION -> H-DRAFT -> H-PATCH -> H-SYNC
 ```
 
-If a locked claim or positioning decision becomes invalid, run `H-REOPEN` before drafting. If the review only creates localized fixes, run `H-DRAFT` directly and then `H-PATCH`.
+Project memory is a compact live-state cache, not an append-only transcript. Prefer rewriting current state to appending discussion history.
 
-## Evidence-Driven Revision System
+## Gates
 
-Project packs should maintain four compact evidence/revision files in addition to the older evidence map and decision log:
+Before `H-SPOT` or `H-PASS`, inspect `draft_map.md` when present.
 
-- `claim_ledger.md`: current locked claims, scope, evidence status, and wording boundaries.
-- `evidence_matrix.csv`: structured mapping from claim to source, figure/table/result, status, and gap.
-- `revision_queue.csv`: active revision tasks only; stale or completed tasks should be deleted or archived by `H-SYNC`.
-- `reviewer_risk_log.md`: current reviewer objections, severity, affected claims, and mitigation status.
+- `STABLE`: execute silently.
+- `REWORK` or `DELETE-CANDIDATE`: emit exactly one line, once per section per session, then honor the author's command:
 
-Command responsibilities:
+```text
+[GATE] §<id> marked <verdict> by intake (<reason>). Local polish here is likely to be discarded. Continue anyway, or run H-PASS P2 --section <id>.
+```
 
-- `H-REVIEW` generates reviewer risks and revision-queue candidates from the current draft/evidence state.
-- `H-DECIDE` locks claim and evidence status after user confirmation, then triggers scoped `H-SYNC`.
-- `H-SYNC` rewrites the four files around current state and removes stale, contradicted, superseded, or completed entries.
-- `H-PATCH` changes manuscript text only; it should not silently lock claim/evidence status.
+- A target claim tagged `MISSING_EVIDENCE`, `OVERCLAIM_RISK`, or `CITATION_UNVERIFIED`: emit one concise notice and preserve every qualifier and scope term by default.
+- No `draft_map.md`: continue normally and emit this once per session:
 
-## Compact Memory Policy
+```text
+[no intake] running ungated. H-INTAKE gives you section-level gating.
+```
 
-HElicon project memory is a live state cache, not an append-only transcript.
+Gates warn; they do not block. No command may refuse work merely because an upstream step is unfinished. Only an immutable-set violation may stop or roll back execution.
 
-When synchronizing project files:
+## Output footer
 
-1. Keep only the latest confirmed state in trackers.
-2. Keep decision logs compact: current locked decisions first, open decisions second, short recent rationale third.
-3. Delete stale, contradicted, or superseded statements when the current discussion has made them false.
-4. Move historically useful but no longer active material to an archive section or archive file only when it may prevent future confusion.
-5. Do not preserve temporary debate merely because it occurred.
-6. Mark uncertain inferences as `OPEN` or `UNKNOWN`; never promote them to current state.
-7. Prefer rewriting a compact file over appending another long entry.
-
-## Standard Output Footer
-
-For discussion and iteration commands, end with:
+Discussion and iteration commands end with the existing compact footer:
 
 ```markdown
 Round consensus:
@@ -120,533 +136,223 @@ Next recommended HElicon commands:
 3. `...` - ...
 ```
 
-Use Chinese labels if the conversation is in Chinese.
+Use Chinese labels in a Chinese conversation. Recommendations are pass-aware: after P4, recommend P5 before P6 or P7. Routed revisions also use the fixed trailer from `intent_router.md`.
 
-## Command Contracts
+## Command contracts
 
-### H-HELP
+### H-NEW
 
-Purpose: show the command menu and recommend the right next command.
+Purpose: start a paper from zero by invoking the existing `H-ONBOARD` contract.
 
-Use when:
-- the user asks what command to use;
-- the project state is unclear;
-- the user invokes an unknown `H-*` command.
+Before writing, output the proposed project-local `.helicon/` path, files, direction-pack suggestions, known facts, missing facts, and a confirmation request. After confirmation, bootstrap the pack; do not create manuscript claims or evidence.
 
-Output:
-- command categories;
-- the most likely command for the current situation;
-- 2-3 next command suggestions.
+### H-INTAKE
 
-### H-LOAD
+Purpose: perform the cached, skippable triage in `draft_intake.md`.
 
-Purpose: load the current project and direction context without changing files.
+Read the draft, source map, glossary, and available evidence state. Produce per-section structural verdicts, claim labels, terminology drift, polish eligibility, and pass sequence using `templates/draft_map.md`. Show the proposed `draft_map.md` first; write only after confirmation. If skipped, record `[no intake]` through the authorized memory path.
 
-Read as available:
-- project brief;
-- progress tracker;
-- decision log;
-- iteration log;
-- claim/evidence matrix;
-- claim ledger;
-- evidence matrix;
-- revision queue;
-- reviewer risk log;
-- title, abstract, or section workbench;
-- local glossary;
-- selected direction packs;
-- relevant HElicon core references.
+### H-PASS
 
-Output:
-- active project;
-- active direction packs;
-- files read;
-- locked decisions;
-- open decisions;
-- stale or missing files;
-- recommended next command.
-
-Do not:
-- infer project facts as locked if files are missing;
-- write any file.
-
-### H-ONBOARD
-
-Purpose: start a new project pack or repair an incomplete project pack.
-
-Read:
-- `templates/project_pack_template.md`;
-- `templates/project_onboarding_prompt.md`;
-- `templates/evidence_map.csv`;
-- `templates/claim_ledger.md`;
-- `templates/evidence_matrix.csv`;
-- `templates/revision_queue.csv`;
-- `templates/reviewer_risk_log.md`;
-- direction map if direction selection is needed.
-
-Output before writing:
-- proposed project pack path;
-- project-specific files to create;
-- initial direction-pack recommendation;
-- missing facts the user must supply;
-- confirmation request.
-
-Write only after confirmation.
-
-### H-DISCUSS
-
-Purpose: pressure-test a new idea, claim, experiment, storyline move, terminology choice, or reviewer risk.
+Purpose: run exactly one P1–P7 pass on the named section or selection.
 
 Required behavior:
-- do not patch files;
-- do not write final prose unless explicitly requested as a candidate;
-- test against project evidence, direction-pack expectations, venue expectations, and reviewer risks;
-- do not agree by default.
+
+- load only the pass reference and target context;
+- state one target and excluded changes;
+- snapshot and verify the immutable set;
+- apply the draft-map gate without blocking;
+- return revised text, change locations, rollback findings, and the next pass;
+- use `templates/pass_log.md` and `templates/polish_ledger.csv` only for a later authorized state update.
+
+Reject only an invalid pass name or an immutable-set violation. Do not write source files.
+
+### H-SPOT
+
+Purpose: make the smallest useful local revision with minimal ceremony.
+
+Infer the least destructive language pass from the selection, apply the gate, preserve upstream decisions, and return the revision directly. If no intake exists, show the single `[no intake]` line. Do not write a file; use `H-PATCH` for accepted text.
+
+### H-DEADLINE
+
+Purpose: reduce length using `deadline_compression.md` while freezing threat-model and claim-scope language.
 
 Output:
 
 ```markdown
-Agreement:
-- agree / partly agree / disagree / UNKNOWN
-- Reason: ...
+Compression target:
+- Current/target pages or time:
 
-Evidence status:
-- SUPPORTED / PARTIAL / MISSING / RISKY / UNKNOWN
-- Evidence: ...
-- Gap: ...
+Candidates:
+- Delete / merge / appendix / rewrite:
+- Claim-integrity risk:
 
-Reviewer concern:
+Compressed candidate:
 - ...
 
-Venue fit:
-- strong / medium / weak / UNKNOWN
-- Reason: ...
+Frozen-set result:
+- PASS / warning and rollback:
+```
 
-Overclaim risk:
-- OVERCLAIM_RISK: ...
-- Unsafe wording: ...
+Follow the fixed action order. If the target is unsafe, report the remaining delta rather than deleting scope.
 
-Safer framing:
-- Chinese positioning: ...
-- English paper-safe phrasing: ...
+### H-REBUT
 
-Next questions:
-1. ...
-2. ...
-3. ...
+Purpose: use `rebuttal_playbook.md` after an `H-REVIEW` state check.
+
+Classify each comment as factual error, misreading, fixable real defect, or unfixable real defect. Return a direct response, evidence pointer, feasible manuscript promise, and unresolved risk using `templates/rebuttal_response.md`. Never introduce an unverified experimental result or an infeasible camera-ready promise.
+
+### H-CITE
+
+Purpose: verify citation existence and support using `citation_discipline.md`.
+
+Require an authorized Zotero library, project bibliography, or source PDF. Never use model memory as the verifier. Return the claim, citation, external source checked, `VERIFIED`, `CITATION_UNVERIFIED`, or `CITATION_MISATTRIBUTED`, the misattribution class, and a safe next action. Do not invent a replacement citation.
+
+### H-STYLE
+
+Purpose: run style `report`, `baseline`, `compare`, or `drift` through `style_fingerprint.py`.
+
+Keep corpus and fingerprint outputs outside the skill repository and follow `templates/style_baseline_readme.md`. A baseline write requires an explicit local target and `paper_id` grouping; revisions of one paper count once. Report distinct-paper count, source-file count, `ok`, `thin(n=N)`, or `none`, metrics used, comparison result, and whether drift alerts were disabled. `H-VOICE` invokes the same contract.
+
+### H-GATE
+
+Purpose: audit submission readiness without patching files, using `templates/submission_gate_checklist.md` for the three result levels.
+
+Read `review_gate.md`, current claim/citation state, and the applicable venue and FHE references. Run all available repository machine checks plus immutable-set consistency. Missing tools are reported as `NOT_RUN`, not silently treated as passing.
+
+Output:
+
+```markdown
+Blocking findings:
+- ...
+
+Warnings:
+- ...
+
+Optional improvements:
+- ...
+
+Machine checks:
+- command: PASS / FAIL / NOT_RUN
+
+Submission state:
+- READY / NOT_READY / UNKNOWN
+```
+
+The labels prioritize work; they do not prevent another command from running.
+
+### H-EXPORT
+
+Purpose: create one machine-oriented, self-contained external-advisor bundle using `external_advisor_protocol.md` and `templates/advisor_brief.md` for advice mode.
+
+Modes:
+
+- `mode=dossier`: skill state, project state, manuscript summary, claim ledger, and open issues.
+- `mode=advice`: dossier plus the question, attempted approaches, failure reasons, desired correct state, constraints, and immutable items. Instruct the flagship model to provide top-level diagnosis or design and return a Codex execution prompt, not to perform the file changes itself.
+- `mode=skill-upgrade`: HElicon's current design, observed failure, compatibility obligations, requested upgrade, and validation state.
+
+The entire export is one code block. Put constraints first, use labeled fields, and remove pleasantries. Include a sensitivity inventory naming unpublished data, experimental results, and verbatim reviewer text present in the bundle. Never delete sensitive material silently; the author decides what to remove before upload.
+
+### H-INGEST
+
+Purpose: ingest returned flagship advice without applying it.
+
+Output a current-versus-proposed diff, destination layer (`core`, `direction pack`, `project pack`, or `do not write back`), scoped patch plan, conflicts with Iron Rules or locked state, required verification, and unresolved questions. Application requires a later confirmed patch action.
+
+### H-POLISH
+
+Purpose: orchestrate P3, P4, P5, and P6 in order.
+
+Apply the gate once, snapshot immutable content, and emit four pass-labeled sections with target, changes, skipped items, and frozen-set status. The single-pass restriction belongs to `H-PASS`, not this orchestrator. Respect qualified anti-drift refusal for P5/P6; thin baselines do not refuse or warn for drift.
+
+## Legacy v1.2 contracts
+
+### H-HELP
+
+Show the situation table, choose the most likely command for current context, and give two or three next commands. For an unknown `H-*` token, map the author's situation rather than listing commands alphabetically.
+
+### H-LOAD
+
+Load project and direction context without writing. Follow `project_memory.md`: bootstrap with `project.yaml`, draft-map verdict lines, and the pass-log tail; load briefs, trackers, decisions, workbenches, claim/evidence files, risk logs, glossary, direction packs, and core references only when the active task requires them.
+
+Report active project, direction packs, files read, estimated context occupancy, locked and open decisions, missing or stale files, and the next command. Never lock an inferred fact.
+
+### H-ONBOARD
+
+Start or repair a project pack. Read the project templates, evidence templates, claim ledger, revision queue, reviewer risk log, and direction map. Before writing, show the proposed path, files, direction packs, missing author facts, and confirmation request. Write only after confirmation.
+
+### H-DISCUSS
+
+Pressure-test an idea, claim, experiment, story move, term, or reviewer risk. Do not patch or agree by default. Test project evidence, direction and venue expectations, and reviewer risk.
+
+```markdown
+Agreement: agree / partly agree / disagree / UNKNOWN; reason
+Evidence: status; source; gap; citation status
+Reviewer concern: ...
+Venue fit: strong / medium / weak / UNKNOWN; reason
+Overclaim risk: ...
+Safer framing: Chinese positioning; English paper-safe phrasing
+Next questions: ...
 ```
 
 ### H-POSITION
 
-Purpose: define or revise the paper's positioning before drafting.
+Define or revise story, venue, contribution hierarchy, novelty angle, and claim boundary without drafting full prose unless requested. Separate problem, bottleneck, insight, contributions, and evaluation promise. Mark claim-ledger candidates for later `H-DECIDE`.
 
-Use when:
-- the user asks about story, positioning, target venue, contribution hierarchy, novelty angle, or claim boundary;
-- a reviewer risk suggests the paper is framed incorrectly;
-- `H-DISCUSS` reaches consensus that should become a paper-level story.
-
-Required behavior:
-- do not draft full prose unless explicitly requested as a candidate;
-- distinguish problem framing, technical bottleneck, key insight, contribution hierarchy, and evaluation promise;
-- check every positioning claim against evidence status;
-- identify which claims should enter `claim_ledger.md` only after `H-DECIDE`.
-
-Output:
-
-```markdown
-Positioning diagnosis:
-- Current story:
-- Target venue fit:
-- Paper type:
-
-Proposed positioning:
-- One-sentence story:
-- Core bottleneck:
-- Key insight:
-- Contribution hierarchy:
-- Evidence promise:
-
-Claim boundaries:
-- Safe claims:
-- Risky claims:
-- Claims to avoid:
-
-Evidence-driven revision:
-- Claim ledger candidates:
-- Evidence matrix gaps:
-- Reviewer risks:
-
-Next command:
-- H-DECIDE / H-DRAFT / H-REVIEW
-```
+Return current diagnosis, one-sentence story, bottleneck, insight, contribution hierarchy, evidence promise, safe/risky/forbidden claims, evidence gaps, reviewer risks, and the next command.
 
 ### H-DRAFT
 
-Purpose: draft or iterate paper-facing text without patching the manuscript.
+Draft a section, paragraph, abstract, title rationale, related-work contrast, evaluation narrative, rebuttal, or response candidate without patching. Identify the target and upstream position, preserve claims, and emit claim/evidence/risk updates for later synchronization.
 
-Use when:
-- the user wants a section, paragraph, abstract, title rationale, related-work contrast, evaluation narrative, rebuttal, or response candidate;
-- a previous `H-POSITION` decision is ready to become local prose;
-- a reviewer-risk item needs a candidate revision.
-
-Required behavior:
-- identify the target unit and its upstream positioning decision;
-- preserve confirmed claims and evidence boundaries;
-- produce candidate prose, outline, or local rewrite plan;
-- do not modify manuscript files;
-- emit claim/evidence/risk updates that `H-SYNC` can write after confirmation.
-
-Output:
-
-```markdown
-Draft target:
-- Section/unit:
-- Upstream locked position:
-
-Local revision plan:
-- Keep:
-- Change:
-- Delete or move:
-
-Candidate draft:
-- ...
-
-Claim-evidence-risk:
-- Claim:
-- Evidence status:
-- Risk:
-- Needed follow-up:
-
-Patch readiness:
-- READY / NOT_READY
-- Required confirmation or missing evidence:
-```
+Return target, local keep/change/delete-or-move plan, candidate prose, claim-evidence-risk state, and `READY` or `NOT_READY` patch readiness.
 
 ### H-DECIDE
 
-Purpose: convert a discussion consensus into a project decision.
+Turn consensus into a scoped project decision. First show the decision, applies/does-not-apply scope, evidence state, reviewer concerns, risks, affected memory files, stale decisions to remove or archive, and `Need confirmation: YES`. Write only after confirmation and then perform or propose scoped synchronization. Do not patch manuscript text.
 
-Required behavior:
-- first output a write-in plan;
-- wait for explicit user confirmation before editing decision logs or trackers;
-- scope what the decision applies to and does not apply to;
-- do not patch manuscript files.
-- after confirmed write-in, immediately perform a scoped `H-SYNC` plan for affected tracker, workbench, and open-decision entries;
-- remove or archive earlier decisions that conflict with the new decision.
-- if the decision locks or changes a claim, update `claim_ledger.md` and `evidence_matrix.csv` through the scoped sync plan;
-- if the decision resolves reviewer risk or a revision task, delete or archive the corresponding entries in `reviewer_risk_log.md` and `revision_queue.csv`.
-
-Output before writing:
-
-```markdown
-Decision draft:
-- ...
-
-Scope:
-- Applies to: ...
-- Does not apply to: ...
-
-Evidence status:
-- SUPPORTED / PARTIAL / MISSING / RISKY / UNKNOWN
-
-Reviewer concerns addressed:
-- ...
-
-Risks / conditions:
-- ...
-
-Sync needed:
-- YES, scoped `H-SYNC` after confirmation
-
-Need confirmation:
-- YES
-```
+Claim changes update the claim ledger and evidence matrix; resolved reviewer or revision items are removed or archived through synchronization.
 
 ### H-TITLE-ITERATE
 
-Purpose: generate or revise title candidates.
-
-Required behavior:
-- base candidates on locked story, active project direction, and evidence state;
-- do not modify title files or LaTeX;
-- do not assume the story is frozen unless the project memory says so;
-- avoid broad words such as `practical`, `large-scale`, `general`, `universal`, `end-to-end`, and `secure` unless scope and evidence support them.
-
-Output:
-- current title or title state if available;
-- 3-6 title candidates;
-- each candidate's claim, evidence status, venue fit, risk, and best-fit storyline;
-- title directions to avoid;
-- specific feedback choices for the next round.
+Generate title candidates from the locked story, direction, and evidence state without changing files. Return the current title state, several candidates with claim/evidence/venue/risk analysis, directions to avoid, and feedback choices. Broad terms require explicit scope and evidence.
 
 ### H-ABSTRACT-ITERATE
 
-Purpose: revise an abstract interactively and incrementally.
-
-Required behavior:
-- start from the current abstract logic when available;
-- prefer local, reversible changes unless the abstract structure is fundamentally wrong;
-- do not patch manuscript files;
-- label evidence gaps for every strong claim.
-
-Output:
-- current-version diagnosis;
-- old logic to preserve;
-- sentence-level keep/revise/delete/move analysis when text is available;
-- claim-evidence-risk table;
-- revised abstract candidate;
-- next feedback choices.
+Revise an abstract incrementally without patching. Preserve sound logic, prefer reversible local edits unless structure is broken, and label each strong claim's evidence gap. Return diagnosis, keep/revise/delete/move analysis, claim-evidence-risk table, candidate abstract, and feedback choices.
 
 ### H-SECTION-ITERATE
 
-Purpose: legacy alias for `H-DRAFT` with a section target.
-
-Required behavior:
-- identify the target section;
-- provide a local modification plan before prose;
-- preserve structure unless a structural problem is identified;
-- do not patch files;
-- check positioning before rewriting introduction, contribution, related work, evaluation, or threat model sections.
-
-Output:
-- target section;
-- local problem diagnosis;
-- local revision plan;
-- content to keep;
-- content to move or delete;
-- claim-evidence-risk table;
-- candidate outline or prose if appropriate;
-- whether user confirmation is needed before a patch.
-
-Prefer `H-DRAFT` for new workflows. Use this command only when the user or an existing project pack still uses the older name.
+Compatibility alias for `H-DRAFT` with a section target. Diagnose locally, plan before prose, preserve structure unless a structural issue is identified, and check positioning before revising Introduction, Contributions, Related Work, Evaluation, or Threat Model. Do not patch.
 
 ### H-REVIEW
 
-Purpose: simulate reviewer objections or audit draft text for venue fit, evidence gaps, and claim risk.
-
-Read:
-- `references/review_gate.md`;
-- `references/venue_profiles.md`;
-- direction packs relevant to the paper;
-- project evidence map if available.
-
-Output:
-- likely reviewer objections ranked by severity;
-- affected claims or sections;
-- missing evidence;
-- safer claim boundaries;
-- concrete revision actions.
-- reviewer-risk-log candidates;
-- revision-queue candidates.
-
-Do not write `reviewer_risk_log.md` or `revision_queue.csv` directly unless the user confirms a sync target. Recommend `H-SYNC` after a review whose risks should become project state.
+Simulate reviewer objections or audit venue fit, evidence gaps, and claim risk using `review_gate.md`, venue and direction references, FHE checks, and project evidence. Return ranked objections, affected claims/sections, missing evidence, safer boundaries, actions, reviewer-risk candidates, and revision-queue candidates. Write those files only through confirmed synchronization.
 
 ### H-PATCH
 
-Purpose: apply a confirmed version to an exact file location.
-
-Required behavior:
-- require file path, exact location, and confirmed version;
-- modify only the specified location;
-- preserve citations, labels, refs, math, figures, tables, algorithms, comments, and formatting unless instructed otherwise;
-- use the smallest patch that satisfies the request;
-- show the changed target and a diff summary;
-- run the relevant validation if available.
-
-If the target is ambiguous, stop and ask one concise clarification.
-
-Output:
+Apply confirmed text to an explicit file and exact location. Modify only that location; preserve citations, labels, references, mathematics, figures, tables, algorithms, comments, and formatting unless instructed otherwise. Use the smallest patch, show a diff summary, and run relevant validation. If the target is ambiguous, ask one concise clarification.
 
 ```markdown
-Patch target:
-- File: ...
-- Location: ...
-
-Pre-patch check:
-- Preserved commands/citations/labels: YES / issue
-- Ambiguity: none / ...
-
-Applied changes:
-- ...
-
-Diff summary:
-```diff
-...
-```
-
-Verification:
-- Command: ...
-- Status: PASS / FAIL / NOT_RUN
-- First actionable error if any: ...
+Patch target: file; location
+Pre-patch check: immutable items; ambiguity
+Applied changes: ...
+Diff summary: ...
+Verification: command; PASS / FAIL / NOT_RUN; first actionable error
 ```
 
 ### H-LOG
 
-Purpose: compatibility alias for scoped `H-SYNC`. Use `H-LOG` when the user wants to record a specific item, but execute the same compact sync discipline as `H-SYNC`.
-
-Required behavior:
-- translate `H-LOG: <content>` into `H-SYNC: synchronize <content>`;
-- distinguish temporary discussion, project fact, confirmed decision, and long-term reusable lesson;
-- do not append blindly;
-- do not write temporary ideas into the progress tracker;
-- do not write project facts into HElicon core;
-- ask for confirmation before writing unless the user explicitly instructs a target and content.
-
-Output before writing:
-
-```markdown
-Sync target:
-- iteration_log / decision_log / progress_tracker / project_pack / none
-
-Layer:
-- temporary discussion / project fact / confirmed decision / long-term lesson
-
-Scoped sync plan:
-- ...
-
-Stale content to delete/archive:
-- ...
-
-Need confirmation:
-- YES / NO
-```
+Compatibility alias for a scoped `H-SYNC`. Translate the requested item into a compact synchronization plan; classify it as temporary discussion, project fact, confirmed decision, or reusable lesson; identify target and stale content; request confirmation unless target and content were explicitly authorized. Never append blindly or write project facts to core.
 
 ### H-SYNC
 
-Purpose: globally synchronize current project state after patching, deciding, or iterating. `H-SYNC` rewrites project memory into compact current state and deletes or archives stale content.
-
-Required behavior:
-- do not patch manuscript text;
-- read current manuscript state only for the affected scope;
-- read project memory files when available;
-- identify unrecorded consensus, unrecorded patches, stale tracker items, and open decisions;
-- classify sync candidates.
-- rewrite target memory files around the latest confirmed state rather than appending long logs;
-- delete stale, contradicted, superseded, or duplicated items unless they are needed in an archive;
-- keep only short recent rationale for active decisions.
-
-Classification:
-- A. locked project status for progress tracker;
-- B. workbench iteration records;
-- C. temporary ideas for iteration log only;
-- D. stale or obsolete ideas that should be deleted;
-- E. historical material worth moving to archive.
-- F. claim ledger updates;
-- G. evidence matrix updates;
-- H. reviewer risk log updates;
-- I. revision queue updates or deletions.
-
-Output before writing:
-
-```markdown
-Sync scope:
-- ...
-
-Files read:
-- ...
-
-Detected current state:
-- ...
-
-Unrecorded consensus:
-- ...
-
-Unrecorded patches:
-- ...
-
-Stale tracker items:
-- ...
-
-Sync classification:
-- A. Progress tracker candidates: ...
-- B. Workbench candidates: ...
-- C. Discussion log candidates: ...
-- D. Delete stale/obsolete ideas: ...
-- E. Archive candidates: ...
-- F. Claim ledger candidates: ...
-- G. Evidence matrix candidates: ...
-- H. Reviewer risk candidates: ...
-- I. Revision queue candidates/deletions: ...
-
-Rewrite plan:
-- Target files: ...
-- Current-state replacements: ...
-- Deletions: ...
-- Archive moves: ...
-
-Need confirmation:
-- YES
-```
+Synchronize current project state after patching, deciding, or iterating. Do not patch manuscript text. Read only affected scope, detect unrecorded consensus and patches, classify progress, workbench, discussion, stale deletion, archive, claim, evidence, reviewer-risk, and revision-queue changes, then propose compact replacements. Delete or archive stale, contradicted, superseded, completed, or duplicated state. Write only after confirmation.
 
 ### H-SYNC-REPAIR
 
-Purpose: repair missed synchronization after long conversations, context loss, or unsynchronized patches.
-
-Required behavior:
-- do not modify manuscript text;
-- compare current manuscript, workbenches, decision log, iteration log, claim matrix, and tracker when available;
-- distinguish confirmed decisions from plausible but unconfirmed inferences;
-- classify repair candidates using the same A/B/C/D scheme as `H-SYNC`;
-- wait for confirmation before writing.
-
-Output:
-- repair scope;
-- files read;
-- patched-but-unrecorded content;
-- discussed-but-undecided consensus;
-- stale tracker items;
-- repair classification;
-- write plan;
-- confirmation request.
+Repair missed synchronization after long discussion, context loss, or unsynchronized patches. Compare available manuscript scope and project memory, separate confirmed state from plausible inference, list patched-but-unrecorded content, undecided consensus, stale items, classification, and write plan. Wait for confirmation; never modify manuscript text.
 
 ### H-REOPEN
 
-Purpose: reopen an earlier title, abstract, section, claim, or decision when new evidence, contradiction, reviewer risk, or scope change invalidates part of it.
-
-Required behavior:
-- do not patch files;
-- identify what remains valid and what must change;
-- propose the next command.
-
-Output:
-
-```markdown
-Reopen target:
-- ...
-
-Why reopen:
-- New evidence / contradiction / reviewer risk / scope change / UNKNOWN
-
-Old conclusion:
-- ...
-
-Still valid:
-- ...
-
-Needs change:
-- ...
-
-Risk if not reopened:
-- ...
-
-Recommended next command:
-- H-DISCUSS / H-DECIDE / H-TITLE-ITERATE / H-ABSTRACT-ITERATE / H-SECTION-ITERATE
-```
-
-## Quick Command Selection
-
-| Situation | Use | Next |
-|---|---|---|
-| New idea or uncertain claim | `H-DISCUSS` | `H-DECIDE` or gather evidence |
-| Story, positioning, venue fit, or contribution hierarchy | `H-POSITION` | `H-DECIDE` or `H-DRAFT` |
-| Need local prose before patching | `H-DRAFT` | `H-PATCH` or more evidence |
-| Consensus should become a decision | `H-DECIDE` | `H-SYNC` |
-| Need title options | `H-TITLE-ITERATE` | `H-DECIDE` or `H-PATCH` |
-| Need abstract revision | `H-ABSTRACT-ITERATE` | `H-PATCH` |
-| Need section revision | `H-DRAFT` or `H-SECTION-ITERATE` | `H-PATCH` |
-| Confirmed text should be written | `H-PATCH` | `H-SYNC` |
-| Need reviewer risks and revision tasks | `H-REVIEW` | `H-SYNC` or `H-DRAFT` |
-| Project memory may be stale | `H-SYNC` | confirmation |
-| Previous work was not synchronized | `H-SYNC-REPAIR` | confirmation |
-| A prior decision may be wrong | `H-REOPEN` | `H-DISCUSS` or `H-DECIDE` |
-| Need to record without deciding | `H-LOG` as scoped `H-SYNC` | confirmation |
+Reopen a title, abstract, section, claim, or decision after new evidence, contradiction, reviewer risk, or scope change. Do not patch. Return the target, reason, old conclusion, still-valid parts, needed changes, risk of leaving it closed, and the recommended discussion, decision, or iteration command.

@@ -1,242 +1,142 @@
-# HElicon v1.2 Installation and Workflow
+# HElicon v1.3 Installation and Workflow
 
-This document describes how to install HElicon, build its long-term knowledge, and use it on external paper projects.
+This guide installs HElicon, separates private paper state from skill core, and selects a workflow from the author's actual starting point.
 
 ## 0. Important concept
 
-HElicon is not a fine-tuned model. It improves through a controlled loop:
+HElicon is not a fine-tuned model and does not learn silently. It improves through controlled distillation and explicit memory patches:
 
 ```text
-selected papers / own drafts / advisor feedback / project drafts
+selected papers / own drafts / revision feedback / project state
   -> distillation
-  -> structured memory files
-  -> better future prompts and revisions
+  -> scoped core, direction, or project memory
+  -> better future diagnosis and revision
 ```
 
-The skill does not silently learn. After each meaningful session, ask it to produce a `HElicon Memory Patch`, then manually write stable lessons back into the correct files.
+Project facts and unpublished prose stay outside the skill repository.
 
 ## 1. Install HElicon
 
-### Option A: user-level install
+First preview the selected destination.
 
-Use this if you want HElicon available in all Codex projects.
+Windows PowerShell:
+
+```powershell
+.\scripts\install.ps1 --target codex --dry-run
+.\scripts\install.ps1 --target claude-code --dry-run
+```
+
+POSIX shell:
 
 ```bash
-cd ~/Downloads
-unzip HElicon-v1.0-adjusted.zip
-mkdir -p ~/.agents/skills
-cp -R HElicon ~/.agents/skills/HElicon
+sh scripts/install.sh --target codex --dry-run
+sh scripts/install.sh --target claude-code --dry-run
 ```
 
-### Option B: repo-level install
+Targets are `codex`, `claude-code`, `both`, and `repo-local`. Remove `--dry-run` to install. The installer backs up an existing destination as `.bak.<timestamp>`, copies files without symlinks, and runs `check_skill_integrity.py` after installation.
 
-Use this if you want a paper repository to carry HElicon with it.
+Validate a checkout or installed copy:
 
 ```bash
-cd /path/to/your-paper-repo
-mkdir -p .agents/skills
-cp -R ~/Downloads/HElicon .agents/skills/HElicon
+python scripts/selftest_checks.py
+python scripts/check_skill_integrity.py .
+python scripts/check_core_contamination.py .
 ```
 
-### Check
+## 2. Keep optional shared knowledge outside core
 
-```bash
-python ~/.agents/skills/HElicon/scripts/check_skill_integrity.py ~/.agents/skills/HElicon
-```
-
-In Codex:
+An optional private workspace may hold corpus notes, distilled cards, and direction packs:
 
 ```text
-/skills
+HElicon_workspace/
+├── corpus/
+├── distilled/
+├── direction_packs/
+└── projects/        # legacy v1.2 packs remain readable
 ```
 
-Then call:
+Do not put raw PDFs, unpublished drafts, reviewer text, or project facts into `references/`.
 
-```text
-$HElicon
-请说明你会如何帮助我修改安全顶会论文。
-```
+## 3. Build unified paper patterns
 
-## 2. Create an external HElicon workspace
+Use two stages:
 
-Do not put raw PDFs, unpublished drafts, or project-specific facts directly into the skill core.
+1. Distill a high-value paper into a paper pattern card without copying source prose.
+2. After several comparable cards, distill only their stable shared structure into a unified pattern or direction pack.
 
-Recommended global workspace:
-
-```bash
-mkdir -p ~/HElicon_workspace/{corpus,distilled,direction_packs,projects,logs}
-mkdir -p ~/HElicon_workspace/corpus/{selected_papers,own_drafts,advisor_edits}
-mkdir -p ~/HElicon_workspace/distilled/{paper_cards,unified_patterns,style_cards}
-```
-
-The core skill stays stable. The workspace grows over time.
-
-## 3. Build unified paper patterns first
-
-The user expects many papers of the same type to share similar writing logic. Therefore, do not only create one summary per paper. Use a two-stage distillation:
-
-### Stage 1: individual high-value cards
-
-Use this for papers that are especially strong or unusual.
-
-```text
-$HElicon
-请把这篇论文蒸馏成 paper pattern card。不要复制原文句子。
-重点学习：problem、bottleneck、title/abstract、introduction、contribution、evaluation narrative、related-work contrast、术语。
-
-论文内容或笔记：
-<粘贴>
-```
-
-Save outputs under:
-
-```text
-~/HElicon_workspace/distilled/paper_cards/
-```
-
-### Stage 2: unified pattern cards
-
-After 5-10 similar papers, ask HElicon to collapse them:
-
-```text
-$HElicon
-下面是同一类型论文的多个 paper pattern cards。请不要逐篇总结，而是蒸馏出统一模式。
-输出 unified pattern card，重点包括：
-1. invariant problem framing;
-2. common bottleneck language;
-3. title/abstract moves;
-4. introduction arc;
-5. contribution structures;
-6. evaluation expectations;
-7. terminology to prefer;
-8. expressions to avoid;
-9. reviewer expectations.
-
-cards:
-<粘贴多个 cards>
-```
-
-Write stable results into:
-
-```text
-HElicon/references/unified_paper_patterns.md
-```
-
-or a direction pack if it is narrower.
+Promote a lesson to core only when it is reusable across papers and carries no source-specific fact, sentence, identifier, or result.
 
 ## 4. Build direction packs
 
-For a direction such as private LLM inference or encrypted kNN:
-
-```bash
-mkdir -p ~/HElicon_workspace/direction_packs/private_llm_inference
-mkdir -p ~/HElicon_workspace/direction_packs/encrypted_knn_search
-mkdir -p ~/HElicon_workspace/direction_packs/fhe_algorithm_optimization
-```
-
-Use:
-
-```text
-HElicon/templates/direction_pack_template.md
-```
-
-Direction packs should contain focused paper patterns, local terminology, baselines, threat models, and evaluation playbooks. They are reusable across future papers in the same direction.
+Use `templates/direction_pack_template.md` for focused knowledge such as private LLM inference, encrypted search, FHE algorithm optimization, or FHE systems. Direction packs may record recurring threat models, comparison dimensions, terminology, and evaluation expectations, but not one paper's private state.
 
 ## 5. Build personal style memory
 
-Use your own accepted papers, drafts, rejected/revised versions, and advisor edits.
+All available author papers are treated as unpublished. Corpus text and derived `fingerprint.json` stay in a paper-local `.helicon/style/` directory or another private workspace, never in the skill repository.
 
-```text
-$HElicon
-请从下面这些我自己的英文论文段落和修改记录中，蒸馏我的个人写作风格。
-不要复制完整句子。请输出可以写入 references/personal_style_profile.md 的规则：
-1. opening moves;
-2. bottleneck phrasing;
-3. contribution style;
-4. related-work contrast;
-5. evaluation-result phrasing;
-6. expressions I like;
-7. expressions I reject;
-8. recurring weaknesses.
+There are no assumed advisor-edited pairs. Revisions of the same paper may be registered as self-edit pairs with `Version: revised`. Sample only Introduction, Contributions, Related Work, and Evaluation narrative; exclude Methods and Construction.
 
-材料：
-<粘贴>
-```
-
-Write stable lessons into:
-
-```text
-HElicon/references/personal_style_profile.md
-HElicon/references/mentor_memory.md
-```
-
-## 6. Start a new project pack
-
-For any paper project:
+Build a local baseline with an explicit output path:
 
 ```bash
-python ~/.agents/skills/HElicon/scripts/bootstrap_project_pack.py ~/HElicon_workspace/projects <project_name>
+python scripts/style_fingerprint.py baseline /private/style/paper-a-versions --paper-id paper-a --output /path/to/paper/.helicon/style/fingerprint.json
+```
+
+`n` is the number of distinct `paper_id` values, not the number of version files. Below the minimum distinct-paper count, the baseline is `thin(n=N)`: use it directionally and disable drift warnings.
+
+## 6. Create paper-local project memory
+
+For an existing or new LaTeX paper folder:
+
+```bash
+python scripts/bootstrap_project_pack.py --paper-dir /path/to/paper --name MyPaper
 ```
 
 This creates:
 
 ```text
-~/HElicon_workspace/projects/<project_name>/
-├── project_brief.yaml
-├── storyline.md
-├── evidence_map.csv
+<paper_dir>/.helicon/
+├── project.yaml
+├── draft_map.md
+├── claim_ledger.md
+├── evidence_matrix.csv
+├── revision_queue.csv
+├── reviewer_risk_log.md
+├── pass_log.md
+├── polish_ledger.csv
 ├── local_glossary.md
-├── focused_references.md
-├── experiment_notes.md
-├── draft_status.md
-├── reviewer_risks.md
-├── accepted_phrasing.md
-└── memory_patch_log.md
+├── decisions.md
+└── style/
 ```
 
-Project-specific facts stay here, not in HElicon core.
+The global `~/.helicon/registry.json` stores only path and fingerprint. To preserve v1.2 workflows, the legacy positional form still creates or reads a centralized pack:
 
-## 7. Use HElicon on an external project
+```bash
+python scripts/bootstrap_project_pack.py ~/HElicon_workspace/projects MyPaper
+```
+
+Paper-local `.helicon/` has priority when both layouts exist.
+
+## 7. Use HElicon on an external paper
+
+The shortest safe paths are:
 
 ```text
 $HElicon
-
-我现在用 HElicon 修改一个外部论文项目。请注意：该项目不是 HElicon skill 本身。
-请先不要润色句子。
-
-请基于下面材料诊断：
-1. title;
-2. abstract;
-3. paper story;
-4. positioning;
-5. technical framing;
-6. terminology;
-7. claim-evidence-risk;
-8. target-venue fit.
-
-我的中文说明：
-<粘贴>
-
-当前英文草稿：
-<粘贴>
-
-已有证据：
-<粘贴>
+H-INTAKE /path/to/paper
 ```
 
-Then update the project pack:
+or simply paste a paragraph and ask for a revision. Diagnosis and revisions are returned in chat. Manuscript files change only through an explicit `H-PATCH` target.
 
-```text
-~/HElicon_workspace/projects/<project_name>/storyline.md
-~/HElicon_workspace/projects/<project_name>/evidence_map.csv
-~/HElicon_workspace/projects/<project_name>/local_glossary.md
-```
+Keep current project facts in `.helicon/`; promote only stable general lessons through an explicit memory patch.
 
-Only general lessons should be promoted into the core skill.
+## 8. Revision order by entry mode
 
-## 8. Revision order for any project
+There is no single mandatory workflow for every situation.
 
-Recommended order:
+### A. Start a new paper from zero
+
+Retain the original full sequence:
 
 1. project onboarding;
 2. direction-pack selection;
@@ -254,18 +154,53 @@ Recommended order:
 14. final language polish;
 15. memory patch.
 
-## 9. Memory patch loop
+Use `H-NEW`, then the existing discussion, positioning, drafting, patch, and sync contracts.
 
-At the end of a useful session:
+### B. Revise an existing complete draft
 
 ```text
-$HElicon
-请把这次修改中形成的稳定经验整理成 HElicon Memory Patch。
-请区分：
-1. 应写入核心 skill 的长期经验；
-2. 应写入 direction pack 的方向知识；
-3. 只属于当前项目的事实；
-4. 不应该写回的临时想法。
+H-INTAKE -> section-by-section H-PASS from draft_map -> H-REVIEW -> H-DEADLINE -> H-PATCH -> H-SYNC
 ```
 
-This is how HElicon becomes more aligned with the user over time.
+Intake is one-time, cached, and skippable. A skipped intake leaves `[no intake]` but does not block local work.
+
+### C. Perform local surgery
+
+```text
+paste text and use intent routing, or H-SPOT -> H-PATCH
+```
+
+Use this path for a paragraph or several sentences. A gate may warn about an upstream issue but still performs the chosen local work.
+
+### D. Prepare a rebuttal
+
+```text
+H-REVIEW -> H-REBUT
+```
+
+Do not add unverified experimental results or infeasible camera-ready promises.
+
+## 9. What happens without a command
+
+HElicon first identifies project context using the paper-local pack or the path-only registry. If exactly one project matches, it continues directly. If none matches, it works without a project and suggests intake once. Multiple project matches are the only bootstrap ambiguity that stops for selection.
+
+A bare English paragraph routes to P3→P4→P5. Ambiguous language requests take the least destructive route. The router never auto-runs P1 or P2 and never writes a file.
+
+Every routed response ends with:
+
+```text
+[HElicon] <项目名> §<节号> · <pass序列> · <改动处数> · frozen:<0变化|N处告警> · baseline:<ok|thin(n=N)|none>[ · ⬆<N> upstream]
+```
+
+Pass identifiers make the action visible and teach the sequence without a workflow lecture.
+
+## 10. Memory patch loop
+
+At the end of a substantial task, ask HElicon to separate:
+
+1. stable core lessons;
+2. direction-pack knowledge;
+3. current-project facts for `.helicon/`;
+4. temporary ideas that should not be written back.
+
+No layer updates itself silently. `H-PATCH`, `H-DECIDE`, `H-SYNC`, and `H-INGEST` retain their explicit authorization boundaries.

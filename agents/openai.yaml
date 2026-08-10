@@ -1,6 +1,6 @@
 interface:
   display_name: "HElicon"
-  short_description: "Project-aware FHE/security-paper writing mentor with H-* short commands."
-  default_prompt: "$HElicon\nH-HELP: show the project-aware short commands and recommend the right next step."
+  short_description: "FHE/security-paper mentor for new papers, whole-draft revision, and local polish."
+  default_prompt: "$HElicon\nI may be starting from zero or revising an existing full draft. Route me directly: use H-NEW for a new paper, H-INTAKE for an existing draft, or the least-destructive no-command edit when I paste text."
 policy:
   allow_implicit_invocation: true

@@ -1,146 +1,147 @@
 # HElicon
 
-HElicon is a long-term research-writing mentor skill for English security and systems papers in fully homomorphic encryption (FHE/HE), privacy-preserving computation, private inference, encrypted search/kNN, and related algorithmic or systems work.
+HElicon is a long-term research-writing mentor skill for English security and systems papers in fully homomorphic encryption, privacy-preserving computation, private inference, encrypted search, and related algorithmic or systems work.
 
-This repository contains the HElicon skill core only. It does not contain project facts, raw PDFs, paper drafts, extracted paper text, or private project workspaces.
+This repository contains the reusable skill core only. It contains no paper draft, project fact, unpublished style corpus, or derived personal fingerprint.
 
-Current snapshot: `HElicon v1.2`.
+Current snapshot: `HElicon v1.3`.
 
-## What HElicon Does
+## What changed in v1.3
 
-- Converts Chinese research intent into natural English paper prose.
-- Diagnoses paper story, positioning, title, abstract, introduction, related work, contribution framing, and evaluation narrative.
-- Enforces FHE/security terminology discipline and claim-evidence consistency.
-- Distills selected papers into reusable writing patterns without copying source sentences.
-- Maintains a controlled memory-patch loop for stable writing preferences and reusable lessons.
-- Separates reusable writing knowledge from direction-specific knowledge and project-specific facts.
-- Supports project-aware `H-*` short commands for discussion, positioning, drafting, decision logging, patching, sync, repair, and reopening.
-- Keeps project memory compact through overwrite-style `H-SYNC`, where stale decisions, risks, and revision tasks are deleted or archived instead of appended forever.
-- Provides scripts for PDF text extraction, personal style pack preparation, FHE/HE corpus collection, and core contamination checks.
+- Natural-language intent routing handles pasted prose without requiring a command.
+- Paper-local `.helicon/` memory identifies the active paper across sessions.
+- Seven ordered passes separate claim, structure, terminology, rhythm, diction, voice, and surface work.
+- Sentence-level FHE/security polish preserves technical terms, hedging, formal language, and immutable LaTeX content.
+- Machine checks cover contamination, package integrity, style fingerprints, AI-writing tells, and LaTeX frozen sets.
+- Portable installers target Codex, Claude Code, both hosts, or one repository.
 
-## Knowledge Layers
+## Choose by situation
 
-HElicon uses three layers:
+| Situation | Start with | What happens |
+|---|---|---|
+| I have an existing full or partial draft | `H-INTAKE [path]` | One-time cached triage creates section verdicts and pass sequences. |
+| I am starting from zero | `H-NEW <name>` | HElicon proposes a project pack and onboarding state before writing. |
+| I want one controlled revision stage | `H-PASS <Pn> [--section X]` | Exactly one P1–P7 pass runs without patching the source. |
+| I want a small local edit | `H-SPOT <selection>` | The least destructive local surgery is returned directly. |
+| I want normal language polishing | `H-POLISH` | P3→P4→P5→P6 runs with a separate report per pass. |
+| I am over the page limit | `H-DEADLINE --pages N` | Redundancy is removed before any sentence-level compression. |
+| I have reviewer comments | `H-REBUT` | Comments are triaged and answered under evidence and feasibility constraints. |
+| I need citation verification | `H-CITE` | Attribution is checked against an authorized real library, never model memory. |
+| I want a submission audit | `H-GATE` | Blocking findings, warnings, optional improvements, and machine checks are listed. |
+| I need outside strategic advice | `H-EXPORT mode=advice` | A self-contained, sensitivity-labeled handoff is produced for review. |
 
-1. `references/`: stable core memory for long-term writing principles, terminology, venue expectations, FHE framing, reviewer-risk checks, and cross-paper patterns.
-2. Direction packs: focused external writing knowledge for areas such as private LLM inference, encrypted kNN/search, FHE systems, and FHE algorithm optimization.
-3. Project packs: external project-specific facts for a single paper or project.
+All v1.2 commands remain available. See `references/command_registry.md` for complete contracts and compatibility aliases.
 
-Project facts must stay in project packs. Direction-specific details should stay in direction packs unless they become stable cross-direction writing rules.
+## No-command editing
 
-## Distilled Source Bibliography
+Paste an English paragraph with no instruction and HElicon defaults to P3→P4→P5: terminology, rhythm, and diction. It does not change structure, claim scope, numbers, citations, or frozen terms. Ambiguous requests take the least destructive useful route instead of stopping for a workflow question.
 
-The papers used as sources for HElicon distilled writing patterns are listed in [`provenance/distilled_sources.bib`](provenance/distilled_sources.bib).
-
-This BibTeX file is provenance only: it identifies which papers informed the reviewed distilled cards. It does not contain raw paper text, paper-card content, project facts, or extracted PDF text.
-
-## Paper Pipeline
-
-Use this closed loop for normal paper work:
-
-```text
-H-DISCUSS -> H-POSITION -> H-DRAFT -> H-PATCH -> H-SYNC
-```
-
-Use `H-DISCUSS` for idea pressure-testing. Use `H-POSITION` for story, venue fit, contribution hierarchy, and claim boundaries. Use `H-DRAFT` for local prose candidates. Use `H-PATCH` only after the target text is confirmed. Use `H-SYNC` after decisions or patches so the project state stays compact.
-
-For revision or rebuttal, repeat the same loop with reviewer evidence:
+Router output is returned in chat. It does not write a file; accepted text still requires `H-PATCH`. Every routed response ends with:
 
 ```text
-H-REVIEW -> H-REOPEN if needed -> H-DISCUSS/H-POSITION -> H-DRAFT -> H-PATCH -> H-SYNC
+[HElicon] <项目名> §<节号> · <pass序列> · <改动处数> · frozen:<0变化|N处告警> · baseline:<ok|thin(n=N)|none>[ · ⬆<N> upstream]
 ```
 
-## Evidence-Driven Revision System
+The router may recommend P1 or P2 but never executes claim or structural rewrites without explicit approval.
 
-Project packs should include:
+## Revision passes
 
-- `claim_ledger.md`
-- `evidence_matrix.csv`
-- `revision_queue.csv`
-- `reviewer_risk_log.md`
+| Pass | Scope |
+|---|---|
+| P1 | Claim scope and evidence strength |
+| P2 | Section and paragraph structure |
+| P3 | Terminology normalization |
+| P4 | Sentence rhythm and clause structure |
+| P5 | Diction, inflation, filler, and AI tells |
+| P6 | Qualified personal style alignment |
+| P7 | Semantic-free LaTeX, citation placement, and punctuation cleanup |
 
-`H-REVIEW` generates reviewer risks and revision-queue candidates. `H-DECIDE` locks claim/evidence state after confirmation. `H-SYNC` rewrites those files into current-state summaries and removes stale items.
+The fixed order and immutable-set contract are in `references/pass_pipeline.md`.
+
+## Project-local memory
+
+Each paper keeps private state beside its LaTeX source:
+
+```text
+<paper_dir>/
+├── main.tex, sections/, figures/ ...
+└── .helicon/
+    ├── project.yaml
+    ├── draft_map.md
+    ├── claim_ledger.md
+    ├── evidence_matrix.csv
+    ├── revision_queue.csv
+    ├── reviewer_risk_log.md
+    ├── pass_log.md
+    ├── polish_ledger.csv
+    ├── local_glossary.md
+    ├── decisions.md
+    └── style/fingerprint.json
+```
+
+The global `~/.helicon/registry.json` stores only the paper path and fingerprint. Legacy v1.2 packs under `~/HElicon_workspace/projects/<name>/` remain readable, with paper-local memory taking priority.
+
+Create a local pack:
+
+```bash
+python scripts/bootstrap_project_pack.py --paper-dir /path/to/paper --name MyPaper
+```
 
 ## Install
 
-User-level install:
+Preview all destinations before installation:
+
+```powershell
+.\scripts\install.ps1 --target codex --dry-run
+```
 
 ```bash
-mkdir -p ~/.agents/skills
-cp -R HElicon ~/.agents/skills/HElicon
+sh scripts/install.sh --target codex --dry-run
 ```
 
-Repo-level install:
+Supported targets are `codex`, `claude-code`, `both`, and `repo-local`. Remove `--dry-run` to install. Existing destinations are moved to `.bak.<timestamp>`, files are copied rather than symlinked, and package integrity runs after the copy.
+
+Codex user install:
+
+```powershell
+.\scripts\install.ps1 --target codex
+```
+
+Claude Code user install:
 
 ```bash
-mkdir -p .agents/skills
-cp -R HElicon .agents/skills/HElicon
+sh scripts/install.sh --target claude-code
 ```
 
-Check integrity:
+## Validate
 
 ```bash
-python ~/.agents/skills/HElicon/scripts/check_skill_integrity.py ~/.agents/skills/HElicon
-python ~/.agents/skills/HElicon/scripts/check_core_contamination.py ~/.agents/skills/HElicon
+python scripts/selftest_checks.py
+python scripts/check_skill_integrity.py .
+python scripts/check_core_contamination.py .
+python scripts/style_fingerprint.py --help
+python scripts/latex_guard.py --help
+python scripts/check_ai_tells.py --help
 ```
 
-Invoke in Codex:
+Use `scripts/latex_guard.py` on before/after LaTeX files and `scripts/style_fingerprint.py` only with local or private corpus paths. Personal style source and `fingerprint.json` never belong in this repository.
 
-```text
-$HElicon
-Please diagnose this paper's story and positioning before polishing sentences.
-```
+## Knowledge layers
 
-## Recommended External Workspace
+HElicon keeps three layers separate:
 
-Keep private materials outside the skill repository:
+1. `references/`: stable reusable writing and review logic.
+2. Direction packs: focused knowledge for one research direction.
+3. Paper-local or legacy project packs: unpublished project facts and state.
 
-```text
-HElicon_workspace/
-|-- corpus/
-|   |-- selected_papers/
-|   |-- own_drafts/
-|   `-- advisor_edits/
-|-- distilled/
-|   |-- paper_cards/
-|   |-- unified_patterns/
-|   |-- style_cards/
-|   |-- fhe_2023_2026/
-|   `-- batch_logs/
-|-- personal_style_packs/
-|   `-- user_papers/
-|-- direction_packs/
-|   |-- private_llm_inference/
-|   |-- encrypted_knn_search/
-|   |-- fhe_algorithm_optimization/
-|   |-- fhe_systems/
-|   `-- security_top_conference_writing/
-`-- projects/
-    `-- <project_name>/
-```
+Selected paper provenance is listed in `provenance/distilled_sources.bib`. External writing-skill influences and license checks are recorded separately in `provenance/external_influences.md`; HElicon distills concepts and does not copy instruction passages.
 
-Use `scripts/bootstrap_project_pack.py` to create a new project pack.
+## Safety boundaries
 
-## How To Distill New Papers
+- Do not put paper drafts, project facts, experiment results, ePrint identifiers, reviewer text, or personal style derivatives into core references.
+- Do not strengthen claims or silently change security semantics.
+- Do not verify citation truth from model memory.
+- Gates warn and continue; only immutable-set damage causes rollback.
+- A thin personal baseline is directional and cannot emit a drift warning.
 
-1. Put the PDF into `HElicon_workspace/corpus/by_venue_year/<venue>/<year>/`.
-2. Extract text with `scripts/extract_pdf_text.py` if needed.
-3. Distill one paper card at a time into `HElicon_workspace/distilled/paper_cards_reviewed/` when the paper adds a distinct lesson.
-4. After 5-10 similar papers, ask for a unified pattern card and write only the abstract reusable rule into `references/unified_paper_patterns.md`.
-5. Keep project facts, raw text, ePrint IDs, and experiment numbers out of core memory.
-6. Regenerate `provenance/distilled_sources.bib` from the reviewed registry when the batch changes.
-7. Run `scripts/check_skill_integrity.py .` and `scripts/check_core_contamination.py .` before treating the update as stable.
-
-## Safety Boundaries
-
-Do not write these into HElicon core memory:
-
-- project-specific facts from any external paper;
-- raw PDF text or copied paper sentences;
-- single-paper cards as if they were general rules;
-- ePrint IDs, experimental numbers, or one-off benchmark claims;
-- personal style updates unless they come from the user's own writing, accepted revisions, advisor edits, or explicit preferences.
-
-## Version History
-
-See `VERSION.md` and `CHANGELOG.md`.
+See `VERSION.md`, `CHANGELOG.md`, and `INSTALL_AND_WORKFLOW.md` for release and workflow details.

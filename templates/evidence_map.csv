@@ -1,4 +1,4 @@
-claim_id,claim,evidence_type,evidence_detail,source_or_file,status,risk,next_action
-C1,,,,,,,
-C2,,,,,,,
-C3,,,,,,,
+claim_id,claim,evidence_type,evidence_detail,source_or_file,status,citation_status,risk,next_action
+C1,,,,,,CITATION_UNVERIFIED,,
+C2,,,,,,CITATION_UNVERIFIED,,
+C3,,,,,,CITATION_UNVERIFIED,,
