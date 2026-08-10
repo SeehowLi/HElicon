@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.3.1
+
+- 修复 `language_polish.md` 与 `check_ai_tells.py` 的规则 1/2/3 契约断裂：此前脚本仅实现规则 4–14，规则 1/2/3 的部分词表滞留在 `check_style_rules.py`，而 `groundbreaking`、`transformative`、`pivotal`、`remarkable` 等规则 1 核心词在两个脚本中都缺失。现由 `check_ai_tells.py` 统一实现 1–14；规则 2 复用相邻句作用域证据进行豁免；事实性错误规则 3 为 block；`check_style_rules.py` 只保留中式直译与 overclaim 句式。
+- 修复 `style_fingerprint.py` 的默认 `paper_id` 与政策相反的问题：旧逻辑把每个版本文件当作独立论文，可能把同源三至五个版本误计为 `n=3/5` 并错误启用漂移告警。新逻辑优先按归一化标题、其次按父目录自动分组，显式 `--paper-id` 仍可覆盖；输出会报告 `N files -> M papers` 和分组文件。
+- 新增常设契约同步检查，自动核对语言规则号、description 中的 H-* 命令与 registry、以及基线最小论文数阈值，避免文档与代码再次静默分裂。
+- 引入目标范例层。原设计的量化基线和禁止性规则只能让输出更干净，不能让输出趋向作者已经认可的成品形态；现在可从同一论文的分阶段版本建立 `target_profile`、修订方向与成对范例卡，并用 hold-out 收敛率进行端到端验收。
+- `target_profile` 与 `baseline` 保持分家：baseline 描述作者当前习惯并需要至少 5 篇不同论文来估方差，只用于 P6 漂移检测；target 规定收敛方向，单篇合格范本即可用于 P4/P5/P6，但永不触发漂移告警。
+- 目标范本采用“先量后用”。最终版本即使由作者认可，也可能经 AI 辅助而残留连接词堆叠、平坦句长或夸大词；`H-STYLE target` 必须先运行 AI-tell 与结构指标筛查，合格维度标 `source: exemplar`，不合格维度退回 `source: rule`，不得无条件照搬范本。
+- 扩展 `H-STYLE target|direction|eval`：按版本对分别保留 author/advisor 与 reviewer-driven 来源；审稿驱动版本对默认不计入作者偏好；范例卡只作为结构形态参照，每轮最多加载 3 张；hold-out 验收报告结构收敛、AI-tell 三方对比、LaTeX 冻结项和固定 trailer。
+- 所有目标画像数值、筛查报告、修订方向报告和已填范例卡只允许写入项目私有 `.helicon/style/`；仓库只保存 schema、生成方法、空模板和加载协议，污染检查会阻止私有派生物进入 core。
+
 ## v1.3
 
 - 引入无命令意图路由与跨会话项目记忆，解决作者不记命令、只贴局部文本，以及换会话后无法可靠识别论文的问题。路由层默认执行低破坏性的 `P3 → P4 → P5`，不自行改写 claim 或结构；项目状态优先保存在论文目录的 `.helicon/`，全局 registry 只存路径与指纹。
@@ -12,7 +23,7 @@
 - 依赖红线调整为「新增脚本不得引入第三方依赖；既有脚本的可选 fallback 保留」。恢复 `extract_pdf_text.py` 的可选 `PyPDF2` fallback，避免 Windows 缺少 Poppler `pdftotext` 时发生能力回退。
 - 风格基线按 `paper_id` 聚合同源版本；资格计数和跨论文方差均以不同论文为单位，五个同源版本记为 `thin(n=1)`。
 - 外部 humanizer 类 skill 的影响仅以“蒸馏后重写规则”的方式吸收，没有复制其指令段落；许可证、采纳项和拒绝项见 `provenance/external_influences.md`。
-- 作者论文均处于投稿中；个人风格语料及其派生 `fingerprint.json` 一律保存在论文本地或私有 workspace，不进入本仓库。样本不足时标记 `thin(n=N)`，关闭 drift 告警和 anti-drift 拒绝。
+- 作者论文均处于投稿中；个人风格语料及其派生 `fingerprint.json` 一律保存在论文本地或私有 workspace，不进入本仓库。样本不足时标记 `thin(n=N)`，关闭 drift 告警和 anti-drift 拒绝；从 v1.3.1 起，修订方向仅由筛查后的 target 层提供。
 
 ## v1.2
 

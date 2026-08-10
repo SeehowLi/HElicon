@@ -199,6 +199,7 @@ Read:
 - `story_logic_framework.md`
 - `bilingual_glossary.md`
 - `personal_style_profile.md`
+- `target_profile_policy.md`
 - `pass_pipeline.md`
 - `fhe_lexicon_freeze.md`
 - `language_polish.md` for P4-P6 work
@@ -279,6 +280,7 @@ Read:
 - `bilingual_policy.md`
 - `bilingual_glossary.md`
 - `style_baseline_policy.md`
+- `target_profile_policy.md`
 - `language_polish.md`
 - `pass_pipeline.md`
 

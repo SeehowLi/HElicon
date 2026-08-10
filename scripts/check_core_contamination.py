@@ -31,6 +31,13 @@ NUMERIC_OK_FILES = {
 }
 NUMERIC_PREFIXES = ("threshold:", "budget:", "target:", "limit:", "range:")
 NUMERIC_MARKER = "<!-- helicon:allow-numeric -->"
+PRIVATE_ARTIFACT_NAMES = {
+    "target_profile.json",
+    "target_screening.json",
+    "revision_direction.json",
+    "holdout_manifest.json",
+    "target_eval.json",
+}
 
 
 def is_allowed_line(token: str, line: str) -> bool:
@@ -49,10 +56,18 @@ def scan_file(path: Path, root: Path) -> list[str]:
     rel = path.relative_to(root).as_posix()
     if ".git/" in rel:
         return []
-    if rel.startswith("scripts/"):
-        return []
-    text = path.read_text(encoding="utf-8", errors="ignore")
     findings: list[str] = []
+    if ".helicon" in path.relative_to(root).parts:
+        findings.append(f"{rel}: private .helicon artifact inside skill repository")
+    if path.name in PRIVATE_ARTIFACT_NAMES:
+        findings.append(f"{rel}: private target artifact filename")
+    if "/exemplars/" in f"/{rel}" and rel != "templates/exemplar_card.md":
+        findings.append(f"{rel}: filled exemplar card inside skill repository")
+    if rel.startswith("scripts/"):
+        return findings
+    if path.suffix.lower() not in {".md", ".yaml", ".yml", ".csv", ".json"}:
+        return findings
+    text = path.read_text(encoding="utf-8", errors="ignore")
     for lineno, line in enumerate(text.splitlines(), start=1):
         for token in DEFAULT_BLOCKLIST:
             if token in line:
@@ -76,10 +91,7 @@ def main() -> int:
     parser.add_argument("root", nargs="?", type=Path, default=Path.cwd())
     args = parser.parse_args()
     root = args.root.resolve()
-    targets = [
-        p for p in root.rglob("*")
-        if p.is_file() and p.suffix.lower() in {".md", ".yaml", ".yml", ".csv"}
-    ]
+    targets = [p for p in root.rglob("*") if p.is_file()]
     findings: list[str] = []
     for path in targets:
         findings.extend(scan_file(path, root))

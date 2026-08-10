@@ -1,4 +1,4 @@
-# HElicon v1.3 Installation and Workflow
+# HElicon v1.3.1 Installation and Workflow
 
 This guide installs HElicon, separates private paper state from skill core, and selects a workflow from the author's actual starting point.
 
@@ -70,19 +70,41 @@ Promote a lesson to core only when it is reusable across papers and carries no s
 
 Use `templates/direction_pack_template.md` for focused knowledge such as private LLM inference, encrypted search, FHE algorithm optimization, or FHE systems. Direction packs may record recurring threat models, comparison dimensions, terminology, and evaluation expectations, but not one paper's private state.
 
-## 5. Build personal style memory
+## 5. Build personal style memory and target exemplars
 
-All available author papers are treated as unpublished. Corpus text and derived `fingerprint.json` stay in a paper-local `.helicon/style/` directory or another private workspace, never in the skill repository.
+All available author papers are treated as unpublished. Corpus text and all derived style artifacts stay in a paper-local `.helicon/style/` directory or another private workspace, never in the skill repository.
 
-There are no assumed advisor-edited pairs. Revisions of the same paper may be registered as self-edit pairs with `Version: revised`. Sample only Introduction, Contributions, Related Work, and Evaluation narrative; exclude Methods and Construction.
+The baseline and target profile are deliberately different. A baseline describes current habits, needs at least five distinct papers to estimate variance, and is used only for drift detection. A target profile prescribes the direction of P4/P5/P6, may use one screened author-approved exemplar, and never emits a drift alert.
 
-Build a local baseline with an explicit output path:
+Build a local baseline with an explicit output path. Same-title versions group automatically; `--paper-id` is only an explicit override:
 
 ```bash
+python scripts/style_fingerprint.py baseline /private/style/author-papers --output /path/to/paper/.helicon/style/fingerprint.json
 python scripts/style_fingerprint.py baseline /private/style/paper-a-versions --paper-id paper-a --output /path/to/paper/.helicon/style/fingerprint.json
 ```
 
-`n` is the number of distinct `paper_id` values, not the number of version files. Below the minimum distinct-paper count, the baseline is `thin(n=N)`: use it directionally and disable drift warnings.
+`n` is the number of distinct `paper_id` values, not the number of version files. Below the minimum distinct-paper count, the baseline is `thin(n=N)`: retain it as descriptive context only and disable drift warnings. Direction comes from a screened target profile, not a thin baseline.
+
+### Prepare a three-stage target set
+
+Put ordered versions of the same paper in one private directory and record the provenance of every adjacent version pair. A common layout is v1→v2 author/advisor discussion and v2→v3 reviewer-driven revision. Mark reviewer-driven pairs explicitly: they remain visible in the report but are excluded from author-preference signals by default. The final version must be author-approved even if AI-assisted.
+
+Before building the target, reserve several v1 paragraphs as hold-out data and exclude their corresponding v3 paragraphs from target construction. Then preview the mandatory screening and outputs:
+
+```bash
+python scripts/build_target_profile.py /private/stages --holdout 2 --holdout 7 --author-advisor-pair 1:2 --review-driven-pair 2:3
+python scripts/extract_revision_direction.py /private/stages --author-advisor-pair 1:2 --review-driven-pair 2:3
+```
+
+The target builder runs AI-tell and structural checks first. Each profile field records `source: exemplar|rule` and `confidence`; a rejected dimension falls back to the rule policy. Inspect the preview before using `--write`, which is restricted to `.helicon/style/`. Filled exemplar cards remain under `.helicon/style/exemplars/`; load at most three cards matched by section type and rule ID, never copy their prose as content.
+
+After HElicon processes the held-out v1 text through the normal router, evaluate it against the corresponding approved target:
+
+```bash
+python scripts/target_eval.py /private/holdout/before.tex /private/holdout/output.tex /private/holdout/target.tex --screening /path/to/paper/.helicon/style/target_screening.json --target-paragraph 2 --trailer-file /private/holdout/trailer.txt --output-report /path/to/paper/.helicon/style/target_eval.json --write
+```
+
+This reports structural convergence relative to the original v1→v3 distance, AI-tell counts for v1/output/v3, frozen-set changes from `latex_guard.py`, paragraph alignment, unconverged dimensions, and fixed-trailer compliance.
 
 ## 6. Create paper-local project memory
 
@@ -107,6 +129,12 @@ This creates:
 ├── local_glossary.md
 ├── decisions.md
 └── style/
+    ├── fingerprint.json
+    ├── target_profile.json
+    ├── target_screening.json
+    ├── revision_direction.json
+    ├── target_eval.json
+    └── exemplars/
 ```
 
 The global `~/.helicon/registry.json` stores only path and fingerprint. To preserve v1.2 workflows, the legacy positional form still creates or reads a centralized pack:
@@ -189,7 +217,7 @@ A bare English paragraph routes to P3→P4→P5. Ambiguous language requests tak
 Every routed response ends with:
 
 ```text
-[HElicon] <项目名> §<节号> · <pass序列> · <改动处数> · frozen:<0变化|N处告警> · baseline:<ok|thin(n=N)|none>[ · ⬆<N> upstream]
+[HElicon] <项目名> §<节号> · <pass序列> · <改动处数> · frozen:<0变化|N处告警> · baseline:<ok|thin(n=N)|none> · target:<ok|partial|none>[ · sample:too-short][ · ⬆<N> upstream]
 ```
 
 Pass identifiers make the action visible and teach the sequence without a workflow lecture.

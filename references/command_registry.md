@@ -53,7 +53,7 @@ Entry modes name the author's situation rather than an internal operation.
 | Command | Function | Writes by default |
 |---|---|---|
 | `H-CITE` | Verify citation existence and attribution against an authorized external library. | No |
-| `H-STYLE` | Report, build, compare, or inspect drift for a local style fingerprint. | Only after a confirmed baseline target |
+| `H-STYLE` | Report, build, compare, inspect drift, build a target, extract revision direction, or evaluate a hold-out. | Only after a confirmed private write target |
 | `H-GATE` | Run the pre-submission review gate and available machine checks. | No |
 | `H-EXPORT mode=<mode>` | Build a self-contained external-advisor handoff. | No |
 | `H-INGEST` | Compare returned advice with current state and propose a scoped patch plan. | No |
@@ -210,9 +210,14 @@ Require an authorized Zotero library, project bibliography, or source PDF. Never
 
 ### H-STYLE
 
-Purpose: run style `report`, `baseline`, `compare`, or `drift` through `style_fingerprint.py`.
+Purpose: run descriptive style work or one private target-layer subcommand.
 
-Keep corpus and fingerprint outputs outside the skill repository and follow `templates/style_baseline_readme.md`. A baseline write requires an explicit local target and `paper_id` grouping; revisions of one paper count once. Report distinct-paper count, source-file count, `ok`, `thin(n=N)`, or `none`, metrics used, comparison result, and whether drift alerts were disabled. `H-VOICE` invokes the same contract.
+- `H-STYLE report|baseline|compare|drift` uses `style_fingerprint.py`. Keep corpus and fingerprint outputs outside the skill repository and follow `templates/style_baseline_readme.md`. A baseline write requires an explicit local target; revisions of one paper count once after title or directory grouping. Report distinct-paper count, source-file count, grouping, `ok`, `thin(n=N)`, or `none`, metrics, comparison, and whether drift alerts were disabled.
+- `H-STYLE target <dir>` uses `build_target_profile.py`. Reserve target paragraphs for hold-out before screening. Run the AI-tell and structural screen, show the dimension/source table and exemplar-card candidates, and write `target_screening.json`, `target_profile.json`, and approved cards only after confirmation. Require explicit stage-pair provenance; exclude reviewer-driven pairs from author-preference signals and default cards.
+- `H-STYLE direction <dir>` uses `extract_revision_direction.py`. Report each stage pair separately, its driver, rule/pass frequencies, observed ordering conflicts, unchanged candidates, and whether the pair contributes to author preference. Never change P1-P7 automatically. For the supplied three-stage case, mark v1->v2 `author-advisor` and v2->v3 `reviewer-driven`.
+- `H-STYLE eval <before-file> <target-file>` first runs the normal default route on the private hold-out and records its actual trailer. Then call `target_eval.py` with the private output, target screening, and reserved target paragraph identifiers. Report convergence, three-way AI-tell counts, immutable-set result, alignment, and unconverged dimensions.
+
+Target profiles, screening reports, revision directions, hold-outs, generated output, evaluations, and filled exemplar cards stay under the paper's `.helicon/style/` directory. Preview before write. `H-VOICE` invokes the descriptive subset of the same contract.
 
 ### H-GATE
 
@@ -263,7 +268,7 @@ Output a current-versus-proposed diff, destination layer (`core`, `direction pac
 
 Purpose: orchestrate P3, P4, P5, and P6 in order.
 
-Apply the gate once, snapshot immutable content, and emit four pass-labeled sections with target, changes, skipped items, and frozen-set status. The single-pass restriction belongs to `H-PASS`, not this orchestrator. Respect qualified anti-drift refusal for P5/P6; thin baselines do not refuse or warn for drift.
+Apply the gate once, snapshot immutable content, and emit four pass-labeled sections with target, changes, skipped items, and frozen-set status. The single-pass restriction belongs to `H-PASS`, not this orchestrator. A screened target supplies direction; a qualified baseline detects drift only, and a thin baseline neither refuses nor warns. When no target exists, retain the qualified anti-drift refusal defined in `pass_pipeline.md`.
 
 ## Legacy v1.2 contracts
 

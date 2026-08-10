@@ -1,11 +1,11 @@
 # Version
 
-HElicon v1.3
+HElicon v1.3.1
 
-Status: official v1.3 skill snapshot.
+Status: v1.3.1 target-layer patch candidate.
 
 Design principle: long-term personal writing mentor, not project-specific.
 
 Project-specific work stays in external project packs.
 
-v1.3 focus: zero-friction intent routing, paper-local project memory, seven attributable revision passes, immutable-set enforcement, sentence-level FHE/security polish, and portable Codex/Claude Code installation.
+v1.3.1 focus: contract-checked AI-tell coverage, safe same-paper version grouping, and a screened target-exemplar layer that remains separate from descriptive style baselines.

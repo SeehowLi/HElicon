@@ -4,16 +4,16 @@ HElicon is a long-term research-writing mentor skill for English security and sy
 
 This repository contains the reusable skill core only. It contains no paper draft, project fact, unpublished style corpus, or derived personal fingerprint.
 
-Current snapshot: `HElicon v1.3`.
+Current snapshot: `HElicon v1.3.1`.
 
-## What changed in v1.3
+## What changed in v1.3.1
 
-- Natural-language intent routing handles pasted prose without requiring a command.
-- Paper-local `.helicon/` memory identifies the active paper across sessions.
-- Seven ordered passes separate claim, structure, terminology, rhythm, diction, voice, and surface work.
-- Sentence-level FHE/security polish preserves technical terms, hedging, formal language, and immutable LaTeX content.
-- Machine checks cover contamination, package integrity, style fingerprints, AI-writing tells, and LaTeX frozen sets.
-- Portable installers target Codex, Claude Code, both hosts, or one repository.
+- AI-tell rules 1–14 now have executable, contract-checked coverage, including scoped exemptions for qualified performance language.
+- Same-paper versions group automatically by normalized title or parent directory, so five versions remain `thin(n=1)` rather than masquerading as five papers.
+- A screened target profile gives P4/P5/P6 a prescriptive destination while the descriptive baseline remains isolated to drift detection.
+- Revision-direction reports keep author/advisor changes separate from reviewer-driven changes and surface invariant expressions for author confirmation.
+- Private before/after exemplar cards provide section- and rule-matched form anchors without becoming content sources.
+- Hold-out evaluation measures structural convergence, AI tells, frozen LaTeX, alignment, and the actual router trailer against an approved final version.
 
 ## Choose by situation
 
@@ -27,6 +27,9 @@ Current snapshot: `HElicon v1.3`.
 | I am over the page limit | `H-DEADLINE --pages N` | Redundancy is removed before any sentence-level compression. |
 | I have reviewer comments | `H-REBUT` | Comments are triaged and answered under evidence and feasibility constraints. |
 | I need citation verification | `H-CITE` | Attribution is checked against an authorized real library, never model memory. |
+| I have staged versions of one paper | `H-STYLE target <dir>` | The final version is screened before a private target profile and exemplar candidates are previewed. |
+| I want to inspect my revision habits | `H-STYLE direction <dir>` | Version pairs are aligned; reviewer-driven edits stay separate from author-preference signals. |
+| I want a measurable hold-out test | `H-STYLE eval <before> <target>` | A held-out HElicon output is compared with the approved target and frozen source. |
 | I want a submission audit | `H-GATE` | Blocking findings, warnings, optional improvements, and machine checks are listed. |
 | I need outside strategic advice | `H-EXPORT mode=advice` | A self-contained, sensitivity-labeled handoff is produced for review. |
 
@@ -39,7 +42,7 @@ Paste an English paragraph with no instruction and HElicon defaults to P3→P4�
 Router output is returned in chat. It does not write a file; accepted text still requires `H-PATCH`. Every routed response ends with:
 
 ```text
-[HElicon] <项目名> §<节号> · <pass序列> · <改动处数> · frozen:<0变化|N处告警> · baseline:<ok|thin(n=N)|none>[ · ⬆<N> upstream]
+[HElicon] <项目名> §<节号> · <pass序列> · <改动处数> · frozen:<0变化|N处告警> · baseline:<ok|thin(n=N)|none> · target:<ok|partial|none>[ · sample:too-short][ · ⬆<N> upstream]
 ```
 
 The router may recommend P1 or P2 but never executes claim or structural rewrites without explicit approval.
@@ -76,7 +79,13 @@ Each paper keeps private state beside its LaTeX source:
     ├── polish_ledger.csv
     ├── local_glossary.md
     ├── decisions.md
-    └── style/fingerprint.json
+    └── style/
+        ├── fingerprint.json
+        ├── target_profile.json
+        ├── target_screening.json
+        ├── revision_direction.json
+        ├── target_eval.json
+        └── exemplars/
 ```
 
 The global `~/.helicon/registry.json` stores only the paper path and fingerprint. Legacy v1.2 packs under `~/HElicon_workspace/projects/<name>/` remain readable, with paper-local memory taking priority.
@@ -119,12 +128,22 @@ sh scripts/install.sh --target claude-code
 python scripts/selftest_checks.py
 python scripts/check_skill_integrity.py .
 python scripts/check_core_contamination.py .
+python scripts/check_contract_sync.py .
 python scripts/style_fingerprint.py --help
 python scripts/latex_guard.py --help
 python scripts/check_ai_tells.py --help
+python scripts/build_target_profile.py --help
+python scripts/extract_revision_direction.py --help
+python scripts/target_eval.py --help
 ```
 
-Use `scripts/latex_guard.py` on before/after LaTeX files and `scripts/style_fingerprint.py` only with local or private corpus paths. Personal style source and `fingerprint.json` never belong in this repository.
+Use `scripts/latex_guard.py` on before/after LaTeX files and all style scripts only with local or private corpus paths. Personal prose, fingerprints, target-profile values, screening and direction reports, evaluations, and filled exemplar cards never belong in this repository.
+
+## Target exemplars from staged versions
+
+Prepare ordered versions of the same paper in one private directory. The final version must be author-approved, version pairs must be labeled as author/advisor or reviewer-driven, and some start-version paragraphs must be reserved as hold-out data before target construction. `H-STYLE target <dir>` first screens the final version; it never treats an AI-assisted final draft as an unconditional target. Clean dimensions use `source: exemplar`, while rejected dimensions use `source: rule`.
+
+Run `H-STYLE direction <dir>` to inspect what changed, the observed editing order, and what remained invariant. Reviewer-driven pairs are listed separately and excluded from author-preference signals by default. After confirming target artifacts and exemplar candidates, keep them under the paper's `.helicon/style/`; load at most three cards matched by section type and rule ID. Finally, process the reserved start-version paragraphs through the normal router and use `H-STYLE eval <before> <target>` to compare that output with the approved target.
 
 ## Knowledge layers
 
@@ -142,6 +161,6 @@ Selected paper provenance is listed in `provenance/distilled_sources.bib`. Exter
 - Do not strengthen claims or silently change security semantics.
 - Do not verify citation truth from model memory.
 - Gates warn and continue; only immutable-set damage causes rollback.
-- A thin personal baseline is directional and cannot emit a drift warning.
+- A thin personal baseline is descriptive and cannot emit a drift warning; the target profile supplies direction but never activates drift detection.
 
 See `VERSION.md`, `CHANGELOG.md`, and `INSTALL_AND_WORKFLOW.md` for release and workflow details.

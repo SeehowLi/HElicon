@@ -29,7 +29,7 @@ P4 changes syntax and cadence, not terminology or meaning.
 These identifiers are the source of truth for `scripts/check_ai_tells.py`. A match is a warning for contextual review, not permission to rewrite blindly.
 
 1. **Inflated importance.** Flag unsupported `groundbreaking`, `transformative`, `pivotal`, `remarkable`, and broad claims of significance.
-2. **Unscoped performance adjectives.** Flag `significantly`, `dramatically`, `practical`, `scalable`, and `secure and efficient` unless the nearby text states the metric, workload, hardware, or threat model that earns the term.
+2. **Unscoped performance adjectives.** Flag `significantly`, `dramatically`, `practical`, `scalable`, `efficient`, and `secure and efficient` unless the same or adjacent sentence states the metric, workload, hardware, or threat model that earns the term.
 3. **Domain-invalid phrases.** Flag `technical packaging`, `large model privacy inference`, `homomorphic realization`, and `full homomorphic encryption`; use the glossary's scoped form.
 4. **Filler AI vocabulary.** Review decorative uses of `delve`, `tapestry`, `landscape`, `showcase`, `seamless`, `intricate`, `leverage`, and `underscore`. Keep a term if it has a precise technical sense.
 5. **Connective stacking.** Reduce clusters such as `Moreover, furthermore, additionally` while retaining the actual logical relation.
@@ -43,13 +43,13 @@ These identifiers are the source of truth for `scripts/check_ai_tells.py`. A mat
 13. **Rule-of-three padding.** Keep exactly as many items as the contribution or experiment contains; do not manufacture a third item for cadence.
 14. **Punctuation mannerism.** Enforce the em-dash threshold and use colons, semicolons, parentheses, or sentences according to their actual grammatical function.
 
-Rules 1 through 3 subsume the nine phrases previously surfaced by `check_style_rules.py`; do not maintain a competing vocabulary list.
+Rules 1 through 3 own their vocabulary in `check_ai_tells.py`. `check_style_rules.py` retains only non-numbered Chinese-literal and sentence-level overclaim patterns and must not maintain competing rule 1/2/3 terms.
 
 ## P6: Voice
 
-Load only the structural fingerprint relevant to the target section. Compare sentence-length distribution, paragraph-opening pattern, connective density, active/passive balance, first-person usage, and preferred contribution or limitation moves.
+Load the qualified `target_profile` relevant to the section and, separately, the structural baseline when available. Compare sentence-length distribution, paragraph-opening pattern, connective density, active/passive balance, first-person usage, and preferred contribution or limitation moves.
 
-Use the fingerprint as a correction vector, not a prose generator. Change only metrics that materially depart from a qualified baseline. The only positive lexical imitation source is the author-supplied `Expressions the user likes` field. A thin baseline is directional only and cannot trigger a drift warning.
+The target profile supplies direction for P4, P5, and P6. The baseline supplies drift detection only; a thin baseline emits no warning and cannot refuse a pass. A field marked `source: rule` follows this reference rather than the exemplar. Use target values as a correction vector, not a prose generator. Positive lexical imitation remains limited to author-confirmed `Expressions the user likes` candidates from the revision-direction workflow.
 
 ## Pass report
 

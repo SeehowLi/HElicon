@@ -9,6 +9,8 @@ import re
 import sys
 from typing import Any
 
+import check_contract_sync
+
 MAX_BODY_LINES = 500
 MAX_DESCRIPTION_CHARS = 1024
 REQUIRED = (
@@ -41,6 +43,7 @@ REQUIRED = (
     "references/citation_discipline.md",
     "references/deadline_compression.md",
     "references/style_baseline_policy.md",
+    "references/target_profile_policy.md",
     "references/rebuttal_playbook.md",
     "references/intent_router.md",
     "references/project_memory.md",
@@ -59,12 +62,17 @@ REQUIRED = (
     "templates/polish_ledger.csv",
     "templates/rebuttal_response.md",
     "templates/style_baseline_readme.md",
+    "templates/exemplar_card.md",
     "templates/advisor_brief.md",
     "templates/submission_gate_checklist.md",
     "scripts/check_skill_integrity.py",
+    "scripts/check_contract_sync.py",
     "scripts/check_core_contamination.py",
     "scripts/selftest_checks.py",
     "scripts/style_fingerprint.py",
+    "scripts/build_target_profile.py",
+    "scripts/extract_revision_direction.py",
+    "scripts/target_eval.py",
     "scripts/latex_guard.py",
     "scripts/check_ai_tells.py",
     "scripts/export_dossier.py",
@@ -127,6 +135,9 @@ def validate(root: Path) -> dict[str, Any]:
     if body_lines > MAX_BODY_LINES:
         errors.append(f"SKILL.md body has {body_lines} lines; limit is {MAX_BODY_LINES}")
 
+    contract_sync = check_contract_sync.validate_contracts(root)
+    errors.extend(f"contract sync: {error}" for error in contract_sync["errors"])
+
     registry_path = root / "references/command_registry.md"
     registry_text = read_utf8(registry_path) if registry_path.exists() else ""
     routing_text = skill_text + "\n" + registry_text
@@ -156,6 +167,7 @@ def validate(root: Path) -> dict[str, Any]:
         "missing_required": missing,
         "referenced_missing": referenced_missing,
         "orphan_references": orphans,
+        "contract_sync": contract_sync,
         "errors": errors,
     }
 

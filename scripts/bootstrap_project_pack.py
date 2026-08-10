@@ -175,6 +175,7 @@ def bootstrap(paper_dir: Path, pack_dir: Path, name: str, registry_path: Path, m
     try:
         pack_dir.mkdir(parents=True, exist_ok=True)
         (pack_dir / "style").mkdir(parents=True, exist_ok=True)
+        (pack_dir / "style" / "exemplars").mkdir(parents=True, exist_ok=True)
     except OSError as exc:
         raise UserError(f"cannot create project pack {pack_dir}: {exc}") from exc
     write_new(pack_dir / "project.yaml", project_yaml(name, paper_dir, fp, now), created)

@@ -24,6 +24,15 @@ CONNECTIVES = {
 }
 CLAUSE_OPENERS = {"although", "because", "if", "since", "unless", "when", "whereas", "while"}
 PREPOSITION_OPENERS = {"after", "at", "before", "by", "during", "for", "from", "in", "on", "through", "under", "with", "without"}
+HEDGE_PHRASES = ("may", "might", "could", "suggests", "appears to", "is consistent with", "we conjecture", "likely", "approximately")
+PASSIVE_RE = re.compile(r"\b(?:is|are|was|were|be|been|being)\s+(?:\w+ly\s+)?\w+(?:ed|en)\b", re.IGNORECASE)
+CLAIM_RE = re.compile(
+    r"\b(?:we (?:show|demonstrate|present|propose|introduce|find)|our (?:method|system|evaluation) "
+    r"(?:achieves|reduces|improves)|(?:the )?results? (?:show|indicate|suggest))\b",
+    re.IGNORECASE,
+)
+CONTRIBUTION_RE = re.compile(r"\b(?:our contributions?|we (?:present|propose|introduce|design|develop))\b", re.IGNORECASE)
+LIMITATION_RE = re.compile(r"\b(?:limitation|limited to|does not|do not|however|future work)\b", re.IGNORECASE)
 SYNONYM_GROUPS = {
     "ciphertext object": ("ciphertext", "encrypted value", "encrypted input"),
     "method referent": ("method", "approach", "framework", "technique"),
@@ -76,6 +85,21 @@ def input_files(inputs: list[str]) -> list[Path]:
 
 def normalize_space(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def extract_title(text: str, suffix: str) -> str | None:
+    if suffix == ".tex":
+        match = re.search(r"\\title\s*(?:\[[^\]]*\]\s*)*\{([^{}]+)\}", text, re.DOTALL)
+    elif suffix == ".md":
+        match = re.search(r"(?m)^#\s+(.+?)\s*$", text)
+    else:
+        match = re.search(r"(?im)^\s*(?:paper\s+)?title\s*:\s*(.+?)\s*$", text)
+    return normalize_space(match.group(1)) if match else None
+
+
+def normalize_title(title: str) -> str:
+    without_commands = re.sub(r"\\[A-Za-z@]+\*?", " ", title)
+    return re.sub(r"[\W_]+", " ", without_commands.casefold(), flags=re.UNICODE).strip()
 
 
 def protect_latex(text: str) -> str:
@@ -167,17 +191,40 @@ def metric_block(paragraphs: list[str]) -> dict[str, Any]:
     synonym_hits: list[dict[str, Any]] = []
     em_dash_count = 0
     word_count = 0
+    paragraph_word_counts: list[int] = []
+    paragraph_sentence_counts: list[int] = []
+    passive_sentences = 0
+    first_person_count = 0
+    hedge_count = 0
+    max_hedges_in_sentence = 0
+    claim_positions: list[float] = []
+    contribution_moves = 0
+    limitation_moves = 0
 
     for index, paragraph in enumerate(paragraphs, 1):
         sentences = split_sentences(paragraph)
+        paragraph_claim_positions: list[float] = []
         lengths = [len(WORD_RE.findall(sentence)) for sentence in sentences]
         words = WORD_RE.findall(paragraph)
         word_count += len(words)
+        paragraph_word_counts.append(len(words))
+        paragraph_sentence_counts.append(len(sentences))
         em_dash_count += paragraph.count("—")
+        first_person_count += len(re.findall(r"\b(?:we|our|ours)\b", paragraph, re.IGNORECASE))
+        contribution_moves += len(CONTRIBUTION_RE.findall(paragraph))
+        limitation_moves += len(LIMITATION_RE.findall(paragraph))
         all_sentences.extend(sentences)
         all_lengths.extend(lengths)
-        for sentence in sentences:
+        for sentence_index, sentence in enumerate(sentences, 1):
             openings[opening_type(sentence)] += 1
+            passive_sentences += bool(PASSIVE_RE.search(sentence))
+            sentence_hedges = sum(len(re.findall(rf"\b{re.escape(phrase)}\b", sentence, re.IGNORECASE)) for phrase in HEDGE_PHRASES)
+            hedge_count += sentence_hedges
+            max_hedges_in_sentence = max(max_hedges_in_sentence, sentence_hedges)
+            if CLAIM_RE.search(sentence):
+                normalized_claim_position = sentence_index / max(len(sentences), 1)
+                claim_positions.append(normalized_claim_position)
+                paragraph_claim_positions.append(normalized_claim_position)
             lowered = {word.lower() for word in WORD_RE.findall(sentence)}
             for connective in CONNECTIVES:
                 if connective in lowered:
@@ -191,6 +238,7 @@ def metric_block(paragraphs: list[str]) -> dict[str, Any]:
             "word_count": len(words),
             "sentence_lengths": lengths,
             "alternation_index": round(alternation, 4),
+            "claim_sentence_positions": [round(value, 4) for value in paragraph_claim_positions],
         })
 
     lowered_text = " ".join(paragraphs).lower()
@@ -204,6 +252,10 @@ def metric_block(paragraphs: list[str]) -> dict[str, Any]:
     return {
         "sentence_count": len(all_lengths),
         "word_count": word_count,
+        "paragraph_count": len(paragraphs),
+        "mean_paragraph_words": round(statistics.fmean(paragraph_word_counts), 4) if paragraph_word_counts else 0.0,
+        "paragraph_word_sd": round(statistics.pstdev(paragraph_word_counts), 4) if len(paragraph_word_counts) > 1 else 0.0,
+        "mean_sentences_per_paragraph": round(statistics.fmean(paragraph_sentence_counts), 4) if paragraph_sentence_counts else 0.0,
         "mean_sentence_length": round(mean, 4),
         "sentence_length_sd": round(sd, 4),
         "min_sentence_length": min(all_lengths, default=0),
@@ -214,6 +266,15 @@ def metric_block(paragraphs: list[str]) -> dict[str, Any]:
         "connective_frequency": dict(sorted(connectives.items())),
         "connective_density": round(sum(connectives.values()) / max(len(all_lengths), 1), 4),
         "em_dash_per_1000_words": round(em_dash_count * 1000 / max(word_count, 1), 4),
+        "active_sentence_ratio": round((len(all_lengths) - passive_sentences) / max(len(all_lengths), 1), 4),
+        "passive_sentence_ratio": round(passive_sentences / max(len(all_lengths), 1), 4),
+        "first_person_per_1000_words": round(first_person_count * 1000 / max(word_count, 1), 4),
+        "hedges_per_1000_words": round(hedge_count * 1000 / max(word_count, 1), 4),
+        "max_hedges_in_sentence": max_hedges_in_sentence,
+        "claim_sentence_count": len(claim_positions),
+        "mean_claim_position": round(statistics.fmean(claim_positions), 4) if claim_positions else None,
+        "contribution_move_count": contribution_moves,
+        "limitation_move_count": limitation_moves,
         "synonym_candidates": synonym_hits,
         "paragraphs": paragraph_results,
     }
@@ -221,16 +282,18 @@ def metric_block(paragraphs: list[str]) -> dict[str, Any]:
 
 def document_report(path: Path) -> dict[str, Any]:
     raw = read_utf8(path)
+    document_title = extract_title(raw, path.suffix.lower())
     section_results: list[dict[str, Any]] = []
     all_clean: list[str] = []
-    for title, content in raw_sections(raw, path.suffix.lower()):
+    for section_title, content in raw_sections(raw, path.suffix.lower()):
         clean = protect_latex(content) if path.suffix.lower() == ".tex" else content.replace("\r\n", "\n").replace("\r", "\n")
         paragraphs = split_paragraphs(clean)
         all_clean.extend(paragraphs)
-        section_results.append({"title": title, "metrics": metric_block(paragraphs)})
+        section_results.append({"title": section_title, "metrics": metric_block(paragraphs)})
     return {
         "path": str(path),
         "format": path.suffix.lower(),
+        "title": document_title,
         "document": metric_block(all_clean),
         "sections": section_results,
     }
@@ -244,11 +307,29 @@ def compact_metrics(report: dict[str, Any]) -> dict[str, float]:
 def baseline_data(files: list[Path], paper_ids: list[str] | None = None) -> dict[str, Any]:
     reports = [document_report(path) for path in files]
     document_metrics = [compact_metrics(report) for report in reports]
+    grouping_warnings: list[str] = []
     if paper_ids is None:
-        paper_ids = [str(path) for path in files]
+        paper_ids = []
+        paper_id_sources = []
+        for path, report in zip(files, reports):
+            title_key = normalize_title(report["title"] or "")
+            parent_key = normalize_title(path.parent.name)
+            if title_key:
+                paper_ids.append(f"title:{title_key}")
+                paper_id_sources.append("title")
+            elif parent_key:
+                paper_ids.append(f"directory:{parent_key}")
+                paper_id_sources.append("parent_directory")
+            else:
+                paper_ids.append(f"path:{str(path).casefold()}")
+                paper_id_sources.append("path_fallback")
+                grouping_warnings.append(f"could not infer title or parent directory; used path: {path}")
+    else:
+        paper_id_sources = ["explicit"] * len(paper_ids)
     paper_ids = [paper_id.strip() for paper_id in paper_ids]
     if len(paper_ids) == 1:
         paper_ids = paper_ids * len(files)
+        paper_id_sources = paper_id_sources * len(files)
     if len(paper_ids) != len(files) or any(not paper_id.strip() for paper_id in paper_ids):
         raise UserError("--paper-id must be supplied once for all inputs or once per resolved input file")
 
@@ -259,6 +340,8 @@ def baseline_data(files: list[Path], paper_ids: list[str] | None = None) -> dict
         {
             "paper_id": paper_id,
             "source_count": len(items),
+            "files": [str(path) for path, item_paper_id in zip(files, paper_ids) if item_paper_id == paper_id],
+            "id_sources": sorted({source for source, item_paper_id in zip(paper_id_sources, paper_ids) if item_paper_id == paper_id}),
             "metrics": {name: round(statistics.fmean(item[name] for item in items), 6) for name in BASELINE_METRICS},
         }
         for paper_id, items in grouped.items()
@@ -281,10 +364,15 @@ def baseline_data(files: list[Path], paper_ids: list[str] | None = None) -> dict
         "status": "ok" if count >= MIN_BASELINE_PAPERS else f"thin(n={count})",
         "drift_alerts_enabled": count >= MIN_BASELINE_PAPERS,
         "documents": [
-            {"path": str(path), "paper_id": paper_id, "metrics": metrics}
-            for path, paper_id, metrics in zip(files, paper_ids, document_metrics)
+            {"path": str(path), "paper_id": paper_id, "paper_id_source": source, "metrics": metrics}
+            for path, paper_id, source, metrics in zip(files, paper_ids, paper_id_sources, document_metrics)
         ],
         "papers": papers,
+        "grouping": {
+            "summary": f"grouped: {len(files)} files -> {count} papers",
+            "groups": [{"paper_id": paper["paper_id"], "files": paper["files"]} for paper in papers],
+            "warnings": grouping_warnings,
+        },
         "metric_stats": stats,
     }
 

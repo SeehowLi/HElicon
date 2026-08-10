@@ -14,9 +14,9 @@ Use completed-draft prose from Introduction, Contributions, Related Work, and Ev
 
 ## Build and use
 
-Run `scripts/style_fingerprint.py baseline` with an explicit local output path and `--paper-id` metadata. One `--paper-id` applies to all selected files; otherwise repeat it once per resolved input file. Compare section types with the same section type. Sentence rhythm informs P4, diction-adjacent structural measures inform P5, and qualified baseline deviations inform P6.
+Run `scripts/style_fingerprint.py baseline` with an explicit local output path. It groups equal normalized titles first and otherwise uses the parent directory. Inspect the reported file-to-paper groups; use one `--paper-id` for all selected files, or one per resolved file, only to override a wrong inference. Compare section types with the same section type. Sentence rhythm informs P4, diction-adjacent structural measures inform P5, and qualified baseline deviations inform P6.
 
-A quantitative baseline needs the minimum distinct-paper count declared in `references/style_baseline_policy.md`. Versions sharing a `paper_id` are averaged and count once. Below that minimum, mark it `thin(n=N)`, use it only directionally, disable drift alerts and anti-drift refusal, and show the thin status in the trailer.
+A quantitative baseline needs the minimum distinct-paper count declared in `references/style_baseline_policy.md`. Versions sharing a `paper_id` are averaged and count once. Below that minimum, mark it `thin(n=N)`, keep it descriptive only, disable drift alerts and anti-drift refusal, and show the thin status in the trailer. A screened target profile supplies direction.
 
 ## Positive imitation boundary
 

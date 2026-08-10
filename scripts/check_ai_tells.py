@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Flag AI-writing patterns defined in references/language_polish.md."""
+"""Flag P5 rules 1-14 defined in references/language_polish.md.
+
+This script owns every numbered P5 audit rule. It does not own the separate
+Chinese-literal and sentence-level overclaim checks in check_style_rules.py.
+"""
 from __future__ import annotations
 
 import argparse
@@ -14,6 +18,18 @@ EXTENSIONS = {".tex", ".md", ".txt"}
 SEVERITY_RANK = {"info": 0, "warn": 1, "block": 2}
 PRESERVED_HEDGES = ("suggests", "is consistent with", "we conjecture", "appears to")
 SUPPORT_RE = re.compile(r"\\(?:cite\w*|ref|autoref|eqref|cref)\s*\{|\b\d+(?:\.\d+)?\s*(?:%|ms|s|GB|MB|KB|bits?)?\b")
+RULE2_RE = re.compile(
+    r"\b(?:secure\s+and\s+efficient|significantly|dramatically|practical|scalable|efficient)\b",
+    re.IGNORECASE,
+)
+RULE2_SUPPORT_RE = re.compile(
+    r"\b\d+(?:\.\d+)?\s*(?:%|x|×|ns|us|ms|s|sec(?:onds?)?|min(?:utes?)?|h(?:ours?)?|"
+    r"KB|MB|GB|TB|bits?|bytes?|queries?|records?|vectors?|samples?|entries?|slots?|cores?|threads?)\b|"
+    r"\b(?:latency|throughput|runtime|memory|communication|bandwidth|accuracy|error|speedup|CPU|GPU|"
+    r"threat model|security model|semi-honest|malicious|IND-CPA|IND-CCA)\b|"
+    r"\b(?:under|for|on)\s+(?:the\s+)?(?:evaluated|fixed|specified|target)\s+(?:dataset|workload|batch)\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass
@@ -36,6 +52,8 @@ class PatternRule:
 
 
 PATTERN_RULES = (
+    PatternRule(1, "warn", re.compile(r"\b(?:groundbreaking|transformative|pivotal|remarkable|revolutionary|unprecedented|game-changing|breakthrough)\b", re.IGNORECASE), "Remove inflated importance unless a precise, supported comparison earns it."),
+    PatternRule(3, "block", re.compile(r"\b(?:technical packaging|large model privacy inference|homomorphic realization|full homomorphic encryption)\b", re.IGNORECASE), "Use the glossary's technically valid, scoped term."),
     PatternRule(4, "info", re.compile(r"\b(?:delve|tapestry|landscape|showcase|seamless|intricate|leverage|underscore)\w*\b", re.IGNORECASE), "Keep only a precise technical use; otherwise state the mechanism directly."),
     PatternRule(6, "warn", re.compile(r"\b(?:it is (?:important|worthwhile|notable) to (?:note|observe)|it should be noted that)\b", re.IGNORECASE), "Remove the shell and state the supported claim directly."),
     PatternRule(8, "warn", re.compile(r"\b(?:in other words|that is|essentially)\b", re.IGNORECASE), "Check whether this repeats the previous claim; keep formal definitions and real disambiguation."),
@@ -44,12 +62,6 @@ PATTERN_RULES = (
     PatternRule(12, "warn", re.compile(r"\bnot only\b[^.!?]{0,120}\bbut also\b", re.IGNORECASE), "State the direct relation unless the contrast is logically necessary."),
     PatternRule(13, "info", re.compile(r"\b[A-Za-z][\w-]+,\s+[A-Za-z][\w-]+,\s+and\s+[A-Za-z][\w-]+\b"), "Confirm that the source genuinely contains three distinct items."),
 )
-
-DELEGATED_RULES = {
-    1: "Inflated importance is checked by check_style_rules.py.",
-    2: "Unscoped performance adjectives are checked by check_style_rules.py.",
-    3: "Domain-invalid phrases are checked by check_style_rules.py.",
-}
 
 
 class UserError(Exception):
@@ -110,12 +122,35 @@ def add_finding(findings: list[Finding], path: Path, text: str, offset: int, rul
     findings.append(Finding(str(path), line, column, rule, severity, re.sub(r"\s+", " ", matched).strip(), suggestion))
 
 
-def scan(path: Path) -> list[Finding]:
-    text = read_utf8(path)
+def scan_text(text: str, path: Path = Path("<memory>")) -> list[Finding]:
     findings: list[Finding] = []
     for rule in PATTERN_RULES:
         for match in rule.pattern.finditer(text):
             add_finding(findings, path, text, match.start(), rule.number, rule.severity, match.group(0), rule.suggestion)
+
+    # Rule 2: an adjective is scoped when its sentence or one adjacent sentence
+    # names a metric, workload, hardware setting, or threat/security model.
+    sentences = list(sentence_spans(text))
+    for match in RULE2_RE.finditer(text):
+        index = next(
+            (i for i, (start, sentence) in enumerate(sentences) if start <= match.start() < start + len(sentence)),
+            None,
+        )
+        context = " ".join(
+            sentence for _, sentence in sentences[max(0, (index or 0) - 1):min(len(sentences), (index or 0) + 2)]
+        )
+        if RULE2_SUPPORT_RE.search(context):
+            continue
+        add_finding(
+            findings,
+            path,
+            text,
+            match.start(),
+            2,
+            "warn",
+            match.group(0),
+            "State the metric, workload, hardware, or threat model that scopes this adjective.",
+        )
 
     # Rule 7: several abstract nominalizations in one sentence can hide the actor.
     nominal_re = re.compile(r"\b[A-Za-z]+(?:tion|sion|ment|ance|ence|ity|ization)\b", re.IGNORECASE)
@@ -158,6 +193,10 @@ def scan(path: Path) -> list[Finding]:
     return sorted(findings, key=lambda item: (item.file.lower(), item.line, item.column, item.rule))
 
 
+def scan(path: Path) -> list[Finding]:
+    return scan_text(read_utf8(path), path)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("paths", nargs="+", help="files or directories")
@@ -178,14 +217,13 @@ def main() -> int:
         if args.json:
             print(json.dumps({
                 "files": [str(path) for path in files],
-                "delegated_rules": DELEGATED_RULES,
                 "findings": [asdict(item) for item in shown],
                 "finding_count": len(shown),
             }, ensure_ascii=False, indent=2))
         else:
             for item in shown:
                 print(f"{item.file}:{item.line}:{item.column} | R{item.rule:02d} {item.severity} | {item.match} | {item.suggestion}")
-            print(f"AI-tell findings: {len(shown)} (rules 1-3 delegated to check_style_rules.py)")
+            print(f"AI-tell findings: {len(shown)} (P5 rules 1-14)")
         if args.exit_code_on:
             threshold = SEVERITY_RANK[args.exit_code_on]
             if any(SEVERITY_RANK[item.severity] >= threshold for item in all_findings):

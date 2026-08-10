@@ -23,6 +23,8 @@ Use this file to select, order, and audit revision passes. A pass has one primar
 5. **P6 is the final language pass.** Voice alignment is fine calibration. General rhythm or diction edits performed afterward would erase it.
 6. **P7 is last.** It is mechanical and may not revise meaning.
 
+For P4, load at most three qualified exemplar cards matching the section type and rhythm-related rule context. For P5, load at most three cards matching the section type and triggered rule IDs. For P6, load at most three non-reviewer-driven cards matching the section type; use them as form anchors only, never as content sources.
+
 ## Immutable set
 
 The immutable set contains:
@@ -51,6 +53,6 @@ Before each pass:
 
 ## Anti-drift rule
 
-threshold: if the target section's style metrics are already inside the personal baseline band of plus or minus 1.5 standard deviations, P5 and P6 refuse to run. Report: `already within baseline; further editing would create drift rather than improvement`.
+threshold: when no qualified target profile exists, if the target section's style metrics are already inside the personal baseline band of plus or minus 1.5 standard deviations, P5 and P6 refuse to run. Report: `already within baseline; further editing would create drift rather than improvement`.
 
-This refusal is active only when the baseline contains at least the minimum document count defined in `style_baseline_policy.md`. With a thin baseline, use the fingerprint only as directional context, do not issue drift warnings, and do not refuse P5 or P6.
+This refusal is active only when the baseline contains at least the minimum document count defined in `style_baseline_policy.md`. With a thin baseline, do not issue drift warnings or refuse P5/P6. When a qualified target exists, movement toward that screened target is convergence rather than drift; the baseline may flag movement that approaches neither target nor baseline, but it cannot override the target direction. A target profile never activates anti-drift refusal by itself.

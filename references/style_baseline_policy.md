@@ -4,9 +4,9 @@ The personal baseline records the author's current structural habits. It is not 
 
 ## Available and missing evidence
 
-There are no advisor-edited before/after pairs. Therefore the baseline cannot encode a verified direction of improvement from an advisor. It may describe the author's present habits only.
+An author-approved final version can define a target direction even when no advisor-edited pair exists. That direction belongs to the separate object in `target_profile_policy.md`; approval may come from the author rather than an advisor. The baseline itself remains descriptive and never encodes an ideal.
 
-Multiple revisions of the same manuscript are valid self-edit pairs. Register every source version with the same `Paper ID` in `templates/style_sample_card.md`; mark the later self-edited item as `Version: revised`. Such a pair may indicate how the author tends to revise, but not how an advisor would revise.
+Multiple revisions of the same manuscript are valid self-edit pairs. The baseline command first groups equal normalized document titles, then falls back to the parent directory; use explicit `--paper-id` only to override an incorrect inference. Register every source version with the same `Paper ID` in `templates/style_sample_card.md`; mark the later self-edited item as `Version: revised`. Such a pair may indicate how the author tends to revise, but not how an advisor would revise.
 
 ## Confidentiality boundary
 
@@ -20,7 +20,7 @@ threshold: a quantitative baseline requires at least 5 distinct papers, identifi
 
 Several versions of one paper count as one document for qualification and variance: average their metrics inside the `paper_id` group before computing cross-paper statistics. Thus five versions of one manuscript remain `thin(n=1)`, not `thin(n=5)`.
 
-With fewer distinct papers, the fingerprint is `thin(n=N)`: use it only as directional context, disable the P5/P6 anti-drift refusal, and issue no drift warning. The trailer must show `baseline:thin(n=N)`. A qualified baseline may show `baseline:ok`; no available baseline shows `baseline:none`.
+With fewer distinct papers, the fingerprint is `thin(n=N)`: retain it only as descriptive context, disable the P5/P6 anti-drift refusal, and issue no drift warning. A screened `target_profile`, not the thin baseline, supplies revision direction. The trailer must show `baseline:thin(n=N)`. A qualified baseline may show `baseline:ok`; no available baseline shows `baseline:none`.
 
 The minimum prevents ordinary variation in a narrow sample from being misreported as personal-style drift.
 
@@ -39,8 +39,8 @@ Exclude Methods and Construction. Their conventions constrain prose too tightly 
 
 Measure sentence-length distribution, paragraph-length distribution, opening patterns, connective density, active/passive balance, first-person use, and selected punctuation. Keep section types separate; do not compare an Evaluation paragraph directly with an Introduction baseline.
 
-P6 uses metric differences as revision guidance. It must not reconstruct source prose or copy characteristic project terminology.
+P6 uses a qualified baseline only for drift detection. Direction comes from `target_profile_policy.md`. Neither object may reconstruct source prose or copy characteristic project terminology.
 
 ## Expressions the user likes
 
-`Expressions the user likes` is the only profile field that permits positive lexical imitation. The author must supply or explicitly approve each entry. Record the expression, acceptable context, and any exclusion. Until material is provided, leave the field empty; never infer entries from unpublished drafts. Every other profile field is descriptive or restrictive and cannot by itself make text sound like the author.
+`Expressions the user likes` is the only profile field that permits positive lexical imitation. Its only legal candidate source is the unchanged-signal output of `extract_revision_direction.py`, followed by explicit author confirmation. Record the expression, acceptable context, and any exclusion. Until a candidate is confirmed, leave the field empty. Every other profile field is descriptive or restrictive and cannot by itself make text sound like the author.

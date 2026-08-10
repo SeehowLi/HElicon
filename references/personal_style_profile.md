@@ -39,8 +39,8 @@ Append stable observations under these headings:
 
 ### Expressions the user likes
 
-- Leave empty until the user supplies or explicitly approves an expression.
-- For each approved entry, record the expression, acceptable rhetorical context, and exclusions.
+- Leave empty until `extract_revision_direction.py` finds an expression unchanged across all declared stages and the author explicitly confirms it.
+- For each confirmed unchanged candidate, record the expression, acceptable rhetorical context, and exclusions.
 - This is the only profile field that permits positive lexical imitation; all other fields are descriptive or restrictive.
 
 ### Expressions the user rejects
@@ -66,5 +66,11 @@ Append stable observations under these headings:
 - Generate it with `scripts/style_fingerprint.py baseline` from the eligible section classes in `style_baseline_policy.md`; assign revisions of the same manuscript the same `paper_id`.
 - P4 reads sentence-length distribution, alternation, and opening structure.
 - P5 reads connective density, punctuation density, and terminology-variation candidates as warnings rather than rewrite instructions.
-- P6 reads section-matched baseline deviations and the baseline qualification status.
-- A thin baseline is directional only: it cannot produce a drift warning or refuse a pass.
+- P6 reads the target profile for direction and section-matched baseline deviations only for drift detection.
+- A thin baseline is descriptive only: it cannot produce a drift warning, refuse a pass, or define a revision target.
+
+### Prescriptive target
+
+- Store screened target values and filled exemplar cards only under `<paper_dir>/.helicon/style/`.
+- Follow `target_profile_policy.md`: target values guide P4/P5/P6, while the baseline remains a separate drift detector.
+- Never use a reviewer-driven stage pair as an author-preference signal unless the author explicitly reclassifies it.

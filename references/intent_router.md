@@ -35,18 +35,38 @@ The router never initiates an actual P1 claim rewrite or P2 structural rewrite. 
 Every routed result ends with exactly one scannable line:
 
 ```text
-[HElicon] <项目名> §<节号> · <pass序列> · <改动处数> · frozen:<0变化|N处告警> · baseline:<ok|thin(n=N)|none>[ · ⬆<N> upstream]
+[HElicon] <项目名> §<节号> · <pass序列> · <改动处数> · frozen:<0变化|N处告警> · baseline:<ok|thin(n=N)|none> · target:<ok|partial|none>[ · sample:too-short][ · ⬆<N> upstream]
 ```
 
-Keep pass identifiers in the trailer; do not replace them with a vague phrase such as "language optimized." For unrecognized projects, use a neutral project and section marker and `baseline:none`.
+Keep pass identifiers in the trailer; do not replace them with a vague phrase such as "language optimized." Use `target:ok` when every target dimension used by this route came from a qualified exemplar, `target:partial` when a target exists but at least one used dimension falls back to `source: rule`, and `target:none` when no target exists. For unrecognized projects, use a neutral project and section marker, `baseline:none`, and `target:none`.
+
+For a one-sentence sample, append `· sample:too-short` before any upstream marker. This records that paragraph-level rhythm was not evaluated.
 
 ## Representative routes
 
-| Input | Action |
-|---|---|
-| Bare English paragraph | P3 → P4 → P5; return revision and trailer |
-| "This paragraph reads awkwardly" | P3 → P4 → P5 |
-| "The logic here does not work" | Diagnose and propose P2; do not silently reorder |
-| "Can this conclusion stand?" | Diagnose and propose P1; preserve the original claim until approved |
-| Reviewer comment | Rebuttal triage, then the rebuttal contract |
-| Page overflow near deadline | Deadline-compression contract with threat and claim scope frozen |
+`L1` means sentence-level language work. `L2` means a structural or claim-level diagnosis that may recommend P1 or P2 but cannot execute it silently. `Default` is the zero-friction P3 → P4 → P5 route.
+
+| Input wording | Depth | Pass sequence or route | Explicitly excluded |
+|---|---|---|---|
+| Bare English paragraph | Default | P3 → P4 → P5; return revision and trailer | No claim or paragraph-order change |
+| `这段读起来别扭` | L1, default | P3 → P4 → P5 | No structural rewrite |
+| `这段有点绕` | L1, default | P3 → P4 → P5 | No paragraph reordering or claim strengthening |
+| `这段说不清楚在干什么` | L2 | Diagnose the missing paragraph function; recommend P2 | Do not silently restructure |
+| `这段的重点没出来` | L2 | Diagnose emphasis and recommend P2 | Do not invent or promote a contribution |
+| `这个结论有点强` | L1 plus upstream claim finding | Preserve qualifiers during P3 → P4 → P5; recommend P1 | No claim-strength rewrite |
+| `这么说会不会被challenge` | L1 plus upstream claim finding | Preserve hedging during P3 → P4 → P5; recommend P1 | No unsupported defense or stronger evidence label |
+| `帮我把这段改得更像顶会的写法` | Default plus venue register | P3 → P4 → P5 with venue-register notes | No structural or novelty rewrite |
+| `这里的术语统一一下` | L1, narrow | P3 only | No rhythm, deletion, or voice changes |
+| `顺一下不要动意思` | L1, narrow | P4 only | No P5 deletion and no terminology substitution |
+| `太啰嗦了删短点` | L1, compression | Audit P4 rhythm, then run P5 as primary; warn if deletion flattens sentence-length variance | No claim, evidence, or logical-connector deletion |
+| One sentence, shorter than a paragraph | L1, short sample | Sentence-internal P3 → P4 → P5; mark `sample:too-short` | No paragraph-rhythm reconstruction |
+| Chinese paragraph with a request for English prose | Translation plus writing | Translate research intent, then apply P3 → P4 → P5 to the English result | Do not treat Chinese surface form as an English polish target |
+| Whole draft pasted or supplied by path | Intake | Recommend `H-INTAKE` before editing | Do not begin a whole-draft rewrite |
+| Whole draft, author explicitly insists on immediate editing | Staged default | Start with the first section and proceed section by section through P3 → P4 → P5 | No simultaneous full-draft rewrite |
+| `The logic here does not work` | L2 | Diagnose and recommend P2 | Do not silently reorder |
+| `Can this conclusion stand?` | L2 | Diagnose evidence strength and recommend P1 | Preserve the original claim until approved |
+| Reviewer comment or `Reviewer #` block | Rebuttal | Rebuttal triage, then the `H-REBUT` contract | No invented evidence or infeasible promise |
+| Page overflow near deadline | Compression | `H-DEADLINE` contract | Freeze threat model and claim scope |
+| Citation, BibTeX, or attribution question | Verification | `H-CITE` contract | Never verify from model memory |
+| Ready-to-submit or pre-submission request | Gate | `H-GATE` contract | Audit only; do not patch files |
+| Request to write a new paragraph without source prose | Generation | Draft from confirmed claim/evidence context, then P3 → P5 | Do not fabricate project facts or results |
