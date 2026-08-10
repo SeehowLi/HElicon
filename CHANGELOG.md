@@ -2,6 +2,9 @@
 
 ## v1.3.1
 
+- 修复规则 10 对证据型 `-ing` 收尾从句的误报：从句内含数字加单位、引用/交叉引用或明确机制动词短语时不再建议删除；空洞的伪深度从句仍会命中。
+- 将规则 2 的声明词表纳入逐词行为契约，覆盖 `dramatically` 等全部点名词；契约检查现在会实际调用检测器，并通过上下文正反例验证作用域豁免，不再只核对规则编号。
+- 明确记录规则 2 的保守豁免窗口：同句或相邻句的度量、负载、硬件或威胁模型限定会抑制告警，因此数字密集的 Evaluation 段落需要配合 claim-evidence 审查。
 - 修复 `language_polish.md` 与 `check_ai_tells.py` 的规则 1/2/3 契约断裂：此前脚本仅实现规则 4–14，规则 1/2/3 的部分词表滞留在 `check_style_rules.py`，而 `groundbreaking`、`transformative`、`pivotal`、`remarkable` 等规则 1 核心词在两个脚本中都缺失。现由 `check_ai_tells.py` 统一实现 1–14；规则 2 复用相邻句作用域证据进行豁免；事实性错误规则 3 为 block；`check_style_rules.py` 只保留中式直译与 overclaim 句式。
 - 修复 `style_fingerprint.py` 的默认 `paper_id` 与政策相反的问题：旧逻辑把每个版本文件当作独立论文，可能把同源三至五个版本误计为 `n=3/5` 并错误启用漂移告警。新逻辑优先按归一化标题、其次按父目录自动分组，显式 `--paper-id` 仍可覆盖；输出会报告 `N files -> M papers` 和分组文件。
 - 新增常设契约同步检查，自动核对语言规则号、description 中的 H-* 命令与 registry、以及基线最小论文数阈值，避免文档与代码再次静默分裂。

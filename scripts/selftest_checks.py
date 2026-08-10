@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 
 import check_ai_tells
+import check_contract_sync
 import check_core_contamination as checker
 import style_fingerprint
 
@@ -70,7 +71,18 @@ def main() -> int:
         tests.append(("repository .helicon blocked", has(hidden_style, "private .helicon artifact")))
 
         tests.append(("AI-tell rule 1", 1 in ai_rules(root / "rule1.txt", "This is a groundbreaking method.")))
-        tests.append(("AI-tell rule 2", 2 in ai_rules(root / "rule2.txt", "The method is significantly faster.")))
+        for index, keyword in enumerate((
+            "significantly",
+            "dramatically",
+            "practical",
+            "scalable",
+            "efficient",
+            "secure and efficient",
+        ), 1):
+            tests.append((
+                f"AI-tell rule 2 keyword: {keyword}",
+                2 in ai_rules(root / f"rule2-keyword-{index}.txt", f"The method is {keyword}."),
+            ))
         tests.append((
             "AI-tell rule 2 generic workload is not an exemption",
             2 in ai_rules(root / "rule2-generic.txt", "This practical vector-query design is useful."),
@@ -85,6 +97,52 @@ def main() -> int:
                 root / "rule2-scoped.txt",
                 "The method is efficient. On 32 CPU cores, latency is 12 ms for 1024 vectors.",
             ),
+        ))
+        tests.append((
+            "AI-tell rule 10 measured-clause exemption",
+            10 not in ai_rules(
+                root / "rule10-measured.txt",
+                "Our scheme is significantly faster, reducing latency to 12 ms on one CPU core.",
+            ),
+        ))
+        tests.append((
+            "AI-tell rule 10 citation exemption",
+            10 not in ai_rules(
+                root / "rule10-citation.txt",
+                r"The construction reduces setup work, matching the bound in \ref{sec:proof}.",
+            ),
+        ))
+        tests.append((
+            "AI-tell rule 10 mechanism exemption",
+            10 not in ai_rules(
+                root / "rule10-mechanism.txt",
+                "The construction reduces communication, reducing transfers by batching adjacent requests.",
+            ),
+        ))
+        tests.append((
+            "AI-tell rule 10 hollow clause remains visible",
+            10 in ai_rules(
+                root / "rule10-hollow.txt",
+                "The construction improves the design, highlighting its broad potential.",
+            ),
+        ))
+
+        polish_text = (Path(__file__).resolve().parent.parent / "references" / "language_polish.md").read_text(encoding="utf-8")
+        behavior = check_contract_sync.validate_rule_behaviors(polish_text)
+        tests.append(("rule-keyword behavior contract", behavior["passed"]))
+
+        def scanner_without_dramatically(text: str, path: Path) -> list[check_ai_tells.Finding]:
+            return [
+                finding
+                for finding in check_ai_tells.scan_text(text, path)
+                if not (finding.rule == 2 and finding.match.lower() == "dramatically")
+            ]
+
+        mutation = check_contract_sync.validate_rule_behaviors(polish_text, scanner_without_dramatically)
+        tests.append((
+            "rule-keyword contract catches injected R02 omission",
+            not mutation["passed"]
+            and any("R02 `dramatically` positive sample" in error for error in mutation["errors"]),
         ))
 
         versions = []

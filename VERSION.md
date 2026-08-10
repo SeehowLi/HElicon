@@ -2,7 +2,7 @@
 
 HElicon v1.3.1
 
-Status: v1.3.1 target-layer patch candidate.
+Status: released.
 
 Design principle: long-term personal writing mentor, not project-specific.
 

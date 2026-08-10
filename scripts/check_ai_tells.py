@@ -30,6 +30,20 @@ RULE2_SUPPORT_RE = re.compile(
     r"\b(?:under|for|on)\s+(?:the\s+)?(?:evaluated|fixed|specified|target)\s+(?:dataset|workload|batch)\b",
     re.IGNORECASE,
 )
+RULE10_EVIDENCE_RE = re.compile(
+    r"\\(?:cite\w*|(?:auto|eq|c|C)?ref)\s*\{|"
+    r"\b\d+(?:\.\d+)?\s*(?:%|x|×|ns|us|ms|s|sec(?:onds?)?|min(?:utes?)?|h(?:ours?)?|"
+    r"KB|MB|GB|TB|bits?|bytes?|queries?|records?|vectors?|samples?|entries?|slots?|cores?|threads?)"
+    r"(?![A-Za-z0-9])",
+    re.IGNORECASE,
+)
+RULE10_MECHANISM_RE = re.compile(
+    r"\b(?:by|via|through)\s+(?:[A-Za-z][\w-]*\s+){0,3}[A-Za-z][\w-]*ing\b|"
+    r"\b(?:using|applying|employing|computing|evaluating|encoding|encrypting|decrypting|"
+    r"packing|batching|precomputing|caching|parallelizing|offloading)\s+"
+    r"(?:an?\s+|the\s+)?[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){0,4}",
+    re.IGNORECASE,
+)
 
 
 @dataclass
@@ -126,6 +140,11 @@ def scan_text(text: str, path: Path = Path("<memory>")) -> list[Finding]:
     findings: list[Finding] = []
     for rule in PATTERN_RULES:
         for match in rule.pattern.finditer(text):
+            if rule.number == 10 and (
+                RULE10_EVIDENCE_RE.search(match.group(0))
+                or RULE10_MECHANISM_RE.search(match.group(0))
+            ):
+                continue
             add_finding(findings, path, text, match.start(), rule.number, rule.severity, match.group(0), rule.suggestion)
 
     # Rule 2: an adjective is scoped when its sentence or one adjacent sentence

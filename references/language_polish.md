@@ -29,7 +29,7 @@ P4 changes syntax and cadence, not terminology or meaning.
 These identifiers are the source of truth for `scripts/check_ai_tells.py`. A match is a warning for contextual review, not permission to rewrite blindly.
 
 1. **Inflated importance.** Flag unsupported `groundbreaking`, `transformative`, `pivotal`, `remarkable`, and broad claims of significance.
-2. **Unscoped performance adjectives.** Flag `significantly`, `dramatically`, `practical`, `scalable`, `efficient`, and `secure and efficient` unless the same or adjacent sentence states the metric, workload, hardware, or threat model that earns the term.
+2. **Unscoped performance adjectives.** Flag `significantly`, `dramatically`, `practical`, `scalable`, `efficient`, and `secure and efficient` unless the same or adjacent sentence states the metric, workload, hardware, or threat model that earns the term. This same-or-adjacent-sentence exemption is deliberately conservative: number-dense Evaluation prose may suppress many rule 2 findings because nearby measurements provide scope. Treat that behavior as a precision choice, and use claim-evidence review rather than assuming rule 2 remains sensitive in such passages.
 3. **Domain-invalid phrases.** Flag `technical packaging`, `large model privacy inference`, `homomorphic realization`, and `full homomorphic encryption`; use the glossary's scoped form.
 4. **Filler AI vocabulary.** Review decorative uses of `delve`, `tapestry`, `landscape`, `showcase`, `seamless`, `intricate`, `leverage`, and `underscore`. Keep a term if it has a precise technical sense.
 5. **Connective stacking.** Reduce clusters such as `Moreover, furthermore, additionally` while retaining the actual logical relation.
