@@ -14,11 +14,21 @@ The router handles ordinary requests when the author does not use an HElicon com
 
 ### Default zero-friction route
 
-When the author supplies an English paragraph with no other instruction, run P3, then P4, then P5. Normalize terms, repair rhythm, and clean diction. Do not change structure, claim scope, numbers, citations, or other frozen content.
+When the author supplies an English paragraph with no other instruction, select P3, then P4, then P5. First check P3 for an exact frozen-glossary mismatch and run the deterministic P4/P5 preservation preflight. If the preflight returns `preserve` and P3 found no mismatch, return the supplied paragraph byte-for-byte and report `0处`; selecting a pass does not require manufacturing an edit. Otherwise, apply only the triggered pass responsibilities. Do not change structure, claim scope, numbers, citations, or other frozen content.
 
 When the intent is ambiguous, choose the least destructive route and proceed. If sentence editing and structural editing are both plausible, edit sentences only and state in the trailer that the author can request the deeper route. A language-level mismatch is easy to correct; a silent structural rewrite is not.
 
 Direct action means returning revised text, not writing a file. Router output never patches a source file. File writes still require `H-PATCH` or another command contract with an explicit confirmed write target.
+
+### Required context for language passes
+
+The default P3 → P4 → P5 route names these references and project files; the context-budget rule must not omit them:
+
+- P3: `language_polish.md`, `bilingual_glossary.md`, `fhe_lexicon_freeze.md`, and the active project's `.helicon/local_glossary.md` when present.
+- P4 or P5: `pass_pipeline.md`, `language_polish.md`, `target_profile_policy.md`, and the results of `scripts/resolve_target_profile.py` plus `scripts/revision_preflight.py` for the active project and pass sequence. If the resolver returns `none`, the preflight applies rule-backed checks without a private target.
+- P6: the same target resolver plus `personal_style_profile.md` and `style_baseline_policy.md`; baseline state remains independent of target state.
+
+Run the resolver and preservation preflight before editing, not after composing the trailer. The resolver's `resolved_status` determines `target:<ok|partial|none>`; the preflight's `preserve|revise` decision determines whether P4/P5 may change the selection. A model-authored trailer alone is not evidence that either check ran. Do not load `target_screening.json`, revision-direction reports, hold-out ground truth, or exemplar prose unless the explicit command contract requires them.
 
 ### Upstream findings
 
@@ -38,7 +48,9 @@ Every routed result ends with exactly one scannable line:
 [HElicon] <项目名> §<节号> · <pass序列> · <改动处数> · frozen:<0变化|N处告警> · baseline:<ok|thin(n=N)|none> · target:<ok|partial|none>[ · sample:too-short][ · ⬆<N> upstream]
 ```
 
-Keep pass identifiers in the trailer; do not replace them with a vague phrase such as "language optimized." Use `target:ok` when every target dimension used by this route came from a qualified exemplar, `target:partial` when a target exists but at least one used dimension falls back to `source: rule`, and `target:none` when no target exists. For unrecognized projects, use a neutral project and section marker, `baseline:none`, and `target:none`.
+Keep pass identifiers in the trailer; do not replace them with a vague phrase such as "language optimized." Copy the target state from the resolver: `ok` means every eligible dimension owned by the requested passes came from a qualified exemplar for the active venue; `partial` means at least one eligible dimension uses `source: rule`, the venue differs, or the active venue is unknown; `none` means no valid target profile was resolved. For unrecognized projects, use a neutral project and section marker, `baseline:none`, and `target:none`.
+
+Render multi-pass sequences with spaces around the arrow, for example `P3 → P4 → P5`. Evaluators also accept the historical compact form `P3→P4→P5` and normalize both to the same pass sequence.
 
 For a one-sentence sample, append `· sample:too-short` before any upstream marker. This records that paragraph-level rhythm was not evaluated.
 

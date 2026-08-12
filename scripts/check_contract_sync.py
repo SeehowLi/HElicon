@@ -201,6 +201,35 @@ def python_constant(path: Path, name: str) -> int | None:
     return None
 
 
+def python_literal(path: Path, name: str) -> Any:
+    tree = ast.parse(read_utf8(path), filename=str(path))
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == name for target in node.targets
+        ):
+            return ast.literal_eval(node.value)
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == name:
+            return ast.literal_eval(node.value)
+    return None
+
+
+def python_dict_keys(path: Path, name: str) -> set[str]:
+    tree = ast.parse(read_utf8(path), filename=str(path))
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or not any(
+            isinstance(target, ast.Name) and target.id == name for target in node.targets
+        ):
+            continue
+        if not isinstance(node.value, ast.Dict):
+            return set()
+        return {
+            str(key.value)
+            for key in node.value.keys
+            if isinstance(key, ast.Constant) and isinstance(key.value, str)
+        }
+    return set()
+
+
 def validate_contracts(root: Path) -> dict[str, Any]:
     errors: list[str] = []
     polish = read_utf8(root / "references/language_polish.md")
@@ -233,6 +262,61 @@ def validate_contracts(root: Path) -> dict[str, Any]:
     if policy_threshold is not None and code_threshold is not None and policy_threshold != code_threshold:
         errors.append(f"baseline threshold mismatch: policy={policy_threshold}, code={code_threshold}")
 
+    builder_dimensions = python_dict_keys(
+        root / "scripts/build_target_profile.py", "DIMENSION_RULES"
+    )
+    resolver_pass_fields = python_literal(root / "scripts/resolve_target_profile.py", "PASS_FIELDS") or {}
+    resolver_value_keys = python_literal(root / "scripts/resolve_target_profile.py", "VALUE_KEYS") or {}
+    rule_values = python_literal(root / "scripts/build_target_profile.py", "RULE_VALUES") or {}
+    resolver_structural_fields = set(
+        python_literal(root / "scripts/resolve_target_profile.py", "P2_ONLY_FIELDS") or ()
+    )
+    routed_target_fields = {
+        field
+        for fields in resolver_pass_fields.values()
+        for field in fields
+    }
+    resolver_dimensions = routed_target_fields | resolver_structural_fields
+    if builder_dimensions != resolver_dimensions:
+        errors.append(
+            "target field ownership mismatch: "
+            f"builder_only={sorted(builder_dimensions - resolver_dimensions)}, "
+            f"resolver_only={sorted(resolver_dimensions - builder_dimensions)}"
+        )
+    if routed_target_fields & resolver_structural_fields:
+        errors.append(
+            "P2-only target fields must not be injected into P4/P5/P6: "
+            f"{sorted(routed_target_fields & resolver_structural_fields)}"
+        )
+    if set(resolver_value_keys) != builder_dimensions:
+        errors.append(
+            "target typed-value validator coverage mismatch: "
+            f"builder_only={sorted(builder_dimensions - set(resolver_value_keys))}, "
+            f"validator_only={sorted(set(resolver_value_keys) - builder_dimensions)}"
+        )
+    for field_id in sorted(builder_dimensions & set(resolver_value_keys)):
+        required_rule_keys = set(resolver_value_keys[field_id].get("rule", set()))
+        produced_rule_keys = set(rule_values.get(field_id, {}))
+        if not required_rule_keys.issubset(produced_rule_keys):
+            errors.append(
+                f"target rule value shape mismatch for {field_id}: "
+                f"missing={sorted(required_rule_keys - produced_rule_keys)}"
+            )
+    pipeline_text = read_utf8(root / "references/pass_pipeline.md")
+    missing_pipeline_fields = sorted(
+        field for field in builder_dimensions if f"`{field}`" not in pipeline_text
+    )
+    if missing_pipeline_fields:
+        errors.append(f"pass_pipeline.md lacks target field ownership entries: {missing_pipeline_fields}")
+    router_text = read_utf8(root / "references/intent_router.md")
+    for document, text in (("pass_pipeline.md", pipeline_text), ("intent_router.md", router_text)):
+        if "resolve_target_profile.py" not in text:
+            errors.append(f"{document} does not name the target-profile resolver")
+        if "revision_preflight.py" not in text:
+            errors.append(f"{document} does not name the preservation preflight")
+        if "preserve" not in text or not ("zero" in text.lower() or "0处" in text):
+            errors.append(f"{document} lacks a deterministic preserve/zero-change contract")
+
     return {
         "passed": not errors,
         "documented_rules": sorted(documented_rules),
@@ -245,6 +329,9 @@ def validate_contracts(root: Path) -> dict[str, Any]:
         "unknown_description_commands": unknown_description_commands,
         "policy_threshold": policy_threshold,
         "code_threshold": code_threshold,
+        "builder_target_fields": sorted(builder_dimensions),
+        "routed_target_fields": sorted(routed_target_fields),
+        "structural_target_fields": sorted(resolver_structural_fields),
         "errors": errors,
     }
 

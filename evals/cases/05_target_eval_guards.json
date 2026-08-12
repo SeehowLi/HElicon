@@ -1,0 +1,26 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "target-eval-guards",
+  "input": {
+    "directional_seed_fixture": "directional_seed.txt",
+    "directional_goal_fixture": "directional_goal.txt",
+    "preservation_fixture": "preservation_sample.txt",
+    "project": "Synthetic Project",
+    "section": "Introduction",
+    "passes": "P3→P4→P5"
+  },
+  "expected": {
+    "approved_directional_passed": true,
+    "rule_direction_status": "improved",
+    "stale_hash_rejected": true,
+    "preservation_passed": true,
+    "changed_preservation_exit_code": 1,
+    "equivalent_claim_scope_passed": true,
+    "strengthened_claim_scope_rejected": true,
+    "unsafe_approved_target_rejected": true
+  },
+  "assertion": "Exercise author-approved directional admission, preservation short-circuit behavior, hash binding, and claim-scope guards with synthetic prose.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

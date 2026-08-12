@@ -38,6 +38,8 @@ PRIVATE_ARTIFACT_NAMES = {
     "holdout_manifest.json",
     "target_eval.json",
 }
+CORE_TEXT_SUFFIXES = {".md", ".yaml", ".yml", ".csv", ".json"}
+EVAL_TEXT_SUFFIXES = {".txt", ".py"}
 
 
 def is_allowed_line(token: str, line: str) -> bool:
@@ -65,7 +67,10 @@ def scan_file(path: Path, root: Path) -> list[str]:
         findings.append(f"{rel}: filled exemplar card inside skill repository")
     if rel.startswith("scripts/"):
         return findings
-    if path.suffix.lower() not in {".md", ".yaml", ".yml", ".csv", ".json"}:
+    suffix = path.suffix.lower()
+    if suffix not in CORE_TEXT_SUFFIXES and not (
+        rel.startswith("evals/") and suffix in EVAL_TEXT_SUFFIXES
+    ):
         return findings
     text = path.read_text(encoding="utf-8", errors="ignore")
     for lineno, line in enumerate(text.splitlines(), start=1):

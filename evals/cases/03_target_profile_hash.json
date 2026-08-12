@@ -1,0 +1,29 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "target-profile-hash",
+  "input": {
+    "profile_fixture": "profile_v3.synthetic.json",
+    "project_venue": "Synthetic Venue",
+    "passes": ["P4", "P5"],
+    "section_type": "Introduction"
+  },
+  "expected": {
+    "exit_code": 0,
+    "resolved_status": "partial",
+    "venue_match": true,
+    "profile_schema": "helicon-target-profile-v3",
+    "field_ids": [
+      "connectives",
+      "hedging",
+      "opening_structure",
+      "paragraph_length",
+      "sentence_length"
+    ],
+    "hash_prefix": "sha256:",
+    "hash_refresh_on_byte_change": true
+  },
+  "assertion": "Resolve a typed synthetic profile and prove that the reported qualified hash exactly tracks the profile bytes.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

@@ -45,6 +45,16 @@ BASELINE_METRICS = (
     "connective_density",
     "em_dash_per_1000_words",
 )
+SECTION_TYPES = (
+    "Introduction",
+    "Related Work",
+    "Evaluation",
+    "Contributions",
+    "Threat Model",
+    "Conclusion",
+    "Methods",
+    "Other",
+)
 
 
 class UserError(Exception):
@@ -69,9 +79,15 @@ def input_files(inputs: list[str]) -> list[Path]:
         if not path.exists():
             raise UserError(f"input does not exist: {path}")
         if path.is_dir():
+            private_root = any(part.casefold() == ".helicon" for part in path.resolve().parts)
             files.extend(
                 child for child in path.rglob("*")
-                if child.is_file() and child.suffix.lower() in EXTENSIONS and ".helicon" not in child.parts
+                if child.is_file()
+                and child.suffix.lower() in EXTENSIONS
+                and (
+                    private_root
+                    or not any(part.casefold() == ".helicon" for part in child.relative_to(path).parts)
+                )
             )
         elif path.suffix.lower() in EXTENSIONS:
             files.append(path)
@@ -129,7 +145,7 @@ def raw_sections(text: str, suffix: str) -> list[tuple[str, str]]:
     if suffix == ".tex":
         pattern = re.compile(r"\\(section|subsection|subsubsection)\*?\{([^{}]+)\}")
         matches = list(pattern.finditer(text))
-    elif suffix == ".md":
+    elif suffix in {".md", ".txt"}:
         pattern = re.compile(r"(?m)^(#{1,6})\s+(.+?)\s*$")
         matches = list(pattern.finditer(text))
     else:
@@ -173,6 +189,26 @@ def opening_type(sentence: str) -> str:
     return "other"
 
 
+def section_type(title: str) -> str:
+    """Map a heading to a reusable, deliberately conservative section type."""
+    normalized = re.sub(r"[^a-z0-9]+", " ", title.casefold()).strip()
+    if re.search(r"\b(?:threat|adversar(?:y|ial)|security) model\b", normalized):
+        return "Threat Model"
+    if re.search(r"\b(?:related|prior) work\b", normalized):
+        return "Related Work"
+    if re.search(r"\b(?:evaluation|experiment(?:s|al)?|benchmark(?:s|ing)?)\b", normalized):
+        return "Evaluation"
+    if re.search(r"\bcontributions?\b", normalized):
+        return "Contributions"
+    if re.search(r"\bconclusions?\b", normalized):
+        return "Conclusion"
+    if re.search(r"\bintroduction\b", normalized):
+        return "Introduction"
+    if re.search(r"\b(?:method(?:s|ology)?|approach|design|architecture|construction|protocol|implementation)\b", normalized):
+        return "Methods"
+    return "Other"
+
+
 def length_distribution(lengths: list[int]) -> dict[str, int]:
     return {
         "short_1_14": sum(length <= 14 for length in lengths),
@@ -187,6 +223,7 @@ def metric_block(paragraphs: list[str]) -> dict[str, Any]:
     all_lengths: list[int] = []
     alternations: list[float] = []
     openings: Counter[str] = Counter()
+    paragraph_openings: Counter[str] = Counter()
     connectives: Counter[str] = Counter()
     synonym_hits: list[dict[str, Any]] = []
     em_dash_count = 0
@@ -215,6 +252,8 @@ def metric_block(paragraphs: list[str]) -> dict[str, Any]:
         limitation_moves += len(LIMITATION_RE.findall(paragraph))
         all_sentences.extend(sentences)
         all_lengths.extend(lengths)
+        if sentences:
+            paragraph_openings[opening_type(sentences[0])] += 1
         for sentence_index, sentence in enumerate(sentences, 1):
             openings[opening_type(sentence)] += 1
             passive_sentences += bool(PASSIVE_RE.search(sentence))
@@ -262,7 +301,10 @@ def metric_block(paragraphs: list[str]) -> dict[str, Any]:
         "max_sentence_length": max(all_lengths, default=0),
         "sentence_length_distribution": length_distribution(all_lengths),
         "alternation_index": round(statistics.fmean(alternations), 4) if alternations else 0.0,
+        # Retain the all-sentence distribution for backward compatibility.
         "opening_types": dict(sorted(openings.items())),
+        "paragraph_opening_types": dict(sorted(paragraph_openings.items())),
+        "paragraph_opening_count": sum(paragraph_openings.values()),
         "connective_frequency": dict(sorted(connectives.items())),
         "connective_density": round(sum(connectives.values()) / max(len(all_lengths), 1), 4),
         "em_dash_per_1000_words": round(em_dash_count * 1000 / max(word_count, 1), 4),
@@ -284,18 +326,27 @@ def document_report(path: Path) -> dict[str, Any]:
     raw = read_utf8(path)
     document_title = extract_title(raw, path.suffix.lower())
     section_results: list[dict[str, Any]] = []
+    paragraphs_by_section_type: dict[str, list[str]] = {name: [] for name in SECTION_TYPES}
     all_clean: list[str] = []
     for section_title, content in raw_sections(raw, path.suffix.lower()):
+        if section_title == "Preamble":
+            continue
         clean = protect_latex(content) if path.suffix.lower() == ".tex" else content.replace("\r\n", "\n").replace("\r", "\n")
         paragraphs = split_paragraphs(clean)
         all_clean.extend(paragraphs)
-        section_results.append({"title": section_title, "metrics": metric_block(paragraphs)})
+        kind = section_type(section_title)
+        paragraphs_by_section_type[kind].extend(paragraphs)
+        section_results.append({"title": section_title, "section_type": kind, "metrics": metric_block(paragraphs)})
     return {
         "path": str(path),
         "format": path.suffix.lower(),
         "title": document_title,
         "document": metric_block(all_clean),
         "sections": section_results,
+        "section_types": [
+            {"section_type": kind, "metrics": metric_block(paragraphs_by_section_type[kind])}
+            for kind in SECTION_TYPES if paragraphs_by_section_type[kind]
+        ],
     }
 
 

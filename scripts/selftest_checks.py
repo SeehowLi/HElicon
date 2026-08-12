@@ -2,12 +2,22 @@
 """Run small regression tests for HElicon's repository checks."""
 from __future__ import annotations
 
+import hashlib
+import json
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 import check_ai_tells
+import build_target_profile
 import check_contract_sync
 import check_core_contamination as checker
+import extract_revision_direction
+import latex_guard
+import resolve_target_profile
+import revision_preflight
+import target_eval
 import style_fingerprint
 
 
@@ -61,6 +71,22 @@ def main() -> int:
         eprint = scan(root, "references/pass_pipeline.md", "See 2025/1234")
         tests.append(("ePrint still active", has(eprint, "ePrint-like identifier")))
 
+        eval_blocked = scan(root, "evals/fixtures/private.txt", "CKKS-KNN")
+        tests.append(("eval txt blocklist active", has(eval_blocked, "blocked token")))
+
+        eval_project = scan(root, "evals/cases/private.py", "PROJECT = 'NOMOS'")
+        tests.append(("eval py project check active", has(eval_project, "project token")))
+
+        eval_eprint = scan(root, "evals/run_private.py", "SOURCE = '2025/1234'")
+        tests.append(("eval py ePrint active", has(eval_eprint, "ePrint-like identifier")))
+
+        script_fixture = scan(
+            root,
+            "scripts/selftest_fixture.py",
+            "CKKS-KNN NOMOS 2025/1234",
+        )
+        tests.append(("scripts remain exempt from content scanning", not script_fixture))
+
         private_target = scan(root, "references/target_profile.json", "{}")
         tests.append(("private target filename blocked", has(private_target, "private target artifact filename")))
 
@@ -69,6 +95,23 @@ def main() -> int:
 
         hidden_style = scan(root, ".helicon/style/note.md", "private")
         tests.append(("repository .helicon blocked", has(hidden_style, "private .helicon artifact")))
+
+        scripts_dir = Path(__file__).resolve().parent
+        install_ps1 = (scripts_dir / "install.ps1").read_text(encoding="utf-8")
+        install_sh = (scripts_dir / "install.sh").read_text(encoding="utf-8")
+        excluded = '".git", ".agents", ".helicon", "__pycache__", "evals", "handoff"'
+        tests.append(("PowerShell installer excludes repository-only roots", excluded in install_ps1))
+        tests.append((
+            "shell installer excludes repository-only roots",
+            ".git|.agents|.helicon|__pycache__|evals|handoff)" in install_sh,
+        ))
+        tests.append((
+            "installers remove nested Python bytecode",
+            '-Filter "__pycache__"' in install_ps1
+            and '-Filter "*.pyc"' in install_ps1
+            and "-name '__pycache__'" in install_sh
+            and "-name '*.pyc'" in install_sh,
+        ))
 
         tests.append(("AI-tell rule 1", 1 in ai_rules(root / "rule1.txt", "This is a groundbreaking method.")))
         for index, keyword in enumerate((
@@ -184,6 +227,1282 @@ def main() -> int:
             "different document titles remain distinct",
             distinct["paper_count"] == 2
             and distinct["grouping"]["summary"] == "grouped: 2 files -> 2 papers",
+        ))
+
+        private_stages = root / ".helicon" / "corpus" / "stages"
+        private_stages.mkdir(parents=True)
+        stage1 = private_stages / "v1.txt"
+        stage2 = private_stages / "v2.txt"
+        stage1.write_text("# Introduction\n\nHeld paragraph.\n\nKept paragraph one.\n\n# Evaluation\n\nKept evaluation one.", encoding="utf-8")
+        stage2.write_text("# Introduction\n\nHeld paragraph revised.\n\nKept paragraph two.\n\n# Evaluation\n\nKept evaluation two.", encoding="utf-8")
+        discovered = style_fingerprint.input_files([str(private_stages)])
+        tests.append(("explicit private corpus directory is readable", discovered == [stage1.resolve(), stage2.resolve()]))
+        txt_sections = style_fingerprint.raw_sections(stage1.read_text(encoding="utf-8"), ".txt")
+        tests.append(("txt Markdown headings preserve sections", [title for title, _ in txt_sections] == ["Introduction", "Evaluation"]))
+        holdouts = extract_revision_direction.parse_holdouts(["1:1", "2:1"])
+        direction = extract_revision_direction.analyze(private_stages, "synthetic", set(), {(1, 2)}, holdouts)
+        tests.append((
+            "direction excludes declared hold-outs",
+            direction["holdout_paragraphs_by_stage"] == {"1": [1], "2": [1]},
+        ))
+
+        unnumbered_stages = root / "unnumbered-stages"
+        unnumbered_stages.mkdir()
+        unnumbered_files = []
+        for name, qualifier in (("alpha.txt", "initial"), ("middle.txt", "revised"), ("target.txt", "final")):
+            path = unnumbered_stages / name
+            path.write_text(
+                f"# Introduction\n\nThe {qualifier} first paragraph states the scope. It has support.\n\n"
+                f"The {qualifier} second paragraph states the evidence. It has support.",
+                encoding="utf-8",
+            )
+            unnumbered_files.append(path)
+
+        def run_target_builder(direction_path: Path, *extra: str) -> tuple[int, dict[str, object]]:
+            process = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    str(Path(build_target_profile.__file__).resolve()),
+                    str(unnumbered_stages),
+                    "--target-file",
+                    str(unnumbered_files[2]),
+                    "--paper-id",
+                    "synthetic",
+                    "--venue",
+                    "Synthetic Venue",
+                    "--author-advisor-pair",
+                    "1:2",
+                    "--review-driven-pair",
+                    "2:3",
+                    "--direction-input",
+                    str(direction_path),
+                    "--json",
+                    *extra,
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            try:
+                payload = json.loads(process.stdout)
+            except json.JSONDecodeError:
+                payload = {}
+            return process.returncode, payload
+
+        positioned_direction = extract_revision_direction.analyze(
+            unnumbered_stages, "synthetic", {(2, 3)}, {(1, 2)}, {3: {1}}
+        )
+        positioned_direction_path = root / "direction-positioned.json"
+        positioned_direction_path.write_text(json.dumps(positioned_direction), encoding="utf-8")
+        positioned_code, positioned_payload = run_target_builder(
+            positioned_direction_path, "--holdout", "1"
+        )
+        tests.append((
+            "unnumbered target hold-out aligns to discovered stage 3",
+            positioned_code == 0
+            and positioned_payload.get("written") is False
+            and positioned_payload.get("screening", {}).get("holdout_target_paragraphs") == [1],
+        ))
+
+        empty_direction = extract_revision_direction.analyze(
+            unnumbered_stages, "synthetic", {(2, 3)}, {(1, 2)}, {}
+        )
+        empty_direction["holdout_paragraphs_by_stage"] = {"3": []}
+        empty_direction_path = root / "direction-empty.json"
+        empty_direction_path.write_text(json.dumps(empty_direction), encoding="utf-8")
+        empty_code, empty_payload = run_target_builder(empty_direction_path)
+        tests.append((
+            "empty direction hold-out map does not cause a mismatch",
+            empty_code == 0
+            and empty_payload.get("written") is False
+            and empty_payload.get("screening", {}).get("holdout_target_paragraphs") == [],
+        ))
+
+        target = build_target_profile.build(private_stages, stage2, {1}, "synthetic", direction, "Synthetic Venue")
+        profile = target["profile"]
+        tests.append((
+            "target profile is partitioned by venue",
+            profile["schema"] == "helicon-target-profile-v3"
+            and profile["default_venue"] == "Synthetic Venue"
+            and "Synthetic Venue" in profile["venue_profiles"]
+            and profile["venue_applicability"]["cross_venue"] == "partial",
+        ))
+        opening_metrics = style_fingerprint.metric_block([
+            "However, the first paragraph opens with contrast. A second sentence follows.",
+            "We open the second paragraph with an author action. Another sentence follows.",
+        ])
+        tests.append((
+            "opening structure counts paragraph openings rather than every sentence",
+            opening_metrics["paragraph_opening_count"] == 2
+            and sum(opening_metrics["paragraph_opening_types"].values()) == 2
+            and sum(opening_metrics["opening_types"].values()) == 4,
+        ))
+        tests.append((
+            "section titles normalize to reusable types",
+            style_fingerprint.section_type("Experimental Setup") == "Evaluation"
+            and style_fingerprint.section_type("Protocol Design") == "Methods"
+            and style_fingerprint.section_type("Security Model") == "Threat Model",
+        ))
+
+        numbering_contracts = []
+        for suffix in (".md", ".txt"):
+            numbering_fixture = root / f"preamble-numbering{suffix}"
+            numbering_fixture.write_text(
+                "Synthetic preamble metadata.\n\n"
+                "# Introduction\n\n"
+                "The first body paragraph defines the scope. It has a second sentence.\n\n"
+                "The second body paragraph records the evidence. It also has a second sentence.\n",
+                encoding="utf-8",
+            )
+            direction_paragraphs = extract_revision_direction.paragraphs(numbering_fixture)
+            report = style_fingerprint.document_report(numbering_fixture)
+            full_report, full_text, paragraph_count = build_target_profile.filtered_report(
+                numbering_fixture, set()
+            )
+            held_report, held_text, held_count = build_target_profile.filtered_report(
+                numbering_fixture, {1}
+            )
+            direction_hashes = [
+                hashlib.sha256(item["text"].encode("utf-8")).hexdigest()
+                for item in direction_paragraphs
+            ]
+            filtered_hashes = [
+                hashlib.sha256(text.encode("utf-8")).hexdigest()
+                for text in style_fingerprint.split_paragraphs(full_text)
+            ]
+            held_hashes = [
+                hashlib.sha256(text.encode("utf-8")).hexdigest()
+                for text in style_fingerprint.split_paragraphs(held_text)
+            ]
+            numbering_contracts.append(
+                len(direction_paragraphs) == 2
+                and report["document"]["paragraph_count"] == 2
+                and all(section["title"] != "Preamble" for section in report["sections"])
+                and full_report["document"]["paragraph_count"] == 2
+                and paragraph_count == held_count == 2
+                and direction_hashes == filtered_hashes
+                and held_report["document"]["paragraph_count"] == 1
+                and held_hashes == direction_hashes[1:]
+            )
+        tests.append((
+            "preamble exclusion keeps direction, profile, and document numbering aligned",
+            all(numbering_contracts),
+        ))
+
+        tex_numbering = root / "preamble-numbering.tex"
+        tex_numbering.write_text(
+            "\\documentclass{article}\n"
+            "\\title{Synthetic Paper}\n"
+            "\\begin{document}\n"
+            "\\maketitle\n"
+            "\\section{Introduction}\n"
+            "The first body paragraph defines the scope. It has a second sentence.\n\n"
+            "The second body paragraph records the evidence. It also has a second sentence.\n"
+            "\\end{document}\n",
+            encoding="utf-8",
+        )
+        tex_direction = extract_revision_direction.paragraphs(tex_numbering)
+        tex_full, tex_full_text, tex_count = build_target_profile.filtered_report(tex_numbering, set())
+        tex_held, tex_held_text, tex_held_count = build_target_profile.filtered_report(tex_numbering, {1})
+        tex_direction_hashes = [
+            hashlib.sha256(item["text"].encode("utf-8")).hexdigest()
+            for item in tex_direction
+        ]
+        tex_full_hashes = [
+            hashlib.sha256(text.encode("utf-8")).hexdigest()
+            for text in style_fingerprint.split_paragraphs(tex_full_text)
+        ]
+        tex_held_hashes = [
+            hashlib.sha256(text.encode("utf-8")).hexdigest()
+            for text in style_fingerprint.split_paragraphs(tex_held_text)
+        ]
+        tests.append((
+            "TeX preamble exclusion preserves hold-out numbering and paragraph hashes",
+            len(tex_direction) == 2
+            and tex_count == tex_held_count == 2
+            and tex_full["document"]["paragraph_count"] == 2
+            and tex_held["document"]["paragraph_count"] == 1
+            and all(section["title"] != "Preamble" for section in tex_full["sections"])
+            and tex_full_hashes == tex_direction_hashes
+            and tex_held_hashes == tex_direction_hashes[1:],
+        ))
+
+        project_pack = root / ".helicon"
+        (project_pack / "style").mkdir(parents=True, exist_ok=True)
+        (project_pack / "project.yaml").write_text(
+            'schema: helicon-project-v1\nfingerprint:\n  target_venue: "Synthetic Venue"\n',
+            encoding="utf-8",
+        )
+        profile_path = project_pack / "style" / "target_profile.json"
+        profile_path.write_text(json.dumps(profile), encoding="utf-8")
+        loaded_profile, profile_hash = resolve_target_profile.read_profile(profile_path)
+        selected_venue, venue_match = resolve_target_profile.select_venue(
+            loaded_profile,
+            resolve_target_profile.project_target_venue(project_pack / "project.yaml"),
+        )
+        resolved_fields, all_exemplar = resolve_target_profile.resolve_fields(
+            loaded_profile,
+            selected_venue,
+            ["P4", "P5"],
+            "Introduction",
+        )
+        tests.append((
+            "target resolver selects only P4/P5-owned fields",
+            venue_match is True
+            and profile_hash.startswith("sha256:")
+            and {item["id"] for item in resolved_fields}
+            == {"sentence_length", "paragraph_length", "opening_structure", "connectives", "hedging"}
+            and not ({item["id"] for item in resolved_fields} & set(resolve_target_profile.P2_ONLY_FIELDS))
+            and all_exemplar is False,
+        ))
+        legacy_profile = json.loads(json.dumps(profile))
+        legacy_profile["schema"] = "helicon-target-profile-v2"
+        legacy_fields, _ = resolve_target_profile.resolve_fields(
+            legacy_profile,
+            selected_venue,
+            ["P4", "P6"],
+            "Introduction",
+        )
+        legacy_by_id = {item["id"]: item for item in legacy_fields}
+        tests.append((
+            "legacy v2 opening and raw-heading voice fields are excluded",
+            legacy_by_id["opening_structure"]["eligible"] is False
+            and legacy_by_id["active_passive_by_section"]["eligible"] is False,
+        ))
+        trace_root = project_pack / "style" / "target_traces"
+        nested_trace = trace_root / "nested" / "case.json"
+        tests.append((
+            "target trace accepts a nested target_traces file",
+            resolve_target_profile.safe_trace_path(
+                str(nested_trace), project_pack / "style"
+            ) == nested_trace.resolve(),
+        ))
+        rejected_trace_paths = (
+            project_pack / "style" / "target_profile.json",
+            project_pack / "style" / "target_screening.json",
+            project_pack / "style" / "other-trace.json",
+            project_pack / "style" / "other" / "trace.json",
+            trace_root,
+        )
+        rejected_trace_count = 0
+        for rejected_trace in rejected_trace_paths:
+            try:
+                resolve_target_profile.safe_trace_path(
+                    str(rejected_trace), project_pack / "style"
+                )
+            except resolve_target_profile.UserError:
+                rejected_trace_count += 1
+        tests.append((
+            "target trace rejects reserved files, other style paths, and its root directory",
+            rejected_trace_count == len(rejected_trace_paths),
+        ))
+
+        preflight_project = root / "preflight-project"
+        preflight_pack = preflight_project / ".helicon"
+        preflight_style = preflight_pack / "style"
+        preflight_style.mkdir(parents=True)
+        (preflight_pack / "project.yaml").write_text(
+            'schema: helicon-project-v1\nfingerprint:\n  target_venue: "Synthetic Venue"\n',
+            encoding="utf-8",
+        )
+        preflight_profile = {
+            "schema": "helicon-target-profile-v3",
+            "default_venue": "Synthetic Venue",
+            "venue_profiles": {
+                "Synthetic Venue": {
+                    "fields": {
+                        "sentence_length": {
+                            "source": "rule",
+                            "confidence": "high",
+                            "value": {"mean_range_words": [1, 100], "minimum_sd_words": 0},
+                        },
+                        "paragraph_length": {
+                            "source": "exemplar",
+                            "confidence": "high",
+                            "value": {"mean_words": 80, "word_sd": 10, "mean_sentences": 4},
+                        },
+                        "opening_structure": {
+                            "source": "exemplar",
+                            "confidence": "high",
+                            "value": {"author_action": 0.5, "topic_frame": 0.5},
+                        },
+                        "connectives": {
+                            "source": "exemplar",
+                            "confidence": "high",
+                            "value": {"density_per_sentence": 0.5, "allowed": []},
+                        },
+                        "hedging": {
+                            "source": "rule",
+                            "confidence": "high",
+                            "value": {"policy": "Use evidence-bound hedges only."},
+                        },
+                    }
+                }
+            },
+        }
+        preflight_profile_path = preflight_style / "target_profile.json"
+
+        def write_preflight_profile() -> None:
+            preflight_profile_path.write_text(
+                json.dumps(preflight_profile, ensure_ascii=False), encoding="utf-8"
+            )
+
+        write_preflight_profile()
+        clean_fragment = preflight_project / "clean.txt"
+        clean_fragment.write_text(
+            "Requests arrive. The system places each request in a queue. "
+            "A worker processes queued items and records their status before returning a response. "
+            "An independent checker compares every recorded status with the reference produced during setup.",
+            encoding="utf-8",
+        )
+        clean_preflight, clean_style_dir = revision_preflight.preflight(
+            clean_fragment, preflight_project, "Introduction", ["P4", "P5"]
+        )
+        tests.append((
+            "revision preflight preserves a clean four-sentence fragment",
+            clean_preflight["decision"] == "preserve"
+            and clean_preflight["trigger_reason_ids"] == []
+            and clean_preflight["metric_counts"]["sentence_count"] == 4,
+        ))
+        tests.append((
+            "exemplar connective density is a boundary, not a quota",
+            clean_preflight["decision"] == "preserve"
+            and clean_preflight["metric_counts"]["connective_count"] == 0
+            and "connectives" in clean_preflight["evaluated_field_ids"],
+        ))
+        tests.append((
+            "single-paragraph preflight excludes paragraph and opening targets",
+            clean_preflight["metric_counts"]["paragraph_count"] == 1
+            and {"paragraph_length", "opening_structure"}.issubset(
+                clean_preflight["excluded_field_ids"]
+            )
+            and not ({"paragraph_length", "opening_structure"} & set(
+                clean_preflight["evaluated_field_ids"]
+            )),
+        ))
+
+        preflight_profile["venue_profiles"]["Synthetic Venue"]["fields"]["sentence_length"][
+            "value"
+        ] = {"mean_range_words": [12, 30], "minimum_sd_words": 4}
+        write_preflight_profile()
+        flat_fragment = preflight_project / "flat.txt"
+        flat_fragment.write_text(
+            "Results hold. Results hold. Results hold. Results hold.", encoding="utf-8"
+        )
+        flat_preflight, _ = revision_preflight.preflight(
+            flat_fragment, preflight_project, "Introduction", ["P4"]
+        )
+        tests.append((
+            "revision preflight revises rule mean or variance violations",
+            flat_preflight["decision"] == "revise"
+            and {
+                "P4_RULE_SENTENCE_MEAN_OUT_OF_RANGE",
+                "P4_RULE_SENTENCE_SD_LOW",
+            }.issubset(flat_preflight["trigger_reason_ids"]),
+        ))
+
+        _, low_sd_only_triggers = revision_preflight.evaluate_p4(
+            {
+                "sentence_length": {
+                    "source": "rule",
+                    "value": {"mean_range_words": [12, 30], "minimum_sd_words": 4},
+                }
+            },
+            {
+                "sentence_count": 4,
+                "paragraph_count": 1,
+                "mean_sentence_length": 20,
+                "sentence_length_sd": 2,
+                "opening_types": {"noun_phrase_subject": 2, "condition_or_scope": 2},
+            },
+        )
+        tests.append((
+            "low sentence variance alone does not authorize P4 churn",
+            low_sd_only_triggers == set(),
+        ))
+
+        preflight_profile["venue_profiles"]["Synthetic Venue"]["fields"]["sentence_length"][
+            "value"
+        ] = {"mean_range_words": [1, 100], "minimum_sd_words": 0}
+        write_preflight_profile()
+        ai_fragment = preflight_project / "ai-tell.txt"
+        ai_fragment.write_text(
+            "This groundbreaking method handles requests. The queue records each task. "
+            "A worker checks the stored state. The coordinator returns the result.",
+            encoding="utf-8",
+        )
+        ai_preflight, _ = revision_preflight.preflight(
+            ai_fragment, preflight_project, "Introduction", ["P5"]
+        )
+        tests.append((
+            "revision preflight revises an AI-tell hit",
+            ai_preflight["decision"] == "revise"
+            and "R01" in ai_preflight["ai_tells"]["rule_ids"]
+            and "P5_AI_R01" in ai_preflight["trigger_reason_ids"],
+        ))
+
+        traced_preflight, traced_style_dir = revision_preflight.preflight(
+            clean_fragment,
+            preflight_project,
+            "Introduction",
+            ["P4", "P5"],
+            "C01",
+            "run-001",
+        )
+        trace_path = resolve_target_profile.safe_trace_path(
+            str(preflight_style / "target_traces" / "stage3c" / "C01.json"),
+            traced_style_dir,
+        )
+        resolve_target_profile.write_trace(trace_path, traced_preflight)
+        trace_payload = json.loads(trace_path.read_text(encoding="utf-8"))
+        tests.append((
+            "revision preflight trace is privacy-safe and case-bound",
+            clean_style_dir == traced_style_dir == preflight_style.resolve()
+            and trace_path.parent == (preflight_style / "target_traces" / "stage3c").resolve()
+            and trace_payload == traced_preflight
+            and trace_payload["schema"] == revision_preflight.OUTPUT_SCHEMA
+            and trace_payload["producer"] == revision_preflight.PRODUCER
+            and trace_payload["case_id"] == "C01"
+            and trace_payload["run_nonce"] == "run-001"
+            and trace_payload["fragment_sha256"]
+            == "sha256:" + hashlib.sha256(clean_fragment.read_bytes()).hexdigest()
+            and set(trace_payload["target"]) == {"status", "schema", "profile_sha256"}
+            and "text" not in json.dumps(trace_payload).casefold(),
+        ))
+
+        preflight_profile_path.unlink()
+        fallback_preflight, _ = revision_preflight.preflight(
+            flat_fragment, preflight_project, "Introduction", ["P4"]
+        )
+        tests.append((
+            "revision preflight retains rule-backed P4 without a target profile",
+            fallback_preflight["target"]["status"] == "none"
+            and fallback_preflight["decision"] == "revise"
+            and "sentence_length" in fallback_preflight["evaluated_field_ids"],
+        ))
+        write_preflight_profile()
+
+        valid_sentence_value = preflight_profile["venue_profiles"]["Synthetic Venue"]["fields"][
+            "sentence_length"
+        ]["value"]
+        preflight_profile["venue_profiles"]["Synthetic Venue"]["fields"]["sentence_length"][
+            "value"
+        ] = "malformed"
+        write_preflight_profile()
+        malformed_target_rejected = False
+        try:
+            revision_preflight.preflight(clean_fragment, preflight_project, "Introduction", ["P4"])
+        except resolve_target_profile.UserError:
+            malformed_target_rejected = True
+        tests.append((
+            "current target schema rejects malformed typed field values",
+            malformed_target_rejected,
+        ))
+        preflight_profile["venue_profiles"]["Synthetic Venue"]["fields"]["sentence_length"][
+            "value"
+        ] = valid_sentence_value
+        write_preflight_profile()
+
+        incomplete_token_errors = 0
+        for case_id, run_nonce in (("C01", None), (None, "run-001")):
+            try:
+                revision_preflight.validated_tokens(case_id, run_nonce)
+            except revision_preflight.UserError:
+                incomplete_token_errors += 1
+        tests.append((
+            "revision preflight requires case and nonce together",
+            incomplete_token_errors == 2,
+        ))
+        invalid_token_errors = 0
+        for case_id, run_nonce in (("bad token", "run-001"), ("C01", "bad/token")):
+            try:
+                revision_preflight.validated_tokens(case_id, run_nonce)
+            except revision_preflight.UserError:
+                invalid_token_errors += 1
+        tests.append((
+            "revision preflight rejects unsafe case and nonce tokens",
+            invalid_token_errors == 2,
+        ))
+
+        before_holdout = root / "holdout-before.txt"
+        output_holdout = root / "holdout-output.txt"
+        target_holdout = root / "holdout-target.txt"
+        before_holdout.write_text(
+            "The groundbreaking method completes the task in 12 ms. It is significantly efficient.",
+            encoding="utf-8",
+        )
+        target_holdout.write_text(
+            "The method completes the task in 12 ms. Its design is concise and evidence-bounded.",
+            encoding="utf-8",
+        )
+        output_holdout.write_text(target_holdout.read_text(encoding="utf-8"), encoding="utf-8")
+        trailer, trailer_fields = target_eval.read_trailer(
+            "[HElicon] synthetic §Introduction · P3 → P4 → P5 · 2处 · frozen:0变化 · baseline:none · target:partial",
+            None,
+        )
+        _, compact_trailer_fields = target_eval.read_trailer(
+            "[HElicon] synthetic §Introduction · P3→P4→P5 · 2处 · frozen:0变化 · baseline:none · target:partial",
+            None,
+        )
+        tests.append((
+            "documented and compact trailer arrows share one canonical pass sequence",
+            trailer_fields["passes"] == compact_trailer_fields["passes"] == "P3→P4→P5",
+        ))
+        route_sources = {
+            "expected_target_status": "partial",
+            "dimension_sources": {
+                "sentence_length": "exemplar",
+                "paragraph_length": "exemplar",
+                "opening_structure": "exemplar",
+                "connectives": "rule",
+                "hedging": "rule",
+            },
+        }
+        p3_target = target_eval.routed_target_contract({"passes": "P3"}, route_sources)
+        p7_target = target_eval.routed_target_contract({"passes": "P7"}, route_sources)
+        default_target = target_eval.routed_target_contract(trailer_fields, route_sources)
+        tests.append((
+            "target status follows target-owning routed passes",
+            p3_target["routed_dimensions"] == []
+            and p3_target["expected_target_status"] == "none"
+            and p7_target["routed_dimensions"] == []
+            and p7_target["expected_target_status"] == "none"
+            and default_target["routed_dimensions"]
+            == ["connectives", "hedging", "opening_structure", "paragraph_length", "sentence_length"]
+            and default_target["expected_target_status"] == "partial",
+        ))
+        invalid_trailer_rejected = False
+        try:
+            target_eval.read_trailer(
+                "[HElicon] synthetic §Introduction · P3 -> P4 · 2处 · frozen:0变化 · baseline:none · target:partial",
+                None,
+            )
+        except target_eval.UserError:
+            invalid_trailer_rejected = True
+        tests.append(("invalid trailer arrow remains rejected", invalid_trailer_rejected))
+        txt_eval = target_eval.evaluate(
+            before_holdout,
+            output_holdout,
+            target_holdout,
+            None,
+            trailer,
+            trailer_fields,
+            {"expected_target_status": "partial"},
+            True,
+        )
+        tests.append((
+            "txt hold-out evaluation preserves immutable data",
+            txt_eval["passed"]
+            and txt_eval["frozen_set"]["passed"]
+            and txt_eval["structural_distance"]["aggregate_convergence_percent"] == 100.0,
+        ))
+        tests.append((
+            "single-paragraph and absent-pass metrics are excluded",
+            set(target_eval.PARAGRAPH_DISTANCE_METRICS).issubset(
+                txt_eval["structural_distance"]["excluded_metrics"]
+            )
+            and "active_sentence_ratio" in txt_eval["structural_distance"]["excluded_metrics"]
+            and "passive_sentence_ratio" in txt_eval["structural_distance"]["excluded_metrics"]
+            and "first_person_per_1000_words" in txt_eval["structural_distance"]["excluded_metrics"],
+        ))
+        confounded_target = root / "holdout-target-confounded.txt"
+        confounded_target.write_text(
+            "The method completes the task in 99 ms. Its design is concise and evidence-bounded.",
+            encoding="utf-8",
+        )
+        confounded_eval = target_eval.evaluate(
+            before_holdout,
+            output_holdout,
+            confounded_target,
+            None,
+            trailer,
+            trailer_fields,
+            {"expected_target_status": "partial"},
+            True,
+        )
+        tests.append((
+            "content-confounded ground truth cannot pass efficacy validation",
+            not confounded_eval["ground_truth_compatibility"]["passed"]
+            and not confounded_eval["evaluation_valid"]
+            and not confounded_eval["passed"],
+        ))
+
+        approved_style_dir = root / ".helicon" / "style" / "approved-eval"
+        approved_style_dir.mkdir(parents=True)
+        approved_before = approved_style_dir / "before.txt"
+        approved_output = approved_style_dir / "output.txt"
+        approved_target = approved_style_dir / "target.txt"
+        approved_screening = approved_style_dir / "target_screening.json"
+        approved_manifest = approved_style_dir / "approval.json"
+        approved_before.write_text(
+            "The method offers flexibility, providing useful support.", encoding="utf-8"
+        )
+        approved_target.write_text(
+            "The method offers flexibility and provides useful support.", encoding="utf-8"
+        )
+        approved_output.write_text(
+            approved_target.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+        approved_screening.write_text(json.dumps({
+            "schema": "helicon-target-screening-v2",
+            "decision_table": [
+                {"dimension": "sentence_length", "source": "rule"},
+                {"dimension": "paragraph_length", "source": "rule"},
+                {"dimension": "opening_structure", "source": "rule"},
+                {"dimension": "connectives", "source": "exemplar"},
+                {"dimension": "hedging", "source": "exemplar"},
+                {"dimension": "active_passive_by_section", "source": "exemplar"},
+                {"dimension": "first_person", "source": "exemplar"},
+            ],
+        }), encoding="utf-8")
+
+        def write_approval(**overrides: object) -> None:
+            payload: dict[str, object] = {
+                "schema": target_eval.APPROVED_TARGET_SCHEMA,
+                "source": target_eval.APPROVED_TARGET_SOURCE,
+                "approval_status": "approved",
+                "approved_utc": "2026-08-11T08:00:00+00:00",
+                "content_stable_confirmed": True,
+                "before_sha256": target_eval.sha256_file(approved_before),
+                "target_sha256": target_eval.sha256_file(approved_target),
+                "screening_sha256": target_eval.sha256_file(approved_screening),
+            }
+            payload.update(overrides)
+            approved_manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+        write_approval()
+        approved_admission = target_eval.verify_author_approved_target(
+            approved_screening,
+            approved_manifest,
+            approved_before,
+            approved_target,
+            None,
+        )
+        approved_eval = target_eval.evaluate(
+            approved_before,
+            approved_output,
+            approved_target,
+            None,
+            trailer,
+            trailer_fields,
+            approved_admission,
+            approved_admission["content_stable_confirmed"],
+        )
+        tests.append((
+            "author-approved style-only target has explicit non-v3 provenance",
+            approved_admission["admission_kind"] == "author-approved-style-only-target"
+            and approved_eval["schema"] == "helicon-author-approved-target-eval-v1"
+            and approved_eval["target_provenance"]["source"]
+            == "author-approved-ai-assisted"
+            and approved_eval["target_provenance"]["before_sha256"]
+            == target_eval.sha256_file(approved_before)
+            and approved_eval["target_provenance"]["target_sha256"]
+            == target_eval.sha256_file(approved_target)
+            and "holdout" not in approved_eval
+            and "v3" not in approved_eval["ai_tells_by_rule"]
+            and "v1_to_v3" not in approved_eval["alignment"],
+        ))
+        tests.append((
+            "author-approved rule evidence can pass with null structural convergence",
+            approved_eval["structural_distance"]["aggregate_convergence_percent"] is None
+            and approved_eval["directional_evidence"]["structural"]["status"]
+            == "insufficient_signal"
+            and approved_eval["directional_evidence"]["ai_tell_rule_distance"][
+                "convergence_percent"
+            ] == 100.0
+            and approved_eval["directional_evidence"]["overall_status"] == "improved"
+            and approved_eval["directional_improvement"] is True
+            and approved_eval["passed"],
+        ))
+        approved_output.write_text(
+            "However, the method offers flexibility and provides useful support.",
+            encoding="utf-8",
+        )
+        drifted_approved_eval = target_eval.evaluate(
+            approved_before,
+            approved_output,
+            approved_target,
+            None,
+            trailer,
+            trailer_fields,
+            approved_admission,
+            True,
+        )
+        tests.append((
+            "exact-match structural drift blocks an otherwise improved rule channel",
+            drifted_approved_eval["structural_distance"][
+                "aggregate_convergence_percent"
+            ] is None
+            and drifted_approved_eval["directional_evidence"]["structural"]["status"]
+            == "worsened"
+            and drifted_approved_eval["directional_evidence"]["ai_tell_rule_distance"][
+                "status"
+            ] == "improved"
+            and drifted_approved_eval["directional_evidence"]["overall_status"]
+            == "mixed_or_worsened"
+            and not drifted_approved_eval["passed"],
+        ))
+        approved_output.write_text(
+            approved_target.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+        zero_rules = {str(rule): 0 for rule in range(1, 15)}
+        rule_before = {**zero_rules, "10": 1}
+        rule_output = {**zero_rules, "1": 1}
+        off_target_rule = target_eval.ai_tell_directional_distance(
+            rule_before, rule_output, zero_rules
+        )
+        tests.append((
+            "new AI-tell outside target-changing rules blocks rule-channel improvement",
+            off_target_rule["convergence_percent"] == 100.0
+            and off_target_rule["status"] == "worsened"
+            and off_target_rule["directional_improvement"] is False
+            and set(off_target_rule["off_target_regressions"]) == {"R1"},
+        ))
+
+        write_approval(approval_status="candidate")
+        unapproved_rejected = False
+        try:
+            target_eval.verify_author_approved_target(
+                approved_screening,
+                approved_manifest,
+                approved_before,
+                approved_target,
+                None,
+            )
+        except target_eval.UserError:
+            unapproved_rejected = True
+        tests.append(("unapproved style target is rejected", unapproved_rejected))
+
+        non_boolean_confirmations_rejected = 0
+        for value in (1, "true"):
+            write_approval(content_stable_confirmed=value)
+            try:
+                target_eval.verify_author_approved_target(
+                    approved_screening,
+                    approved_manifest,
+                    approved_before,
+                    approved_target,
+                    None,
+                )
+            except target_eval.UserError:
+                non_boolean_confirmations_rejected += 1
+        tests.append((
+            "content-stable approval requires the JSON true literal",
+            non_boolean_confirmations_rejected == 2,
+        ))
+
+        write_approval(target_sha256="0" * 64)
+        stale_approval_rejected = False
+        try:
+            target_eval.verify_author_approved_target(
+                approved_screening,
+                approved_manifest,
+                approved_before,
+                approved_target,
+                None,
+            )
+        except target_eval.UserError:
+            stale_approval_rejected = True
+        tests.append(("stale approved-target hash is rejected", stale_approval_rejected))
+        write_approval()
+
+        valid_screening_text = approved_screening.read_text(encoding="utf-8")
+        approved_screening.write_text("{}", encoding="utf-8")
+        tampered_screening_rejected = False
+        try:
+            target_eval.verify_author_approved_target(
+                approved_screening,
+                approved_manifest,
+                approved_before,
+                approved_target,
+                None,
+            )
+        except target_eval.UserError:
+            tampered_screening_rejected = True
+        tests.append((
+            "approved target manifest binds the screening hash",
+            tampered_screening_rejected,
+        ))
+
+        valid_screening_payload = json.loads(valid_screening_text)
+        missing_source_payload = json.loads(valid_screening_text)
+        missing_source_payload["decision_table"] = [
+            item for item in missing_source_payload["decision_table"]
+            if item["dimension"] != "hedging"
+        ]
+        approved_screening.write_text(json.dumps(missing_source_payload), encoding="utf-8")
+        write_approval()
+        missing_source_rejected = False
+        try:
+            target_eval.verify_author_approved_target(
+                approved_screening,
+                approved_manifest,
+                approved_before,
+                approved_target,
+                None,
+            )
+        except target_eval.UserError:
+            missing_source_rejected = True
+
+        duplicate_source_payload = json.loads(valid_screening_text)
+        duplicate_source_payload["decision_table"].append(
+            dict(duplicate_source_payload["decision_table"][0])
+        )
+        approved_screening.write_text(json.dumps(duplicate_source_payload), encoding="utf-8")
+        write_approval()
+        duplicate_source_rejected = False
+        try:
+            target_eval.verify_author_approved_target(
+                approved_screening,
+                approved_manifest,
+                approved_before,
+                approved_target,
+                None,
+            )
+        except target_eval.UserError:
+            duplicate_source_rejected = True
+        tests.append((
+            "approved screening rejects missing or duplicate routed sources",
+            missing_source_rejected and duplicate_source_rejected,
+        ))
+        malformed_screening_rejected = 0
+        for malformed_screening in ([], {"decision_table": [None]}):
+            try:
+                target_eval.screening_route_sources(malformed_screening)  # type: ignore[arg-type]
+            except target_eval.UserError:
+                malformed_screening_rejected += 1
+        tests.append((
+            "screening root and decision entries have explicit type errors",
+            malformed_screening_rejected == 2,
+        ))
+        approved_screening.write_text(
+            json.dumps(valid_screening_payload), encoding="utf-8"
+        )
+        write_approval()
+
+        approved_cli_args = [
+            sys.executable,
+            "-B",
+            str(Path(target_eval.__file__).resolve()),
+            str(approved_before),
+            str(approved_output),
+            str(approved_target),
+            "--screening",
+            str(approved_screening),
+            "--approval-manifest",
+            str(approved_manifest),
+            "--trailer",
+            trailer,
+            "--execution-evidence-class",
+            "independent-session",
+            "--output-report",
+            str(approved_style_dir / "cli-report.json"),
+            "--json",
+        ]
+        approved_cli = subprocess.run(
+            approved_cli_args,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        approved_cli_payload = json.loads(approved_cli.stdout)
+        tests.append((
+            "author-approved CLI separates execution class from target provenance",
+            approved_cli.returncode == 0
+            and approved_cli_payload["execution_provenance"]["evidence_class"]
+            == "independent-session"
+            and approved_cli_payload["target_provenance"]["source"]
+            == "author-approved-ai-assisted"
+            and "execution" in approved_cli_payload["execution_provenance"]["scope"]
+            and approved_cli_payload["written"] is False,
+        ))
+        approved_manifest.write_text("[]", encoding="utf-8")
+        malformed_manifest_cli = subprocess.run(
+            approved_cli_args,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        malformed_manifest_payload = json.loads(malformed_manifest_cli.stdout)
+        tests.append((
+            "malformed manifest root preserves JSON error and exit-code contract",
+            malformed_manifest_cli.returncode == 2
+            and malformed_manifest_payload["ok"] is False
+            and "JSON root must be an object" in malformed_manifest_payload["error"]
+            and "Traceback" not in malformed_manifest_cli.stderr,
+        ))
+        write_approval()
+
+        malformed_holdout_screening = approved_style_dir / "malformed-holdout-screening.json"
+        malformed_holdout_screening.write_text(json.dumps({
+            "schema": target_eval.APPROVED_SCREENING_SCHEMA,
+            "holdout_target_paragraphs": 1,
+            "target_file": str(approved_target),
+            "decision_table": [],
+        }), encoding="utf-8")
+        malformed_holdout_cli = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                str(Path(target_eval.__file__).resolve()),
+                str(approved_before),
+                str(approved_output),
+                str(approved_target),
+                "--screening",
+                str(malformed_holdout_screening),
+                "--target-paragraph",
+                "1",
+                "--trailer",
+                trailer,
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        malformed_holdout_payload = json.loads(malformed_holdout_cli.stdout)
+        tests.append((
+            "malformed screened-v3 shape preserves JSON error and exit-code contract",
+            malformed_holdout_cli.returncode == 2
+            and malformed_holdout_payload["ok"] is False
+            and "positive integers" in malformed_holdout_payload["error"]
+            and "Traceback" not in malformed_holdout_cli.stderr,
+        ))
+
+        guard_before = approved_style_dir / "guard-before.txt"
+        guard_target = approved_style_dir / "guard-target.txt"
+        guard_manifest = approved_style_dir / "guard-approval.json"
+        guard_before.write_text("The method completes the task in 12 ms.", encoding="utf-8")
+        guard_target.write_text("The method completes the task in 99 ms.", encoding="utf-8")
+        guard_manifest.write_text(json.dumps({
+            "schema": target_eval.APPROVED_TARGET_SCHEMA,
+            "source": target_eval.APPROVED_TARGET_SOURCE,
+            "approval_status": "approved",
+            "approved_utc": "2026-08-11T08:00:00+00:00",
+            "content_stable_confirmed": True,
+            "before_sha256": target_eval.sha256_file(guard_before),
+            "target_sha256": target_eval.sha256_file(guard_target),
+            "screening_sha256": target_eval.sha256_file(approved_screening),
+        }), encoding="utf-8")
+        immutable_target_rejected = False
+        try:
+            target_eval.verify_author_approved_target(
+                approved_screening,
+                guard_manifest,
+                guard_before,
+                guard_target,
+                None,
+            )
+        except target_eval.UserError:
+            immutable_target_rejected = True
+        tests.append((
+            "author-approved target still requires before-target immutable guard",
+            immutable_target_rejected,
+        ))
+
+        preservation_before = root / "preservation-before.txt"
+        preservation_output = root / "preservation-output.txt"
+        preservation_target = root / "preservation-target.txt"
+        preservation_text = "This paragraph already matches the approved target."
+        preservation_before.write_text(preservation_text + "\n", encoding="utf-8")
+        preservation_output.write_text(preservation_text, encoding="utf-8")
+        preservation_target.write_text(preservation_text + "\n", encoding="utf-8")
+        preservation_trailer, preservation_fields = target_eval.read_trailer(
+            "[HElicon] synthetic §Introduction · P3 → P4 → P5 · 0处 · "
+            "frozen:0变化 · baseline:none · target:partial",
+            None,
+        )
+        preservation = target_eval.evaluate_preservation(
+            preservation_before,
+            preservation_output,
+            preservation_target,
+            None,
+            preservation_trailer,
+            preservation_fields,
+            {"expected_target_status": "partial", "verified": True},
+        )
+        tests.append((
+            "preservation mode passes canonical exact output",
+            preservation["schema"] == "helicon-target-preservation-eval-v1"
+            and preservation["passed"]
+            and preservation["exact_preservation"]["passed"]
+            and preservation["exact_preservation"]["byte_output_equals_before"] is False
+            and preservation["frozen_set"]["passed"]
+            and preservation["directional_improvement"] is None
+            and preservation["structural_distance"]["aggregate_convergence_percent"] is None
+            and target_eval.result_exit_code(preservation) == 0,
+        ))
+
+        preservation_output.write_text(
+            "This paragraph changes text that was already approved.", encoding="utf-8"
+        )
+        changed_preservation = target_eval.evaluate_preservation(
+            preservation_before,
+            preservation_output,
+            preservation_target,
+            None,
+            preservation_trailer,
+            preservation_fields,
+            {"expected_target_status": "partial", "verified": True},
+        )
+        tests.append((
+            "preservation text change is a report and exit failure",
+            not changed_preservation["exact_preservation"]["passed"]
+            and changed_preservation["frozen_set"]["passed"]
+            and not changed_preservation["passed"]
+            and target_eval.result_exit_code(changed_preservation) == 1,
+        ))
+
+        mismatched_target = root / "preservation-mismatched-target.txt"
+        mismatched_target.write_text("A different approved target.", encoding="utf-8")
+        preservation_admission_rejected = False
+        try:
+            target_eval.evaluate_preservation(
+                preservation_before,
+                preservation_output,
+                mismatched_target,
+                None,
+                preservation_trailer,
+                preservation_fields,
+                {"expected_target_status": "partial", "verified": True},
+            )
+        except target_eval.UserError:
+            preservation_admission_rejected = True
+        tests.append((
+            "preservation mode rejects before-target mismatch",
+            preservation_admission_rejected,
+        ))
+
+        def claim_guard(
+            label: str, before_text: str, after_text: str, allowed: set[str] | None = None
+        ) -> dict[str, object]:
+            before_path = root / f"claim-{label}-before.txt"
+            after_path = root / f"claim-{label}-after.txt"
+            before_path.write_text(before_text, encoding="utf-8")
+            after_path.write_text(after_text, encoding="utf-8")
+            return latex_guard.compare(before_path, after_path, None, allowed or set())
+
+        contraction_guard = claim_guard(
+            "contraction",
+            "The system cannot process requests.",
+            "The system can't process requests.",
+        )
+        tests.append((
+            "claim-scope guard normalizes equivalent contractions",
+            contraction_guard["passed"]
+            and not contraction_guard["differences"]["negation"]["changed"]
+            and not contraction_guard["differences"]["modality"]["changed"],
+        ))
+
+        rhetorical_parallel = claim_guard(
+            "not-only",
+            "The method not only reduces latency but also lowers memory use.",
+            "The method reduces latency and lowers memory use.",
+        )
+        tests.append((
+            "claim-scope guard permits the documented Rule 12 correlative repair",
+            rhetorical_parallel["passed"]
+            and not rhetorical_parallel["differences"]["negation"]["changed"]
+            and not rhetorical_parallel["differences"]["quantifier_scope"]["changed"],
+        ))
+
+        redundant_hedge = claim_guard(
+            "redundant-hedge",
+            "The method may possibly support this workload.",
+            "The method may support this workload.",
+        )
+        tests.append((
+            "claim-scope guard permits same-tier hedge deduplication",
+            redundant_hedge["passed"]
+            and not redundant_hedge["differences"]["claim_strength"]["changed"],
+        ))
+
+        lexical_modal = claim_guard(
+            "lexical-modal",
+            "The system may process queued requests under this policy.",
+            "Under this policy, the system may handle queued requests.",
+        )
+        tests.append((
+            "claim-scope guard permits lexical rewrite around an unchanged modal",
+            lexical_modal["passed"]
+            and not lexical_modal["differences"]["modality"]["changed"],
+        ))
+
+        lexical_negation = claim_guard(
+            "lexical-negation",
+            "Method A does not rely on trusted hardware for execution.",
+            "Method A does not require trusted hardware during execution.",
+        )
+        tests.append((
+            "claim-scope guard permits lexical rewrite around unchanged negation",
+            lexical_negation["passed"]
+            and not lexical_negation["differences"]["negation"]["changed"],
+        ))
+
+        appearance_dedup = claim_guard(
+            "appearance-dedup",
+            "The measurements appear to suggest that the trend is stable.",
+            "The measurements suggest that the trend remains stable.",
+        )
+        tests.append((
+            "claim-scope guard treats appearance plus suggestion as one hedge layer",
+            appearance_dedup["passed"]
+            and not appearance_dedup["differences"]["claim_strength"]["changed"],
+        ))
+
+        probability_dedup = claim_guard(
+            "probability-dedup",
+            "The observed effect seems likely under this workload.",
+            "The observed effect is likely for this workload.",
+        )
+        tests.append((
+            "claim-scope guard treats appearance plus probability as one hedge layer",
+            probability_dedup["passed"]
+            and not probability_dedup["differences"]["claim_strength"]["changed"],
+        ))
+
+        shifted_scope = claim_guard(
+            "shifted-scope",
+            "Method A is not robust. Method B may execute the task.",
+            "The setting is fixed. Method A is not reliable. Method B may run the task.",
+        )
+        tests.append((
+            "claim-scope alignment tolerates an inserted leading scope",
+            shifted_scope["passed"]
+            and not shifted_scope["differences"]["negation"]["changed"]
+            and not shifted_scope["differences"]["modality"]["changed"],
+        ))
+
+        strengthened_modal = claim_guard(
+            "strengthened-modal",
+            "The system may process this request.",
+            "The system must process this request.",
+        )
+        tests.append((
+            "claim-scope guard rejects may-to-must strengthening",
+            not strengthened_modal["passed"]
+            and "modality" in strengthened_modal["failed_categories"],
+        ))
+
+        lost_hedge = claim_guard(
+            "lost-hedge",
+            "The method is likely secure under this model.",
+            "The method is secure under this model.",
+        )
+        tests.append((
+            "claim-scope guard rejects removal of the last hedge layer",
+            not lost_hedge["passed"]
+            and "claim_strength" in lost_hedge["failed_categories"],
+        ))
+
+        moved_negation = claim_guard(
+            "moved-negation",
+            "Method A is not secure. Method B is secure.",
+            "Method A is secure. Method B is not secure.",
+        )
+        tests.append((
+            "claim-scope guard binds markers to coarse clause position",
+            not moved_negation["passed"]
+            and "negation" in moved_negation["failed_categories"],
+        ))
+        reordered_negation = claim_guard(
+            "reordered-negation",
+            "Method A is not secure. Method B is secure.",
+            "Method B is not secure. Method A is secure.",
+        )
+        tests.append((
+            "claim-scope guard follows the subject across reordered scopes",
+            not reordered_negation["passed"]
+            and "negation" in reordered_negation["failed_categories"],
+        ))
+        boilerplate_negation = claim_guard(
+            "boilerplate-negation",
+            "The method is not secure. The system is efficient.",
+            "Security follows from the proof. The method is not scalable.",
+        )
+        tests.append((
+            "claim-scope guard rejects boilerplate-based negation rebinding",
+            not boilerplate_negation["passed"]
+            and "negation" in boilerplate_negation["failed_categories"],
+        ))
+        radical_modal = claim_guard(
+            "radical-modal",
+            "The construction may fail.",
+            "Failure may occur.",
+        )
+        tests.append((
+            "claim-scope guard conservatively rejects an unverifiable radical paraphrase",
+            not radical_modal["passed"]
+            and "modality" in radical_modal["failed_categories"],
+        ))
+        marker_payload = json.dumps(
+            {name: moved_negation["differences"][name] for name in latex_guard.ALLOW_CHOICES[5:]}
+        )
+        tests.append((
+            "claim-scope report exposes marker classes without prose anchors",
+            "@" not in marker_payload
+            and "method" not in marker_payload.casefold()
+            and "secure" not in marker_payload.casefold(),
+        ))
+
+        claim_scope_cases = {
+            "negation": (
+                "The system does not process requests.",
+                "The system processes requests.",
+            ),
+            "modality": (
+                "The system may process requests.",
+                "The system processes requests.",
+            ),
+            "quantifier_scope": (
+                "The system processes every request.",
+                "The system processes requests.",
+            ),
+            "comparison": (
+                "The system is faster.",
+                "The system is responsive.",
+            ),
+            "claim_strength": (
+                "The results suggest a stable trend.",
+                "The results summarize a stable trend.",
+            ),
+        }
+        for category, (before_text, after_text) in claim_scope_cases.items():
+            result = claim_guard(category, before_text, after_text)
+            tests.append((
+                f"claim-scope guard rejects {category} changes",
+                not result["passed"]
+                and category in result["failed_categories"]
+                and result["differences"][category]["changed"],
+            ))
+
+        allowed_negation = claim_guard(
+            "allowed-negation",
+            "The system does not process requests.",
+            "The system processes requests.",
+            {"negation"},
+        )
+        tests.append((
+            "claim-scope guard honors an explicit allowed category",
+            allowed_negation["passed"]
+            and allowed_negation["differences"]["negation"]["changed"]
+            and allowed_negation["differences"]["negation"]["allowed"],
+        ))
+
+        exact = {metric: 0.0 for metric in target_eval.DISTANCE_METRICS}
+        drifted = dict(exact)
+        drifted["connective_density"] = 1.0
+        exact_mask = target_eval.distance_eligibility(exact, drifted, exact, set(), {"P5"})
+        exact_report = target_eval.distances(exact, drifted, exact, exact_mask)
+        tests.append((
+            "exact-match drift is reported explicitly",
+            exact_report["metrics"]["connective_density"]["status"] == "diverged_from_exact_match"
+            and any(
+                item["metric"] == "connective_density"
+                and item["status"] == "diverged_from_exact_match"
+                for item in exact_report["unconverged_dimensions"]
+            ),
         ))
 
     failed = [name for name, passed in tests if not passed]

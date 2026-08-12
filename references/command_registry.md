@@ -159,6 +159,7 @@ Purpose: run exactly one P1–P7 pass on the named section or selection.
 Required behavior:
 
 - load only the pass reference and target context;
+- for P4/P5, run `revision_preflight.py` and preserve the selection verbatim when it returns `preserve`;
 - state one target and excluded changes;
 - snapshot and verify the immutable set;
 - apply the draft-map gate without blocking;
@@ -171,7 +172,7 @@ Reject only an invalid pass name or an immutable-set violation. Do not write sou
 
 Purpose: make the smallest useful local revision with minimal ceremony.
 
-Infer the least destructive language pass from the selection, apply the gate, preserve upstream decisions, and return the revision directly. If no intake exists, show the single `[no intake]` line. Do not write a file; use `H-PATCH` for accepted text.
+Infer the least destructive language pass from the selection, apply the gate and preservation preflight, preserve upstream decisions, and return the revision directly. A clean selection may validly return unchanged with zero changes. If no intake exists, show the single `[no intake]` line. Do not write a file; use `H-PATCH` for accepted text.
 
 ### H-DEADLINE
 
@@ -213,9 +214,9 @@ Require an authorized Zotero library, project bibliography, or source PDF. Never
 Purpose: run descriptive style work or one private target-layer subcommand.
 
 - `H-STYLE report|baseline|compare|drift` uses `style_fingerprint.py`. Keep corpus and fingerprint outputs outside the skill repository and follow `templates/style_baseline_readme.md`. A baseline write requires an explicit local target; revisions of one paper count once after title or directory grouping. Report distinct-paper count, source-file count, grouping, `ok`, `thin(n=N)`, or `none`, metrics, comparison, and whether drift alerts were disabled.
-- `H-STYLE target <dir>` uses `build_target_profile.py` on ordered `.tex`, `.md`, or `.txt` stages. For PDFs, first use the existing `extract_pdf_text.py` to create private `.txt` stages; do not add a new PDF dependency. Reserve target paragraphs for hold-out before screening. Run the AI-tell and structural screen, show the dimension/source table and exemplar-card candidates, and write `target_screening.json`, `target_profile.json`, and approved cards only after confirmation. Require explicit stage-pair provenance; exclude reviewer-driven pairs from author-preference signals and default cards.
+- `H-STYLE target <dir>` uses `build_target_profile.py` on ordered `.tex`, `.md`, or `.txt` stages. For PDFs, first use the existing `extract_pdf_text.py` to create private `.txt` stages; do not add a new PDF dependency. Supply the target venue, keep target values separated by venue, and reserve target paragraphs for hold-out before screening. Run the AI-tell and structural screen, show the dimension/source table and exemplar-card candidates, and write `target_screening.json`, `target_profile.json`, and approved cards only after confirmation. When `<dir>` is a staging corpus, writing requires explicit output paths under the active paper's `.helicon/style/`; a staging-local profile is not active. Require explicit stage-pair provenance; exclude reviewer-driven pairs and all declared hold-outs from author-preference signals and default cards. Cross-venue use always reports `target:partial`.
 - `H-STYLE direction <dir>` uses `extract_revision_direction.py` on the same prepared text stages. Report each stage pair separately, its driver, rule/pass frequencies, observed ordering conflicts, unchanged candidates, and whether the pair contributes to author preference. Never change P1-P7 automatically. For the supplied three-stage case, mark v1->v2 `author-advisor` and v2->v3 `reviewer-driven`.
-- `H-STYLE eval <before-file> <target-file>` first runs the normal default route on the private hold-out and records its actual trailer. Then call `target_eval.py` with the private output, target screening, and reserved target paragraph identifiers. Report convergence, three-way AI-tell counts, immutable-set result, alignment, and unconverged dimensions.
+- `H-STYLE eval <before-file> <target-file>` first runs the normal default route on the private hold-out and records its actual trailer. A screened-v3 hold-out uses `--target-paragraph`. A separate style-only target uses `--approval-manifest` and is admitted only when the private manifest records `source: author-approved-ai-assisted`, `approval_status: approved`, a timezone-bearing approval timestamp, `content_stable_confirmed: true`, and matching before/target/screening SHA-256 hashes; `latex_guard.py` must also pass before→target. This target is never described as a v3 hold-out. Its screening must retain the v2 schema and exactly one valid source for every P4/P5/P6 routed dimension; screening still supplies routed field sources and `target:<ok|partial|none>`. Report structural eligibility and exclusions separately from AI-tell rule-count distance; a missing structural signal must remain `null`, while drift away from an exact structural match is failure rather than missing evidence. `--execution-evidence-class independent-session` describes only who ran the evaluation and never upgrades target provenance. When canonical before and target are identical, use `target_eval.py --mode preservation`: this is a do-no-harm contract that reports exact canonical preservation, descriptive byte equality, immutable-set and trailer checks, and routed target status; convergence and directional improvement are undefined and must not be reported.
 
 Target profiles, screening reports, revision directions, hold-outs, generated output, evaluations, and filled exemplar cards stay under the paper's `.helicon/style/` directory. Preview before write. `H-VOICE` invokes the descriptive subset of the same contract.
 
@@ -268,7 +269,7 @@ Output a current-versus-proposed diff, destination layer (`core`, `direction pac
 
 Purpose: orchestrate P3, P4, P5, and P6 in order.
 
-Apply the gate once, snapshot immutable content, and emit four pass-labeled sections with target, changes, skipped items, and frozen-set status. The single-pass restriction belongs to `H-PASS`, not this orchestrator. A screened target supplies direction; a qualified baseline detects drift only, and a thin baseline neither refuses nor warns. When no target exists, retain the qualified anti-drift refusal defined in `pass_pipeline.md`.
+Apply the gate once, snapshot immutable content, resolve the private target before P4, run the P4/P5 preservation preflight, and emit four pass-labeled sections with target, changes, skipped items, and frozen-set status. A `preserve` decision is a valid zero-change result for P4/P5, not a reason to manufacture variation; P6 is still judged separately. The single-pass restriction belongs to `H-PASS`, not this orchestrator. A screened target supplies direction; a qualified baseline detects drift only, and a thin baseline neither refuses nor warns. When no target exists, retain the qualified anti-drift refusal defined in `pass_pipeline.md`.
 
 ## Legacy v1.2 contracts
 

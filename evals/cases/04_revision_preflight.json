@@ -1,0 +1,23 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "revision-preflight",
+  "input": {
+    "profile_fixture": "profile_v3.synthetic.json",
+    "clean_fixture": "clean_fragment.txt",
+    "flagged_fixture": "flagged_fragment.txt",
+    "project_venue": "Synthetic Venue",
+    "passes": ["P4", "P5"],
+    "section_type": "Introduction"
+  },
+  "expected": {
+    "exit_code": 0,
+    "clean_decision": "preserve",
+    "flagged_decision": "revise",
+    "required_trigger_ids": ["P5_AI_R01"],
+    "required_rule_ids": ["R01"]
+  },
+  "assertion": "Require preserve for a clean synthetic fragment and revise for a fragment with a declared AI-tell trigger.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

@@ -68,8 +68,13 @@ function Install-One([string]$Destination) {
     try {
         New-Item -ItemType Directory -Path $Destination | Out-Null
         Get-ChildItem -LiteralPath $sourceDir -Force |
-            Where-Object { $_.Name -notin @(".git", ".agents") } |
+            Where-Object { $_.Name -notin @(".git", ".agents", ".helicon", "__pycache__", "evals", "handoff") } |
             Copy-Item -Destination $Destination -Recurse -Force
+        # Generated Python bytecode is never part of the installed skill.
+        Get-ChildItem -LiteralPath $Destination -Recurse -Directory -Filter "__pycache__" -Force |
+            ForEach-Object { Remove-InstallTree $_.FullName }
+        Get-ChildItem -LiteralPath $Destination -Recurse -File -Filter "*.pyc" -Force |
+            Remove-Item -Force
         & $python -B (Join-Path $Destination "scripts\check_skill_integrity.py") $Destination
         if ($LASTEXITCODE -ne 0) {
             throw "Installed skill failed integrity validation."

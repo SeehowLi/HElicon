@@ -75,10 +75,12 @@ install_one() {
         [ -e "$entry" ] || continue
         name=$(basename -- "$entry")
         case "$name" in
-            .git|.agents) continue ;;
+            .git|.agents|.helicon|__pycache__|evals|handoff) continue ;;
         esac
         cp -R -- "$entry" "$destination"/ || copy_failed=1
     done
+    find "$destination" -type d -name '__pycache__' -prune -exec rm -rf -- {} + || copy_failed=1
+    find "$destination" -type f -name '*.pyc' -delete || copy_failed=1
     if [ "$copy_failed" -ne 0 ]; then
         rm -rf -- "$destination"
         [ "$had_backup" -eq 0 ] || mv -- "$backup" "$destination"

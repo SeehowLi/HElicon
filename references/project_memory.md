@@ -18,10 +18,14 @@ Each paper has a stable local directory containing its LaTeX source. HElicon sto
     ├── local_glossary.md
     ├── decisions.md
     └── style/
-        └── fingerprint.json
+        ├── fingerprint.json
+        ├── target_profile.json
+        ├── target_screening.json
+        ├── target_traces/
+        └── exemplars/
 ```
 
-`project.yaml` contains the project fingerprint. `draft_map.md` caches intake. `pass_log.md` stores one attributable record per pass. The style directory contains derivatives of unpublished material and never enters the skill repository.
+`project.yaml` contains the project fingerprint. `draft_map.md` caches intake. `pass_log.md` stores one attributable record per pass. The style directory contains derivatives of unpublished material and never enters the skill repository. `target_profile.json` is the only prescriptive target read by P4, P5, or P6; `target_screening.json` remains construction evidence and is not normal revision context.
 
 The adjacent LaTeX source lets `latex_guard.py` compare frozen items against real text instead of relying on a model assertion.
 
@@ -58,7 +62,7 @@ At session start, read only:
 - verdict lines from `draft_map.md`;
 - the final five lines of `pass_log.md`.
 
-Load every other project file only when the active routing node names it. `H-LOAD` reports both the files read and estimated context occupancy.
+Load every other project file only when the active routing node names it. A route containing P3 names `local_glossary.md`; a route containing P4, P5, or P6 names `style/target_profile.json` and must resolve it through `scripts/resolve_target_profile.py` before editing. A P4/P5 route then runs `scripts/revision_preflight.py` on only the supplied selection and returns a privacy-safe `preserve|revise` decision. The resolver reads no manuscript prose, and neither script writes unless an authorized trace path under `style/target_traces/` is supplied. `H-LOAD` reports both the files read and estimated context occupancy.
 
 threshold: when estimated context occupancy exceeds 50%, load only files explicitly named by the current routing node. <!-- helicon:allow-numeric -->
 

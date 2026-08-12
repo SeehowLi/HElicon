@@ -1,0 +1,18 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "selftest",
+  "input": {
+    "script": "scripts/selftest_checks.py",
+    "integrity_checker": "scripts/check_skill_integrity.py",
+    "contamination_checker": "scripts/check_core_contamination.py"
+  },
+  "expected": {
+    "exit_code": 0,
+    "minimum_pass_count": 110,
+    "failure_marker_absent": true
+  },
+  "assertion": "Run the repository self-test and repository integrity/privacy checks with Python bytecode disabled; require clean exits and no failing self-test.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

@@ -37,7 +37,7 @@ All v1.2 commands remain available. See `references/command_registry.md` for com
 
 ## No-command editing
 
-Paste an English paragraph with no instruction and HElicon defaults to P3→P4→P5: terminology, rhythm, and diction. It does not change structure, claim scope, numbers, citations, or frozen terms. Ambiguous requests take the least destructive useful route instead of stopping for a workflow question.
+Paste an English paragraph with no instruction and HElicon defaults to P3→P4→P5: terminology, rhythm, and diction. Before editing, a deterministic preflight checks whether any eligible P4/P5 boundary or numbered rule is actually triggered; clean text returns unchanged with `0处`. It does not change structure, claim scope, numbers, citations, or frozen terms. Ambiguous requests take the least destructive useful route instead of stopping for a workflow question.
 
 Router output is returned in chat. It does not write a file; accepted text still requires `H-PATCH`. Every routed response ends with:
 
@@ -133,6 +133,8 @@ python scripts/style_fingerprint.py --help
 python scripts/latex_guard.py --help
 python scripts/check_ai_tells.py --help
 python scripts/build_target_profile.py --help
+python scripts/resolve_target_profile.py --help
+python scripts/revision_preflight.py --help
 python scripts/extract_revision_direction.py --help
 python scripts/target_eval.py --help
 ```
@@ -141,9 +143,9 @@ Use `scripts/latex_guard.py` on before/after LaTeX files and all style scripts o
 
 ## Target exemplars from staged versions
 
-Prepare ordered `.tex`, `.md`, or `.txt` versions of the same paper in one private directory. If the available stages are PDFs, first run the existing `scripts/extract_pdf_text.py` once per PDF into a separate private text directory; its optional `pdftotext`/`PyPDF2` fallback remains unchanged. The final version must be author-approved, version pairs must be labeled as author/advisor or reviewer-driven, and some start-version paragraphs must be reserved as hold-out data before target construction. `H-STYLE target <dir>` first screens the final version; it never treats an AI-assisted final draft as an unconditional target. Clean dimensions use `source: exemplar`, while rejected dimensions use `source: rule`.
+Prepare ordered `.tex`, `.md`, or `.txt` versions of the same paper in one private directory. If the available stages are PDFs, first run the existing `scripts/extract_pdf_text.py` once per PDF into a separate private text directory; its optional `pdftotext`/`PyPDF2` fallback remains unchanged. The final version must be author-approved, version pairs must be labeled as author/advisor or reviewer-driven, and some start-version paragraphs must be reserved as hold-out data before target construction. `H-STYLE target <dir>` first screens the final version; it never treats an AI-assisted final draft as an unconditional target. Clean dimensions use `source: exemplar`, while rejected dimensions use `source: rule`. When the stage directory is separate from the paper directory, every write uses explicit `--profile-output` and `--screening-output` paths under the active paper's `.helicon/style/`.
 
-Run `H-STYLE direction <dir>` to inspect what changed, the observed editing order, and what remained invariant. Reviewer-driven pairs are listed separately and excluded from author-preference signals by default. After confirming target artifacts and exemplar candidates, keep them under the paper's `.helicon/style/`; load at most three cards matched by section type and rule ID. Finally, process the reserved start-version paragraphs through the normal router and use `H-STYLE eval <before> <target>` to compare that output with the approved target.
+Run `H-STYLE direction <dir>` to inspect what changed, the observed editing order, and what remained invariant. Reviewer-driven pairs are listed separately and excluded from author-preference signals by default. After confirming target artifacts and exemplar candidates, keep them under the paper's `.helicon/style/`; load at most three cards matched by section type and rule ID. Normal P4/P5/P6 routes call `resolve_target_profile.py` before editing; P4/P5 then call `revision_preflight.py`, and a `preserve` result forbids cosmetic churn. Finally, process content-stable reserved start-version paragraphs through the normal router and use `H-STYLE eval <before> <target>` to compare that output with the approved target. A functionally corresponding paragraph with changed facts is diagnostic-only, not a style-efficacy ground truth.
 
 ## Knowledge layers
 

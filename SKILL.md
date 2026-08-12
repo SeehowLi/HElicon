@@ -11,7 +11,7 @@ It is **not** tied to any single paper. Any paper should call HElicon as an exte
 
 ## Iron Rules
 
-1. Never alter the immutable set: numbers with units, `\cite`/`\ref`/`\label`/`\eqref` keys, mathematics, figure/table labels, or glossary-defined terms.
+1. Never alter the immutable set: numbers with units, `\cite`/`\ref`/`\label`/`\eqref` keys, mathematics, figure/table labels, glossary-defined terms, or claim-scope markers such as negation, modality, quantifiers, comparison direction, and claim strength outside an explicit P1 request.
 2. Terminology consistency outranks every suggestion for lexical variety.
 3. Never strengthen a claim: for example, do not turn `suggests` into `shows` or `proves`.
 4. Freeze security semantics, including semi-honest/malicious, selective/adaptive, IND-CPA/IND-CCA, leveled/fully, and computational/statistical distinctions.
@@ -115,7 +115,7 @@ Load `references/pass_pipeline.md` for revision work:
 - P6 aligns qualified personal voice metrics.
 - P7 performs semantic-free LaTeX and punctuation cleanup.
 
-`H-PASS` runs one target pass. `H-POLISH` orchestrates P3 → P4 → P5 → P6 and reports every pass separately. Gates warn but do not block; immutable-set violations roll back.
+`H-PASS` runs one target pass. `H-POLISH` orchestrates P3 → P4 → P5 → P6 and reports every pass separately. Before P4 or P5, follow `pass_pipeline.md`, resolve the paper-local target, and run `scripts/revision_preflight.py`. On the bare P3 → P4 → P5 route, `preserve` plus no exact P3 glossary mismatch returns the input verbatim with zero changes. In `H-POLISH`, the same decision skips only P4/P5; P6 is resolved and judged separately. Do not infer `target:` from file existence alone. Gates warn but do not block; immutable-set violations roll back.
 
 ## Activation behavior
 

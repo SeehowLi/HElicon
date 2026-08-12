@@ -71,6 +71,8 @@ REQUIRED = (
     "scripts/selftest_checks.py",
     "scripts/style_fingerprint.py",
     "scripts/build_target_profile.py",
+    "scripts/resolve_target_profile.py",
+    "scripts/revision_preflight.py",
     "scripts/extract_revision_direction.py",
     "scripts/target_eval.py",
     "scripts/latex_guard.py",

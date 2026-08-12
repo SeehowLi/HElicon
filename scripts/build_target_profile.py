@@ -74,10 +74,15 @@ def choose_target(directory: Path, explicit: str | None) -> Path:
 def filtered_report(path: Path, holdout: set[int]) -> tuple[dict[str, Any], str, int]:
     raw = style_fingerprint.read_utf8(path)
     sections: list[dict[str, Any]] = []
+    paragraphs_by_section_type: dict[str, list[str]] = {
+        name: [] for name in style_fingerprint.SECTION_TYPES
+    }
     all_paragraphs: list[str] = []
     kept_text: list[str] = []
     paragraph_index = 0
     for title, content in style_fingerprint.raw_sections(raw, path.suffix.lower()):
+        if title == "Preamble":
+            continue
         clean = style_fingerprint.protect_latex(content) if path.suffix.lower() == ".tex" else content
         included: list[str] = []
         for paragraph in style_fingerprint.split_paragraphs(clean):
@@ -86,7 +91,9 @@ def filtered_report(path: Path, holdout: set[int]) -> tuple[dict[str, Any], str,
                 included.append(paragraph)
                 all_paragraphs.append(paragraph)
                 kept_text.append(paragraph)
-        sections.append({"title": title, "metrics": style_fingerprint.metric_block(included)})
+        kind = style_fingerprint.section_type(title)
+        paragraphs_by_section_type[kind].extend(included)
+        sections.append({"title": title, "section_type": kind, "metrics": style_fingerprint.metric_block(included)})
     invalid = sorted(index for index in holdout if index < 1 or index > paragraph_index)
     if invalid:
         raise UserError(f"hold-out paragraph indices are out of range: {invalid}; paragraph_count={paragraph_index}")
@@ -98,6 +105,10 @@ def filtered_report(path: Path, holdout: set[int]) -> tuple[dict[str, Any], str,
         "title": style_fingerprint.extract_title(raw, path.suffix.lower()),
         "document": style_fingerprint.metric_block(all_paragraphs),
         "sections": sections,
+        "section_types": [
+            {"section_type": kind, "metrics": style_fingerprint.metric_block(paragraphs_by_section_type[kind])}
+            for kind in style_fingerprint.SECTION_TYPES if paragraphs_by_section_type[kind]
+        ],
     }, "\n\n".join(kept_text), paragraph_index
 
 
@@ -121,17 +132,20 @@ def exemplar_value(dimension: str, report: dict[str, Any]) -> Any:
             "mean_sentences": metrics["mean_sentences_per_paragraph"],
         }
     if dimension == "opening_structure":
-        total = max(metrics["sentence_count"], 1)
-        return {name: round(count / total, 4) for name, count in metrics["opening_types"].items()}
+        total = max(metrics["paragraph_count"], 1)
+        return {
+            name: round(count / total, 4)
+            for name, count in metrics["paragraph_opening_types"].items()
+        }
     if dimension == "connectives":
         return {"density_per_sentence": metrics["connective_density"], "allowed": sorted(metrics["connective_frequency"])}
     if dimension == "active_passive_by_section":
         return {
-            section["title"]: {
+            section["section_type"]: {
                 "active_ratio": section["metrics"]["active_sentence_ratio"],
                 "passive_ratio": section["metrics"]["passive_sentence_ratio"],
             }
-            for section in report["sections"] if section["metrics"]["sentence_count"]
+            for section in report["section_types"] if section["metrics"]["sentence_count"]
         }
     if dimension == "first_person":
         return {"per_1000_words": metrics["first_person_per_1000_words"]}
@@ -167,8 +181,12 @@ def screening_decision(dimension: str, metrics: dict[str, Any], rule_counts: Cou
         reasons.append("sentence sample or variance below policy threshold")
     elif dimension == "paragraph_length" and metrics["paragraph_count"] < 2:
         reasons.append("fewer than 2 paragraphs")
-    elif dimension == "opening_structure" and len(metrics["opening_types"]) < 2:
-        reasons.append("fewer than 2 opening types")
+    elif dimension == "opening_structure" and (
+        metrics["paragraph_count"] < 2
+        or metrics["paragraph_opening_count"] < 2
+        or len(metrics["paragraph_opening_types"]) < 2
+    ):
+        reasons.append("fewer than 2 paragraphs with 2 distinct paragraph-opening types")
     elif dimension == "connectives" and metrics["connective_density"] > 0.6:
         reasons.append("connective density exceeds policy threshold")
     elif dimension == "active_passive_by_section" and metrics["sentence_count"] < 4:
@@ -188,7 +206,10 @@ def performance_text(dimension: str, metrics: dict[str, Any], rule_density: dict
     summaries = {
         "sentence_length": f"mean={metrics['mean_sentence_length']}, sd={metrics['sentence_length_sd']}",
         "paragraph_length": f"paragraphs={metrics['paragraph_count']}, mean_words={metrics['mean_paragraph_words']}",
-        "opening_structure": f"opening_types={sorted(metrics['opening_types'])}",
+        "opening_structure": (
+            f"paragraph_opening_types={sorted(metrics['paragraph_opening_types'])}, "
+            f"observed={metrics['paragraph_opening_count']}/{metrics['paragraph_count']} paragraphs"
+        ),
         "connectives": f"density={metrics['connective_density']}, R5/1000={rule_density['5']}",
         "active_passive_by_section": f"active={metrics['active_sentence_ratio']}, passive={metrics['passive_sentence_ratio']}",
         "first_person": f"per_1000_words={metrics['first_person_per_1000_words']}",
@@ -205,6 +226,7 @@ def build(
     holdout: set[int],
     paper_id: str | None,
     direction: dict[str, Any],
+    venue: str,
 ) -> dict[str, Any]:
     report, screened_text, paragraph_count = filtered_report(target_file, holdout)
     findings = check_ai_tells.scan_text(screened_text, target_file)
@@ -232,8 +254,9 @@ def build(
     excluded_reviewer_cards = len(direction["exemplar_candidates"]) - len(candidates)
     return {
         "screening": {
-            "schema": "helicon-target-screening-v1",
+            "schema": "helicon-target-screening-v2",
             "created_utc": datetime.now(timezone.utc).isoformat(),
+            "venue": venue,
             "target_file": str(target_file),
             "word_count": report["document"]["word_count"],
             "ai_tell_density_per_1000_words": rule_density,
@@ -245,14 +268,24 @@ def build(
             "reviewer_driven_exemplar_candidates_excluded": excluded_reviewer_cards,
         },
         "profile": {
-            "schema": "helicon-target-profile-v1",
+            "schema": "helicon-target-profile-v3",
             "created_utc": datetime.now(timezone.utc).isoformat(),
             "paper_id": paper_id or (f"title:{title_key}" if title_key else f"directory:{style_fingerprint.normalize_title(directory.name)}"),
             "purpose": "prescriptive convergence target; never a drift baseline",
-            "target_file": str(target_file),
-            "holdout_target_paragraphs": sorted(holdout),
-            "exemplar_card_count": len(candidates),
-            "fields": fields,
+            "default_venue": venue,
+            "venue_applicability": {
+                "same_venue": "ok or partial according to field screening",
+                "cross_venue": "partial",
+            },
+            "venue_profiles": {
+                venue: {
+                    "target_file": str(target_file),
+                    "holdout_target_paragraphs": sorted(holdout),
+                    "exemplar_candidate_count": len(candidates),
+                    "approved_exemplar_card_count": 0,
+                    "fields": fields,
+                }
+            },
         },
         "exemplar_candidates": candidates,
         "direction_summary": {
@@ -282,8 +315,8 @@ def write_json(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def write_exemplar_cards(directory: Path, candidates: list[dict[str, Any]]) -> list[str]:
-    root = private_output(directory / ".helicon/style/exemplars")
+def write_exemplar_cards(style_directory: Path, candidates: list[dict[str, Any]]) -> list[str]:
+    root = private_output(style_directory / "exemplars")
     root.mkdir(parents=True, exist_ok=True)
     written: list[str] = []
     for index, item in enumerate(candidates, 1):
@@ -329,17 +362,25 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("directory", help="directory containing ordered paper versions")
     parser.add_argument("--target-file", help="explicit final-stage .tex, .md, or .txt file")
     parser.add_argument("--paper-id", help="explicit paper identity")
+    parser.add_argument("--venue", required=True, help="venue represented by the target exemplar")
     parser.add_argument("--holdout", action="append", type=int, default=[], help="1-based target paragraph index reserved from profile construction; repeat as needed")
+    parser.add_argument("--holdout-stage", action="append", default=[], help="exclude one original paragraph from direction signals as STAGE:PARAGRAPH; repeat as needed")
     parser.add_argument("--review-driven-pair", action="append", default=[], help="stage pair excluded from author preference and default cards, for example 2:3")
     parser.add_argument("--author-advisor-pair", action="append", default=[], help="author/advisor stage pair, for example 1:2")
+    parser.add_argument("--direction-input", help="reuse a private revision_direction.json after validating provenance and hold-outs")
     parser.add_argument("--profile-output", help="private .helicon/style/target_profile.json path")
     parser.add_argument("--screening-output", help="private .helicon/style/target_screening.json path")
+    parser.add_argument("--preview-output", help="optional private .helicon/style JSON preview; does not approve or write target artifacts")
+    parser.add_argument("--card-index", action="append", type=int, default=[], help="1-based preview candidate approved for card write; requires --write; repeat as needed")
     parser.add_argument("--write", action="store_true", help="write after the preview has been confirmed")
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     return parser
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     parser = build_parser()
     json_requested = "--json" in sys.argv
     try:
@@ -347,23 +388,70 @@ def main() -> int:
         directory = Path(args.directory).resolve()
         if not directory.is_dir():
             raise UserError(f"version directory not found: {directory}")
+        if args.write and (not args.profile_output or not args.screening_output):
+            raise UserError(
+                "--write requires explicit --profile-output and --screening-output under the active "
+                "paper's .helicon/style directory"
+            )
         target = choose_target(directory, args.target_file)
         profile_path = private_output(Path(args.profile_output) if args.profile_output else directory / ".helicon/style/target_profile.json")
         screening_path = private_output(Path(args.screening_output) if args.screening_output else directory / ".helicon/style/target_screening.json")
+        if args.write and profile_path.parent != screening_path.parent:
+            raise UserError("profile and screening outputs must share one active .helicon/style directory")
         reviewer = extract_revision_direction.parse_pairs(args.review_driven_pair)
         advisor = extract_revision_direction.parse_pairs(args.author_advisor_pair)
+        holdouts = extract_revision_direction.parse_holdouts(args.holdout_stage)
         overlap = reviewer & advisor
         if overlap:
             raise UserError(f"stage pairs cannot have two drivers: {sorted(overlap)}")
-        direction = extract_revision_direction.analyze(directory, args.paper_id, reviewer, advisor)
-        result = build(directory, target, set(args.holdout), args.paper_id, direction)
+        target_stage = extract_revision_direction.stage_number(target)
+        if target_stage < 1:
+            versions = extract_revision_direction.discover_versions(directory)
+            try:
+                target_stage = versions.index(target) + 1
+            except ValueError as exc:
+                raise UserError("unnumbered target file is not one of the discovered paper versions") from exc
+        holdouts.setdefault(target_stage, set()).update(args.holdout)
+        holdouts = {stage: indices for stage, indices in holdouts.items() if indices}
+        if args.direction_input:
+            direction_path = Path(args.direction_input).resolve()
+            try:
+                direction = json.loads(direction_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise UserError(f"cannot read direction input {direction_path}: {exc}") from exc
+            actual_holdouts = {
+                int(stage): set(indices)
+                for stage, indices in direction.get("holdout_paragraphs_by_stage", {}).items()
+                if indices
+            }
+            if actual_holdouts != holdouts:
+                raise UserError(f"direction-input hold-outs do not match this target run: input={actual_holdouts}, requested={holdouts}")
+            expected_drivers = {
+                f"v{left}->v{right}": "reviewer-driven" for left, right in reviewer
+            }
+            expected_drivers.update({
+                f"v{left}->v{right}": "author-advisor" for left, right in advisor
+            })
+            actual_drivers = {pair["stage_pair"]: pair["driver"] for pair in direction.get("pairs", [])}
+            if any(actual_drivers.get(pair) != driver for pair, driver in expected_drivers.items()):
+                raise UserError(f"direction-input provenance does not match this target run: input={actual_drivers}, requested={expected_drivers}")
+        else:
+            direction = extract_revision_direction.analyze(directory, args.paper_id, reviewer, advisor, holdouts)
+        result = build(directory, target, set(args.holdout), args.paper_id, direction, args.venue)
         cards: list[str] = []
+        if args.card_index and not args.write:
+            raise UserError("--card-index requires --write after author approval")
         if args.write:
             if direction["warnings"]:
                 raise UserError("cannot write target artifacts until every adjacent stage pair has explicit provenance")
+            invalid_cards = sorted({index for index in args.card_index if index < 1 or index > len(result["exemplar_candidates"])})
+            if invalid_cards:
+                raise UserError(f"approved card indices out of range: {invalid_cards}; candidate_count={len(result['exemplar_candidates'])}")
+            selected_cards = [result["exemplar_candidates"][index - 1] for index in dict.fromkeys(args.card_index)]
+            result["profile"]["venue_profiles"][args.venue]["approved_exemplar_card_count"] = len(selected_cards)
             write_json(profile_path, result["profile"])
             write_json(screening_path, result["screening"])
-            cards = write_exemplar_cards(directory, result["exemplar_candidates"])
+            cards = write_exemplar_cards(profile_path.parent, selected_cards)
         payload = {
             **result,
             "profile_output": str(profile_path),
@@ -371,6 +459,10 @@ def main() -> int:
             "exemplar_card_outputs": cards,
             "written": args.write,
         }
+        if args.preview_output:
+            preview_path = private_output(Path(args.preview_output))
+            write_json(preview_path, payload)
+            payload["preview_output"] = str(preview_path)
         if args.json:
             print(json.dumps(payload, ensure_ascii=False, indent=2))
         else:

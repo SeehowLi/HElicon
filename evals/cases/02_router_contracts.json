@@ -1,0 +1,36 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "router-contracts",
+  "input": {
+    "router": "references/intent_router.md",
+    "registry": "references/command_registry.md",
+    "contract_checker": "scripts/check_contract_sync.py",
+    "required_routes": [
+      "这段读起来别扭",
+      "这段有点绕",
+      "这段说不清楚在干什么",
+      "这段的重点没出来",
+      "这个结论有点强",
+      "这么说会不会被challenge",
+      "帮我把这段改得更像顶会的写法",
+      "这里的术语统一一下",
+      "顺一下不要动意思",
+      "太啰嗦了删短点"
+    ],
+    "required_registry_tokens": [
+      "H-STYLE target <dir>",
+      "H-STYLE direction <dir>",
+      "H-STYLE eval <before-file> <target-file>"
+    ]
+  },
+  "expected": {
+    "contract_exit_code": 0,
+    "minimum_representative_routes": 18,
+    "canonical_passes": "P3→P4→P5",
+    "fixed_target_field": "target:<ok|partial|none>"
+  },
+  "assertion": "Require synchronized command contracts, the documented near-synonym routes, and the fixed trailer with canonical arrow normalization.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

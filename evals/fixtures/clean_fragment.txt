@@ -1,0 +1,1 @@
+Requests arrive. The scheduler places each request in a queue. A worker processes queued items and records their status before returning a response. An independent monitor compares the recorded status with the setup reference.

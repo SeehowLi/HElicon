@@ -178,6 +178,19 @@ def parse_pairs(values: list[str]) -> set[tuple[int, int]]:
     return pairs
 
 
+def parse_holdouts(values: list[str]) -> dict[int, set[int]]:
+    holdouts: dict[int, set[int]] = {}
+    for value in values:
+        match = re.fullmatch(r"(\d+)\s*:\s*(\d+)", value)
+        if not match:
+            raise UserError(f"invalid hold-out {value!r}; use STAGE:PARAGRAPH, for example 3:12")
+        stage, paragraph = (int(match.group(1)), int(match.group(2)))
+        if stage < 1 or paragraph < 1:
+            raise UserError(f"invalid hold-out {value!r}; stage and paragraph must be positive")
+        holdouts.setdefault(stage, set()).add(paragraph)
+    return holdouts
+
+
 def pair_driver(left: int, right: int, reviewer: set[tuple[int, int]], advisor: set[tuple[int, int]]) -> str:
     if (left, right) in reviewer:
         return "reviewer-driven"
@@ -243,9 +256,20 @@ def analyze(
     paper_id: str | None,
     reviewer_pairs: set[tuple[int, int]],
     advisor_pairs: set[tuple[int, int]],
+    holdouts: dict[int, set[int]] | None = None,
 ) -> dict[str, Any]:
     files = discover_versions(directory)
-    all_paragraphs = [paragraphs(path) for path in files]
+    holdouts = holdouts or {}
+    all_paragraphs: list[list[dict[str, Any]]] = []
+    stage_ids: list[int] = []
+    for position, path in enumerate(files, 1):
+        stage = stage_number(path) if stage_number(path) >= 0 else position
+        stage_ids.append(stage)
+        items = paragraphs(path)
+        invalid = sorted(index for index in holdouts.get(stage, set()) if index > len(items))
+        if invalid:
+            raise UserError(f"hold-out paragraphs out of range for stage {stage}: {invalid}; paragraph_count={len(items)}")
+        all_paragraphs.append([item for item in items if item["index"] not in holdouts.get(stage, set())])
     pairs: list[dict[str, Any]] = []
     preference_rules: Counter[int] = Counter()
     primary_stage_sequence: list[tuple[str, str]] = []
@@ -321,6 +345,9 @@ def analyze(
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "paper_id": paper_id or directory.name,
         "versions": [str(path) for path in files],
+        "holdout_paragraphs_by_stage": {
+            str(stage): sorted(holdouts.get(stage, set())) for stage in stage_ids if holdouts.get(stage)
+        },
         "pairs": pairs,
         "author_preference_rule_frequencies": {str(rule): count for rule, count in sorted(preference_rules.items())},
         "observed_pair_order": [{"stage_pair": pair, "dominant_pass": stage} for pair, stage in primary_stage_sequence],
@@ -354,6 +381,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--paper-id", help="explicit paper identity")
     parser.add_argument("--review-driven-pair", action="append", default=[], help="stage pair excluded from author preference, for example 2:3")
     parser.add_argument("--author-advisor-pair", action="append", default=[], help="stage pair produced with author/advisor discussion, for example 1:2")
+    parser.add_argument("--holdout", action="append", default=[], help="exclude one original paragraph as STAGE:PARAGRAPH; repeat as needed")
     parser.add_argument("--output", help="private .helicon/style/revision_direction.json path")
     parser.add_argument("--write", action="store_true", help="write the private report")
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
@@ -361,6 +389,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     parser = build_parser()
     json_requested = "--json" in sys.argv
     try:
@@ -370,10 +401,11 @@ def main() -> int:
             raise UserError(f"version directory not found: {directory}")
         reviewer = parse_pairs(args.review_driven_pair)
         advisor = parse_pairs(args.author_advisor_pair)
+        holdouts = parse_holdouts(args.holdout)
         overlap = reviewer & advisor
         if overlap:
             raise UserError(f"stage pairs cannot have two drivers: {sorted(overlap)}")
-        result = analyze(directory, args.paper_id, reviewer, advisor)
+        result = analyze(directory, args.paper_id, reviewer, advisor, holdouts)
         output = private_output(Path(args.output) if args.output else directory / ".helicon/style/revision_direction.json")
         if args.write:
             output.parent.mkdir(parents=True, exist_ok=True)

@@ -25,6 +25,30 @@ Use this file to select, order, and audit revision passes. A pass has one primar
 
 For P4, load at most three qualified exemplar cards matching the section type and rhythm-related rule context. For P5, load at most three cards matching the section type and triggered rule IDs. For P6, load at most three non-reviewer-driven cards matching the section type; use them as form anchors only, never as content sources.
 
+## Pass references and target-field ownership
+
+For every route containing P4, P5, or P6, run `scripts/resolve_target_profile.py` against the active paper directory before editing. The resolver validates the private profile, selects the active venue, returns only fields owned by the requested passes, and computes the trailer target state. If an authorized evaluation needs a durable audit record, use its privacy-safe `--trace-output`; a trace proves resolution, not causal influence on generated prose.
+
+| Pass | Required context | Target fields owned | Permitted use | Explicit exclusions |
+|---|---|---|---|---|
+| P3 | project `local_glossary.md`; `bilingual_glossary.md`; `fhe_lexicon_freeze.md`; `language_polish.md` | none | normalize only against frozen terms | no synonym variation for style |
+| P4 | `language_polish.md`; resolved target | `sentence_length`, `paragraph_length`, `opening_structure` | use sentence range and variance as a direction; vary clauses only at real reasoning boundaries; use paragraph metrics only on a multi-paragraph sample or when paragraph restructuring was explicitly authorized | do not add/delete claims; do not split/merge paragraphs merely to hit a number |
+| P5 | `language_polish.md`; resolved target | `connectives`, `hedging` | remove documented tells; reduce connective density only above an explicit upper bound while preserving the relation; preserve evidence-bound hedges even when density differs | no point-density quota; no deletion of scope, mechanism, evidence, or required uncertainty |
+| P6 | `personal_style_profile.md`; resolved target; qualified baseline when present | `active_passive_by_section`, `first_person` | align voice for the normalized section type; use baseline only for drift detection | no mechanical passive-to-active conversion and no invented first-person actor |
+| P2/upstream | structural review | `claim_position`, `contribution_limitation_moves` | surface as a structural recommendation or execute only in P2 | never apply silently inside the bare P3 → P4 → P5 route |
+
+For `source: exemplar`, treat the typed value as a correction direction, not a quota. For `source: rule`, ignore exemplar statistics and apply the policy value plus `language_polish.md`. If the sample cannot estimate a field—one paragraph for paragraph distributions, one sentence for rhythm, or a missing section type—exclude that field and report the limitation rather than forcing a change. The immutable set and evidence-bound hedging always outrank target convergence.
+
+## Preservation preflight
+
+For every route containing P4 or P5, run `scripts/revision_preflight.py` after target resolution and before generating prose. It measures only fields estimable from the supplied selection and runs the numbered P5 audit. A target value defines an acceptable band or a correction direction, not a quota and not a request for lexical variation.
+
+- `preserve`: no eligible P4 boundary is violated and no P5 rule is triggered. P4 and P5 make no edit. On a bare P3 → P4 → P5 route, if P3 also finds no exact glossary mismatch, return the original selection verbatim and report zero changes. An orchestrated P6 remains a separate decision.
+- `revise`: change only the pass responsibilities named by the preflight trigger IDs. A trigger authorizes a repair, not a general rewrite.
+- Insufficient samples are excluded rather than treated as failures. In particular, a single paragraph cannot trigger paragraph-length or paragraph-opening edits.
+
+The preflight JSON is a privacy-safe decision record: it may contain field IDs, rule IDs, counts, target status, and profile hashes, but never manuscript prose or private target values. It proves deterministic admission to editing; the immutable-set comparison still decides whether the resulting edit is safe.
+
 ## Immutable set
 
 The immutable set contains:
@@ -33,9 +57,10 @@ The immutable set contains:
 - keys inside `\cite*`, `\ref`, `\autoref`, `\eqref`, `\cref`, and `\label` commands;
 - inline mathematics and the contents of mathematics environments;
 - terms frozen by the project glossary and `fhe_lexicon_freeze.md`;
-- figure and table labels, plus caption keys.
+- figure and table labels, plus caption keys;
+- negation, modality, quantifier scope, comparison direction, and claim-strength markers during P3-P7.
 
-P1 may change only the wording that scopes a numeric claim, never the number. P7 may move a citation to its supported clause, never change its key. Any other immutable-set difference is a failed pass: report it, restore the prior text, and use `scripts/latex_guard.py` to identify the violation. A model's claim that it preserved the set is not evidence.
+P1 may change claim-scope markers only when that change is the explicit pass target, and may change only the wording that scopes a numeric claim, never the number. P7 may move a citation to its supported clause, never change its key. Any unapproved immutable-set difference is a failed pass: report it, restore the prior text, and use `scripts/latex_guard.py` to identify the violation. The guard aligns markers only across sufficiently similar content-bearing scopes; an ambiguous match or radical paraphrase is conservatively unverifiable and therefore fails rather than guessing semantic equivalence. A model's claim that it preserved the set is not evidence.
 
 Threat-model qualifiers, security semantics, and claim-scope terms become immutable during compression; see `deadline_compression.md`.
 
@@ -45,10 +70,10 @@ Threat-model qualifiers, security semantics, and claim-scope terms become immuta
 
 Before each pass:
 
-1. load the smallest required references;
+1. load the smallest required references from the ownership table, resolve the target before P4/P5/P6, and run the preservation preflight before P4/P5;
 2. snapshot the immutable set;
 3. state the target and exclusions;
-4. apply the pass;
+4. apply only a triggered pass, or record a deterministic no-op;
 5. compare the immutable set and report any rollback.
 
 ## Anti-drift rule

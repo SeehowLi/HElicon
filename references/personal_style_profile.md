@@ -64,9 +64,9 @@ Append stable observations under these headings:
 
 - Store the local fingerprint at `<paper_dir>/.helicon/style/fingerprint.json`; never commit it to this skill repository.
 - Generate it with `scripts/style_fingerprint.py baseline` from the eligible section classes in `style_baseline_policy.md`; assign revisions of the same manuscript the same `paper_id`.
-- P4 reads sentence-length distribution, alternation, and opening structure.
-- P5 reads connective density, punctuation density, and terminology-variation candidates as warnings rather than rewrite instructions.
-- P6 reads the target profile for direction and section-matched baseline deviations only for drift detection.
+- P4 reads the resolved target's sentence-length, multi-paragraph length, and paragraph-opening fields; unestimable fields are excluded rather than forced.
+- P5 reads the resolved target's connective and hedging fields plus punctuation density and terminology-variation candidates as warnings rather than rewrite instructions.
+- P6 reads the resolved target's section-normalized active/passive and first-person fields; it reads section-matched baseline deviations only for drift detection.
 - A thin baseline is descriptive only: it cannot produce a drift warning, refuse a pass, or define a revision target.
 
 ### Prescriptive target

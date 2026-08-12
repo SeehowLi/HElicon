@@ -1,0 +1,50 @@
+{
+  "schema": "helicon-target-profile-v3",
+  "default_venue": "Synthetic Venue",
+  "venue_profiles": {
+    "Synthetic Venue": {
+      "fields": {
+        "sentence_length": {
+          "source": "rule",
+          "confidence": "high",
+          "value": {
+            "mean_range_words": [1, 100],
+            "minimum_sd_words": 0
+          }
+        },
+        "paragraph_length": {
+          "source": "exemplar",
+          "confidence": "high",
+          "value": {
+            "mean_words": 60,
+            "word_sd": 10,
+            "mean_sentences": 4
+          }
+        },
+        "opening_structure": {
+          "source": "exemplar",
+          "confidence": "high",
+          "value": {
+            "noun_phrase_subject": 0.5,
+            "condition_or_scope": 0.5
+          }
+        },
+        "connectives": {
+          "source": "exemplar",
+          "confidence": "high",
+          "value": {
+            "density_per_sentence": 0.5,
+            "allowed": []
+          }
+        },
+        "hedging": {
+          "source": "rule",
+          "confidence": "high",
+          "value": {
+            "policy": "Retain only evidence-bound qualifiers."
+          }
+        }
+      }
+    }
+  }
+}

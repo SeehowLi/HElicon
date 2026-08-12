@@ -100,19 +100,35 @@ python scripts/extract_pdf_text.py /private/Paper-v3.pdf /private/stages/version
 Before building the target, reserve several v1 paragraphs as hold-out data and exclude their corresponding v3 paragraphs from target construction. Then preview the mandatory screening and outputs:
 
 ```bash
-python scripts/build_target_profile.py /private/stages --holdout 2 --holdout 7 --author-advisor-pair 1:2 --review-driven-pair 2:3
-python scripts/extract_revision_direction.py /private/stages --author-advisor-pair 1:2 --review-driven-pair 2:3
+python scripts/build_target_profile.py /private/stages --venue "IEEE S&P" --holdout 2 --holdout 7 --holdout-stage 1:2 --holdout-stage 2:2 --author-advisor-pair 1:2 --review-driven-pair 2:3
+python scripts/extract_revision_direction.py /private/stages --holdout 1:2 --holdout 2:2 --holdout 3:2 --author-advisor-pair 1:2 --review-driven-pair 2:3
 ```
 
-The target builder runs AI-tell and structural checks first. Each profile field records `source: exemplar|rule` and `confidence`; a rejected dimension falls back to the rule policy. Inspect the preview before using `--write`, which is restricted to `.helicon/style/`. Filled exemplar cards remain under `.helicon/style/exemplars/`; load at most three cards matched by section type and rule ID, never copy their prose as content.
+The target builder runs AI-tell and structural checks first. Each profile field records `source: exemplar|rule` and `confidence`; a rejected dimension falls back to the rule policy. Inspect the preview before writing. When the stages are outside the active paper directory, pass `--profile-output /path/to/paper/.helicon/style/target_profile.json --screening-output /path/to/paper/.helicon/style/target_screening.json --write`; never rely on a staging-local default. Filled exemplar cards remain under `.helicon/style/exemplars/`; load at most three cards matched by section type and rule ID, never copy their prose as content.
+
+Before a P4/P5/P6 revision, resolve the target deterministically:
+
+```bash
+python scripts/resolve_target_profile.py --project-dir /path/to/paper --pass P4 --pass P5 --section-type Introduction
+```
+
+The JSON result is private revision context. For an authorized independent evaluation, add `--trace-output /path/to/paper/.helicon/style/target_traces/H01.json`; the trace omits target values and manuscript text.
+
+Before P4/P5 generates prose, run the deterministic satisfaction gate on the selected fragment:
+
+```bash
+python scripts/revision_preflight.py /private/selection.txt --project-dir /path/to/paper --section-type Introduction --pass P4 --pass P5
+```
+
+`decision: preserve` means P4/P5 must not rewrite the selection; if P3 has no exact glossary mismatch, return it verbatim and report zero changes. `decision: revise` authorizes only the listed trigger IDs. Target observations are bands or directions, never quotas. An evaluation may add a trace below `.helicon/style/target_traces/`; the trace contains no prose or private target values.
 
 After HElicon processes the held-out v1 text through the normal router, evaluate it against the corresponding approved target:
 
 ```bash
-python scripts/target_eval.py /private/holdout/before.tex /private/holdout/output.tex /private/holdout/target.tex --screening /path/to/paper/.helicon/style/target_screening.json --target-paragraph 2 --trailer-file /private/holdout/trailer.txt --output-report /path/to/paper/.helicon/style/target_eval.json --write
+python scripts/target_eval.py /private/holdout/before.tex /private/holdout/output.tex /private/holdout/target.tex --screening /path/to/paper/.helicon/style/target_screening.json --target-paragraph 2 --content-stable-confirmed --trailer-file /private/holdout/trailer.txt --output-report /path/to/paper/.helicon/style/target_eval.json --write
 ```
 
-This reports structural convergence relative to the original v1→v3 distance, AI-tell counts for v1/output/v3, frozen-set changes from `latex_guard.py`, paragraph alignment, unconverged dimensions, and fixed-trailer compliance.
+Use `--content-stable-confirmed` only after human review verifies that before and target differ in form rather than facts, claims, experimental setup, or required evidence. The evaluator reports eligible and excluded metrics, descriptive convergence, AI-tell counts for v1/output/v3, frozen-set changes from `latex_guard.py`, ground-truth compatibility, paragraph alignment, unconverged dimensions, and fixed-trailer compliance. Contract validity and directional improvement are separate results.
 
 ## 6. Create paper-local project memory
 
