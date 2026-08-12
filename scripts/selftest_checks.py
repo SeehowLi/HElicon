@@ -21,15 +21,36 @@ import target_eval
 import style_fingerprint
 
 
-def scan(root: Path, rel: str, text: str) -> list[str]:
+def scan(
+    root: Path,
+    rel: str,
+    text: str,
+    private_token_hashes: frozenset[str] = checker.PRIVATE_PROJECT_TOKEN_SHA256,
+) -> list[str]:
     path = root / rel
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
-    return checker.scan_file(path, root)
+    return checker.scan_file(path, root, private_token_hashes)
 
 
 def has(findings: list[str], fragment: str) -> bool:
     return any(fragment in finding for finding in findings)
+
+
+def rejects_digest_config(
+    private_token_hashes: frozenset[str],
+    expected_count: int = checker.PRIVATE_PROJECT_TOKEN_COUNT,
+    expected_manifest_sha256: str = checker.PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256,
+) -> bool:
+    try:
+        checker.validate_private_token_hashes(
+            private_token_hashes,
+            expected_count,
+            expected_manifest_sha256,
+        )
+    except ValueError:
+        return True
+    return False
 
 
 def ai_rules(path: Path, text: str) -> set[int]:
@@ -41,6 +62,11 @@ def main() -> int:
     tests: list[tuple[str, bool]] = []
     with tempfile.TemporaryDirectory(prefix="helicon-selftest-") as temp:
         root = Path(temp)
+        synthetic_tokens = ("ZZTESTTOKENALPHA", "ZZTESTPROJECTBETA")
+        synthetic_hashes = frozenset(
+            hashlib.sha256(token.casefold().encode("utf-8")).hexdigest()
+            for token in synthetic_tokens
+        )
         for index, sample in enumerate(("37%", "0.5%", "1.5x", "12 GB", "20 ms"), 1):
             findings = scan(root, f"references/numeric_{index}.md", sample)
             tests.append((f"numeric {sample}", has(findings, "numeric result-like token")))
@@ -62,20 +88,25 @@ def main() -> int:
         )
         tests.append(("whitelisted numeric table", not has(whitelisted, "numeric result-like token")))
 
-        blocked = scan(root, "references/pass_pipeline.md", "sp27.pdf")
-        tests.append(("blocklist still active", has(blocked, "blocked token")))
+        blocked = scan(root, "references/pass_pipeline.md", synthetic_tokens[0], synthetic_hashes)
+        tests.append(("private digest scan active", has(blocked, "private identifier digest match")))
 
-        project = scan(root, "references/pass_pipeline.md", "NOMOS")
-        tests.append(("project check still active", has(project, "project token")))
+        project = scan(root, "references/pass_pipeline.md", synthetic_tokens[1], synthetic_hashes)
+        tests.append(("project digest scan active", has(project, "private identifier digest match")))
 
         eprint = scan(root, "references/pass_pipeline.md", "See 2025/1234")
         tests.append(("ePrint still active", has(eprint, "ePrint-like identifier")))
 
-        eval_blocked = scan(root, "evals/fixtures/private.txt", "CKKS-KNN")
-        tests.append(("eval txt blocklist active", has(eval_blocked, "blocked token")))
+        eval_blocked = scan(root, "evals/fixtures/private.txt", synthetic_tokens[0], synthetic_hashes)
+        tests.append(("eval txt digest scan active", has(eval_blocked, "private identifier digest match")))
 
-        eval_project = scan(root, "evals/cases/private.py", "PROJECT = 'NOMOS'")
-        tests.append(("eval py project check active", has(eval_project, "project token")))
+        eval_project = scan(
+            root,
+            "evals/cases/private.py",
+            f"PROJECT = '{synthetic_tokens[1]}'",
+            synthetic_hashes,
+        )
+        tests.append(("eval py digest scan active", has(eval_project, "private identifier digest match")))
 
         eval_eprint = scan(root, "evals/run_private.py", "SOURCE = '2025/1234'")
         tests.append(("eval py ePrint active", has(eval_eprint, "ePrint-like identifier")))
@@ -83,9 +114,56 @@ def main() -> int:
         script_fixture = scan(
             root,
             "scripts/selftest_fixture.py",
-            "CKKS-KNN NOMOS 2025/1234",
+            f"VALUE = '{synthetic_tokens[0]}'",
+            synthetic_hashes,
         )
-        tests.append(("scripts remain exempt from content scanning", not script_fixture))
+        tests.append((
+            "scripts are scanned for private identifier digests",
+            has(script_fixture, "private identifier digest match"),
+        ))
+
+        tests.append((
+            "private digest count mismatch is rejected",
+            rejects_digest_config(
+                checker.PRIVATE_PROJECT_TOKEN_SHA256,
+                checker.PRIVATE_PROJECT_TOKEN_COUNT + 1,
+            ),
+        ))
+        tests.append((
+            "private digest manifest mismatch is rejected",
+            rejects_digest_config(
+                checker.PRIVATE_PROJECT_TOKEN_SHA256,
+                expected_manifest_sha256="0" * 64,
+            ),
+        ))
+        tests.append((
+            "private digest deletion is rejected",
+            rejects_digest_config(
+                frozenset(list(checker.PRIVATE_PROJECT_TOKEN_SHA256)[:-1]),
+            ),
+        ))
+
+        case_variant = scan(
+            root,
+            "references/case_variant.md",
+            synthetic_tokens[0].swapcase(),
+            synthetic_hashes,
+        )
+        tests.append((
+            "private digest scan is case folded",
+            has(case_variant, "private identifier digest match"),
+        ))
+
+        excluded_suffix = scan(
+            root,
+            "notes/private.txt",
+            synthetic_tokens[1],
+            synthetic_hashes,
+        )
+        tests.append((
+            "private digest scan covers suffix-filtered text",
+            has(excluded_suffix, "private identifier digest match"),
+        ))
 
         private_target = scan(root, "references/target_profile.json", "{}")
         tests.append(("private target filename blocked", has(private_target, "private target artifact filename")))

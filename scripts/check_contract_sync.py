@@ -213,6 +213,23 @@ def python_literal(path: Path, name: str) -> Any:
     return None
 
 
+def python_frozenset(path: Path, name: str) -> frozenset[str] | None:
+    tree = ast.parse(read_utf8(path), filename=str(path))
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or not any(
+            isinstance(target, ast.Name) and target.id == name for target in node.targets
+        ):
+            continue
+        if (
+            isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Name)
+            and node.value.func.id == "frozenset"
+            and len(node.value.args) == 1
+        ):
+            return frozenset(ast.literal_eval(node.value.args[0]))
+    return None
+
+
 def python_dict_keys(path: Path, name: str) -> set[str]:
     tree = ast.parse(read_utf8(path), filename=str(path))
     for node in tree.body:
@@ -244,6 +261,25 @@ def validate_contracts(root: Path) -> dict[str, Any]:
 
     behavior = validate_rule_behaviors(polish)
     errors.extend(f"rule behavior: {error}" for error in behavior["errors"])
+
+    contamination_script = root / "scripts/check_core_contamination.py"
+    handoff_validator = root / "handoff/validate.py"
+    contamination_hashes = python_frozenset(
+        contamination_script, "PRIVATE_PROJECT_TOKEN_SHA256"
+    )
+    handoff_hashes = python_frozenset(
+        handoff_validator, "REQUEST_PRIVATE_PROJECT_TOKEN_SHA256"
+    )
+    contamination_manifest = python_literal(
+        contamination_script, "PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256"
+    )
+    handoff_manifest = python_literal(
+        handoff_validator, "REQUEST_PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256"
+    )
+    if contamination_hashes is None or handoff_hashes is None or contamination_hashes != handoff_hashes:
+        errors.append("private identifier digest sets differ between scripts and handoff validator")
+    if contamination_manifest is None or handoff_manifest is None or contamination_manifest != handoff_manifest:
+        errors.append("private identifier digest manifests differ between scripts and handoff validator")
 
     registry_commands = set(COMMAND_RE.findall(read_utf8(root / "references/command_registry.md")))
     description_commands = set(COMMAND_RE.findall(description_text(read_utf8(root / "SKILL.md"))))
