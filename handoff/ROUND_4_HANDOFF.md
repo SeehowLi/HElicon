@@ -12,7 +12,7 @@
 | Round 3 implementation commit | `230dc4ddbedccb8fe263b4180d0b110dc6961bcf` |
 | Round 3 handoff commit | `a52366983621b6481284f0c9a09f9fe3a866f2d8` |
 | Audited checkout commit | `a52366983621b6481284f0c9a09f9fe3a866f2d8` |
-| Round 4 containing commit | `null`，发布后由外部 checkout `HEAD` 解析 |
+| Round 4 containing commit | `a18364d535e3691b49be1c6c9ce3de1a087be14d`，已由外部 fresh-clone 审计 |
 | Taskbook | `handoff/HELICON_ROUND4_TASKBOOK.md` |
 
 本轮没有读取私有稿件、私有 `.helicon/` 或 live skill，也没有安装、merge、tag 或 push。总体继续保持 `partial`。
@@ -88,7 +88,7 @@ Round 3 的 Iteration Protocol 任务曾标为 `done`，但当时多数私有 cl
 
 ## Outstanding items
 
-本轮有 10 项 unverified claims，均对应尚未授权、历史不可恢复、覆盖不足或尚未发布的边界。
+Round 5 已依据外部独立 fresh-clone 审计关闭原 `R4-U10`；当前保留 9 项 unverified claims，均对应尚未授权、历史不可恢复或覆盖不足的边界。该关闭只涉及仓库发布与可复现性，不产生能力证据。
 
 本轮有 0 项开放问题：Round 3 的三个问题已经由作者明确决定，但后续私有 stage 仍需逐 stage 新授权。
 

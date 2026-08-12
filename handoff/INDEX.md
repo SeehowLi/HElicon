@@ -7,7 +7,9 @@ Round 1 and Round 2 predate the repository handoff protocol. Their taskbooks wer
 | 1 | legacy v1.3 taskbook, not retained | `2c10a11` | `legacy-no-handoff` | unknown | unknown |
 | 2 | legacy v1.3.1 taskbook, not retained | `f26388d` | `legacy-no-handoff` | unknown | unknown |
 | 3 | `handoff/HELICON_ROUND3_TASKBOOK.md`, sanitized repository copy | `230dc4d` (implementation anchor; handoff in metadata-only child) | `partial` | 10 | 3 |
-| 4 | `handoff/HELICON_ROUND4_TASKBOOK.md` | `a523669` audited checkout; Round 4 bundle uncommitted | `partial` | 10 | 0 |
+| 4 | `handoff/HELICON_ROUND4_TASKBOOK.md` | `a18364d` published bundle; parent `a523669`; externally audited | `partial` | 9 | 0 |
+| 5 | `handoff/R4_2_AUTHORIZATION_REQUEST.md` | authorization-request-only; containing commit unresolved | `partial` | 9 | 1 |
 
 Round 3 source of truth: `handoff/round_3.json`.
 Round 4 source of truth: `handoff/round_4.json`.
+Round 5 source of truth: `handoff/round_5.json`.

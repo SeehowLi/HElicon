@@ -24,8 +24,8 @@
     "handoff_commit": "a52366983621b6481284f0c9a09f9fe3a866f2d8",
     "audited_checkout_commit": "a52366983621b6481284f0c9a09f9fe3a866f2d8",
     "audited_checkout_parent": "230dc4ddbedccb8fe263b4180d0b110dc6961bcf",
-    "round4_containing_commit": null,
-    "round4_containing_commit_status": "externally-resolved-after-publication"
+    "round4_containing_commit": "a18364d535e3691b49be1c6c9ce3de1a087be14d",
+    "round4_containing_commit_status": "published-and-independently-audited"
   },
   "evidence_hash_policy": {
     "captured-combined-stdout-stderr": [
@@ -794,12 +794,18 @@
       "claim": "A current installed payload backup restores byte-for-byte in a disposable target.",
       "status": "blocked-not-authorized",
       "how_to_verify": "Authorize R4-6 and run parity plus restore drills only against disposable targets."
-    },
+    }
+  ],
+  "subsequent_resolutions": [
     {
       "id": "R4-U10",
-      "claim": "The Round 4 public bundle is committed, published, and independently fresh-clone reproducible.",
-      "status": "not-published",
-      "how_to_verify": "After separate commit/push authorization, resolve the containing commit externally and rerun the public reproduce sequence."
+      "status": "closed-by-external-audit",
+      "closed_in_round": 5,
+      "repository_ref": "refs/heads/codex/round4-evidence-closure",
+      "commit": "a18364d535e3691b49be1c6c9ce3de1a087be14d",
+      "parent": "a52366983621b6481284f0c9a09f9fe3a866f2d8",
+      "scope": "repository publication and fresh-clone reproducibility only",
+      "capability_implication": false
     }
   ],
   "open_questions": [],

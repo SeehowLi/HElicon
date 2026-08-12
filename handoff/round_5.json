@@ -1,0 +1,458 @@
+{
+  "schema": "helicon-handoff-v2",
+  "round": 5,
+  "status": "partial",
+  "taskbook": "handoff/R4_2_AUTHORIZATION_REQUEST.md",
+  "taskbook_role": "authorization-request-only",
+  "generated_utc": "2026-08-12T08:37:05.900570Z",
+  "authorization_scope": {
+    "authorized_stages": [],
+    "requested_stage": "R4-2",
+    "request_status": "proposal-only-not-authorized",
+    "stop_after": "R4-2-authorization-request",
+    "private_data_access": false,
+    "stage_computation_authorized": false,
+    "live_skill_access": false,
+    "installation_authorized": false,
+    "merge_tag_push_authorized": false
+  },
+  "repository": {
+    "origin_url": "https://github.com/SeehowLi/HElicon.git",
+    "work_branch": "codex/round4-evidence-closure",
+    "round4_bundle_commit": "a18364d535e3691b49be1c6c9ce3de1a087be14d",
+    "round4_bundle_parent": "a52366983621b6481284f0c9a09f9fe3a866f2d8",
+    "round5_containing_commit": null,
+    "round5_containing_commit_status": "unpublished-self-reference-excluded"
+  },
+  "evidence_hash_policy": {
+    "captured-combined-stdout-stderr": [],
+    "sanitized-key-output": [
+      "R5-E002"
+    ],
+    "external-audit-attestation": [
+      "R5-E001"
+    ],
+    "input-canonicalization": {
+      "R5-E002": {
+        "algorithm": "sha256-canonical-text-v1",
+        "encoding": "UTF-8",
+        "line_endings": "LF"
+      }
+    }
+  },
+  "tasks": [
+    {
+      "id": "R5-0",
+      "status": "done",
+      "claim_domains": [
+        "repository"
+      ],
+      "claim_scopes": [
+        "repository-integrity"
+      ],
+      "capability_claim": false,
+      "capability_scopes": [],
+      "evidence": [
+        {
+          "id": "R5-E001",
+          "record_type": "external-audit-attestation",
+          "command": "Author-supplied external independent audit command bundle; exact commands and reported exit codes are listed in external_commands and external_exit_codes.",
+          "external_commands": [
+            "python -B scripts/selftest_checks.py",
+            "python -B scripts/check_contract_sync.py",
+            "python -B scripts/check_skill_integrity.py .",
+            "python -B scripts/check_core_contamination.py .",
+            "python -B evals/run_all.py",
+            "python -B handoff/validate.py --selftest",
+            "git diff --check",
+            "git status --porcelain=v1"
+          ],
+          "external_exit_codes": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "negative_tests": {
+            "validator_tamper_injections_rejected": 6,
+            "expected_exit_code": 2
+          },
+          "exit_code": 0,
+          "executed_utc": null,
+          "execution_time_status": "not-reported-by-source",
+          "recorded_utc": "2026-08-12T06:14:12.040578Z",
+          "key_output": "External independent audit reported branch a18364d535e3691b49be1c6c9ce3de1a087be14d with sole parent a52366983621b6481284f0c9a09f9fe3a866f2d8, exactly five handoff-only changed files, eight public commands exiting 0, six of six validator mutations rejected with exit 2, and no capability-language escalation or private identifier leakage within the audited handoff-only change set.",
+          "input_manifest_sha256": "sha256:9180cfccbedef8f3f58b9c5b407f5a25ab2a0807c021012ccab77959a5416998",
+          "output_summary_sha256": "sha256:0495bb48e16b2e9f3dc6e05877822cfe35895faf4eee0397d6bceada15f75bd8",
+          "data_provenance": "repository-metadata",
+          "execution_provenance": "independent-session",
+          "target_provenance": "none",
+          "human_review": "none",
+          "claim_domain": "repository",
+          "claim_scope": "repository-integrity"
+        }
+      ],
+      "note": "The author-supplied independent audit closes R4-U10 for repository publication and fresh-clone reproducibility only; it creates no paper-capability evidence."
+    },
+    {
+      "id": "R5-1",
+      "status": "done",
+      "claim_domains": [
+        "repository"
+      ],
+      "claim_scopes": [
+        "repository-integrity"
+      ],
+      "capability_claim": false,
+      "capability_scopes": [],
+      "evidence": [
+        {
+          "id": "R5-E002",
+          "command": "python -B -c \"from pathlib import Path; import json; t=Path(r'handoff/R4_2_AUTHORIZATION_REQUEST.md').read_text(encoding='utf-8'); m=['request_status=proposal-only-not-authorized','holdout_before_profile_required=true','holdout_precondition_status=declared-not-executed','failure_mode=fail-closed','authorized_closure_claims=R4-U01,R4-U02','deferred_claims=R4-U03,R4-U04,R4-U05,R4-U06,R4-U07,R4-U08,R4-U09','conditional_source_read_requires_stop=true','stage1_summary_create_once=true','holdout_receipt_creation_authorized=false','profile_screening_target_direction_authorized=false','private_paths_are_aliases=true','structural_option_A_expands_private_paths=false','structural_option_B_expands_private_paths=false','structural_option_C_expands_private_paths=true']; a=['<PRIVATE_PAPER_ROOT>/.helicon/corpus/extraction_qc.md','<PRIVATE_PAPER_ROOT>/.helicon/corpus/stages/v1.txt','<PRIVATE_PAPER_ROOT>/.helicon/corpus/stages/v2.md','<PRIVATE_PAPER_ROOT>/.helicon/corpus/stages/v3.txt','<PRIVATE_PAPER_ROOT>/.helicon/corpus/v2_authority.md','<PRIVATE_PAPER_ROOT>/.helicon/corpus/versions.yaml','<PRIVATE_SOURCE_ROOT>/version-2.tex','<PRIVATE_PAPER_ROOT>/.helicon/corpus/stage1_summary.json']; assert all(x in t for x in m+a); assert all(f'R4-U{i:02d}' in t for i in range(1,10)); print(json.dumps({'file':'handoff/R4_2_AUTHORIZATION_REQUEST.md','markers_present':True,'aliases_present':True,'remaining_claim_ids_present':True,'private_paths_resolved':False,'stage_computations_executed':False},separators=(',',':')))\"",
+          "exit_code": 0,
+        "executed_utc": "2026-08-12T06:36:33.603810Z",
+          "key_output": "{\"file\":\"handoff/R4_2_AUTHORIZATION_REQUEST.md\",\"markers_present\":true,\"aliases_present\":true,\"remaining_claim_ids_present\":true,\"private_paths_resolved\":false,\"stage_computations_executed\":false}",
+          "input_manifest_sha256": "sha256:d071a30412f9c2716104ed4e4d16f1236f39e766c1861ba0154ea984366cb5b5",
+          "output_summary_sha256": "sha256:1702cdc6b3c35baecdc8a25234908de3b0902ab5f7ae56f9a4bcc39e945bcc47",
+          "data_provenance": "repository-metadata",
+          "execution_provenance": "builder-session",
+          "target_provenance": "none",
+          "human_review": "none",
+          "claim_domain": "repository",
+          "claim_scope": "repository-integrity"
+        }
+      ],
+      "note": "The authorization request enumerates bounded aliases, claim-specific evidence requirements, a fail-closed hold-out-before-profile admission gate, and structural-coverage options; it does not grant R4-2 access."
+    },
+    {
+      "id": "R4-ITERATION",
+      "status": "partial",
+      "claim_domains": [
+        "repository"
+      ],
+      "claim_scopes": [
+        "repository-integrity"
+      ],
+      "capability_claim": false,
+      "capability_scopes": [],
+      "evidence": [],
+      "note": "The authorization request is complete, but no private successor stage has been authorized or executed."
+    }
+  ],
+  "decisions": [
+    {
+      "id": "R5-D001",
+      "actor": "author",
+      "recorded_utc": "2026-08-12T06:14:12.040578Z",
+      "decision": "Accept the supplied external independent audit as closure evidence for R4-U10 only."
+    },
+    {
+      "id": "R5-D002",
+      "actor": "author",
+      "recorded_utc": "2026-08-12T06:14:12.040578Z",
+      "decision": "Authorize Round 5 only to propose R4-2 access; forbid private data, private evaluations, live skill access, and Stage 1 through Stage 3 computation."
+    }
+  ],
+  "inherited_source": {
+    "commit": "a18364d535e3691b49be1c6c9ce3de1a087be14d",
+    "path": "handoff/round_4.json",
+    "sha256": "sha256:8a19becb2db78645f359f7cf9104f0d8af5ac567a0a100ea06dd987be813df4e",
+    "id_derivation": "preserved-source-ids-v1",
+    "unverified_claims": 10,
+    "open_questions": 0
+  },
+  "inherited_dispositions": [
+    {
+      "source_id": "R4-U01",
+      "source_kind": "unverified_claim",
+      "source_index": 0,
+      "claim_domain": "corpus",
+      "claim_scope": "corpus-qc",
+      "disposition": "carried-forward",
+      "successor_id": "R4-U01",
+      "evidence_ids": [],
+      "decision_ids": [],
+      "rationale": "R4-2 has not been authorized; the request defines the real-data and author-attested closure gate."
+    },
+    {
+      "source_id": "R4-U02",
+      "source_kind": "unverified_claim",
+      "source_index": 1,
+      "claim_domain": "corpus",
+      "claim_scope": "authority-approval",
+      "disposition": "carried-forward",
+      "successor_id": "R4-U02",
+      "evidence_ids": [],
+      "decision_ids": [],
+      "rationale": "R4-2 has not been authorized; only a bounded author approval under declared criteria may close this claim."
+    },
+    {
+      "source_id": "R4-U03",
+      "source_kind": "unverified_claim",
+      "source_index": 2,
+      "claim_domain": "corpus",
+      "claim_scope": "revision-attribution",
+      "disposition": "carried-forward",
+      "successor_id": "R4-U03",
+      "evidence_ids": [],
+      "decision_ids": [],
+      "rationale": "Venue and page-budget adjudication belongs to R4-3 and is outside the proposed R4-2 scope."
+    },
+    {
+      "source_id": "R4-U04",
+      "source_kind": "unverified_claim",
+      "source_index": 3,
+      "claim_domain": "target",
+      "claim_scope": "revision-attribution",
+      "disposition": "carried-forward",
+      "successor_id": "R4-U04",
+      "evidence_ids": [],
+      "decision_ids": [],
+      "rationale": "R4-2 does not read hold-outs or create a receipt; future R4-3 must create and bind the receipt before any target or direction computation."
+    },
+    {
+      "source_id": "R4-U05",
+      "source_kind": "unverified_claim",
+      "source_index": 4,
+      "claim_domain": "privacy",
+      "claim_scope": "privacy-review",
+      "disposition": "carried-forward",
+      "successor_id": "R4-U05",
+      "evidence_ids": [],
+      "decision_ids": [],
+      "rationale": "Reviewer-pattern semantic review remains private and belongs to R4-3."
+    },
+    {
+      "source_id": "R4-U06",
+      "source_kind": "unverified_claim",
+      "source_index": 5,
+      "claim_domain": "evaluation",
+      "claim_scope": "evaluator-only",
+      "disposition": "carried-forward",
+      "successor_id": "R4-U06",
+      "evidence_ids": [],
+      "decision_ids": [],
+      "rationale": "Independent process-exit evidence belongs to R4-4 and cannot be produced in this public proposal round."
+    },
+    {
+      "source_id": "R4-U07",
+      "source_kind": "unverified_claim",
+      "source_index": 6,
+      "claim_domain": "evaluation",
+      "claim_scope": "structural",
+      "disposition": "blocked",
+      "successor_id": "R4-U07",
+      "evidence_ids": [],
+      "decision_ids": [],
+      "rationale": "Structural evidence remains insufficient at 6 eligible, 2 scorable, one zero-denominator case, and null aggregate."
+    },
+    {
+      "source_id": "R4-U08",
+      "source_kind": "unverified_claim",
+      "source_index": 7,
+      "claim_domain": "evaluation",
+      "claim_scope": "fixture-provenance",
+      "disposition": "carried-forward",
+      "successor_id": "R4-U08",
+      "evidence_ids": [],
+      "decision_ids": [],
+      "rationale": "Fixture provenance and authorized-corpus overlap review belong to R4-5."
+    },
+    {
+      "source_id": "R4-U09",
+      "source_kind": "unverified_claim",
+      "source_index": 8,
+      "claim_domain": "install",
+      "claim_scope": "install-rollback",
+      "disposition": "blocked",
+      "successor_id": "R4-U09",
+      "evidence_ids": [],
+      "decision_ids": [],
+      "rationale": "Disposable install and restore parity drills require separate R4-6 authorization."
+    },
+    {
+      "source_id": "R4-U10",
+      "source_kind": "unverified_claim",
+      "source_index": 9,
+      "claim_domain": "repository",
+      "claim_scope": "repository-integrity",
+      "disposition": "closed",
+      "evidence_ids": [
+        "R5-E001"
+      ],
+      "decision_ids": [
+        "R5-D001"
+      ],
+      "rationale": "The public bundle is published on the named branch and was independently reproduced from a fresh HTTPS clone; this closure is repository-only."
+    }
+  ],
+  "legacy_task_dispositions": [
+    {
+      "source_id": "R4-ITERATION",
+      "recorded_status": "partial",
+      "round5_disposition": "retained-partial",
+      "rationale": "Producing an authorization request does not complete the cross-round iteration protocol or any private successor stage."
+    }
+  ],
+  "unverified_claims": [
+    {
+      "id": "R4-U01",
+      "claim": "A dated Round 4 author review confirms every Stage 1 extraction-QC dimension.",
+      "status": "not-authorized",
+      "how_to_verify": "After R4-2 authorization, review the private QC artifact and persist only sanitized dimension verdicts, hashes, reviewer role, and time."
+    },
+    {
+      "id": "R4-U02",
+      "claim": "The middle-version authority is approved under the declared section-level criteria.",
+      "status": "not-authorized",
+      "how_to_verify": "After R4-2 authorization, repeat the bounded private authority review and record a sanitized author decision."
+    },
+    {
+      "id": "R4-U03",
+      "claim": "Venue and page-budget attribution has bounded aggregate confirmed, changed, and unknown counts.",
+      "status": "not-authorized",
+      "how_to_verify": "After R4-3 authorization, adjudicate stable private IDs with the author and publish counts only."
+    },
+    {
+      "id": "R4-U04",
+      "claim": "A Round 4 frozen hold-out manifest precedes every isolated target and direction computation.",
+      "status": "not-authorized",
+      "how_to_verify": "After R4-3 authorization, persist manifest, command, and output hashes in forward execution order."
+    },
+    {
+      "id": "R4-U05",
+      "claim": "Reviewer-pattern candidates pass a bounded human semantic-privacy and usefulness checklist.",
+      "status": "not-authorized",
+      "how_to_verify": "Run the private review in R4-3; keep all candidates private regardless of result."
+    },
+    {
+      "id": "R4-U06",
+      "claim": "New independent Stage 3 runs persist actual OS exit code with command and artifact hashes.",
+      "status": "not-authorized",
+      "how_to_verify": "Use the authorized R4-4 outer wrapper in a new independent task."
+    },
+    {
+      "id": "R4-U07",
+      "claim": "The target layer improves structural dimensions on the preregistered private sample set.",
+      "status": "blocked-insufficient-coverage",
+      "how_to_verify": "Meet all structural admission thresholds without shrinking hold-outs or relaxing immutable gates."
+    },
+    {
+      "id": "R4-U08",
+      "claim": "The six repository fixture texts have bounded synthetic provenance and no detected overlap with the authorized private corpus.",
+      "status": "not-authorized",
+      "how_to_verify": "Run R4-5 with a canonical Git-blob manifest, author attestation, and bounded overlap review."
+    },
+    {
+      "id": "R4-U09",
+      "claim": "A current installed payload backup restores byte-for-byte in a disposable target.",
+      "status": "blocked-not-authorized",
+      "how_to_verify": "Authorize R4-6 and run parity plus restore drills only against disposable targets."
+    }
+  ],
+  "open_questions": [
+    {
+      "id": "R5-OQ01",
+      "question": "是否按 R4_2_AUTHORIZATION_REQUEST.md 第 7 节的精确边界授权 R4-2？",
+      "options": [
+        "授权建议中的非条件私有材料与 stage1_summary.json create-once 输出；hold-out receipt 留待未来 R4-3",
+        "暂不授权，继续保持公开 proposal-only 状态"
+      ],
+      "recommendation": "按精确边界授权 R4-2；若 authority 报告不足，条件 TeX 路径必须另行停下扩权。"
+    }
+  ],
+  "deviations": [
+    {
+      "what": "Round 5 uses the R4-2 authorization request as its taskbook and human-readable handoff.",
+      "why": "The authorized scope is proposal-only and explicitly forbids executing R4-2.",
+      "impact": "No separate capability report is created and overall status remains partial."
+    },
+    {
+      "what": "The historical Round 4 candidate manifest is validated from the published a18364d Git blobs rather than the modified working tree.",
+      "why": "Synchronizing the U10 closure count changes INDEX and the human report; rewriting old evidence hashes would falsify historical inputs.",
+      "impact": "Round 4 evidence remains immutable while Round 5 records the new governance increment."
+    },
+    {
+      "what": "Round 5 uses a six-entry case-folded SHA-256 digest denylist as defense in depth.",
+      "why": "It blocks bounded literal matches without publishing the literals.",
+      "impact": "A small known candidate set is vulnerable to targeted dictionary guessing; an external audit recovered five of six digests. This does not verify semantic non-disclosure, which remains an external human-review boundary."
+    }
+  ],
+  "metrics": {
+    "synthetic_regression": {
+      "groups_satisfied": 5,
+      "groups_total": 5,
+      "pipeline_runnable": true,
+      "capability_validated": false,
+      "claim_scope": "pipeline-only",
+      "generation_path_exercised": false,
+      "synthetic_oracle_case": "target-eval-guards"
+    },
+    "structural_direction": {
+      "status": "insufficient-coverage",
+      "eligible_observations": 6,
+      "scorable_observations": 2,
+      "coverage_percent": 33.3333,
+      "zero_denominator_cases": 1,
+      "aggregate_convergence_percent": null,
+      "headline_allowed": false
+    },
+    "external_audit": {
+      "evidence_id": "R5-E001",
+      "fresh_https_clone": true,
+      "public_commands_exit_zero": 8,
+      "tamper_injections_rejected": 6,
+      "tamper_expected_exit_code": 2,
+      "capability_validated": false,
+      "evidence_truth_verified": false
+    }
+  },
+  "privacy": {
+    "private_data_read": false,
+    "live_skill_read": false,
+    "private_paths_recorded": false,
+    "stage_computations_executed": false,
+    "digest_set_provenance": {
+      "source": "author-supplied-authoritative-six-item-list",
+      "source_handling": "ephemeral-in-memory-only",
+      "canonical_rule": "sha256(casefold(literal).utf-8)",
+      "count": 6,
+      "unique_digest_count": 6,
+      "manifest_rule": "sha256(ascii-sort-lowercase-hex-lines-with-final-LF)",
+      "manifest_bytes": 390,
+      "manifest_sha256": "sha256:bfc62c0661aa5e34baf279c924d405f1fbb8c028e74ffa0cc65682208b81d60a",
+      "recomputation_command": "python -B -c \"import hashlib,json,os,runpy;v=json.loads(os.environ['HELICON_F1R_AUTHORITATIVE_LIST_JSON']);assert len(v)==len(set(v))==6 and all(isinstance(x,str) and x for x in v);d=frozenset(hashlib.sha256(x.casefold().encode('utf-8')).hexdigest() for x in v);m=('\\n'.join(sorted(d))+'\\n').encode('ascii');q=runpy.run_path('handoff/validate.py');assert d==q['REQUEST_PRIVATE_PROJECT_TOKEN_SHA256'];assert hashlib.sha256(m).hexdigest()==q['REQUEST_PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256'];assert all(q['contains_private_identifier_digest']([x],d) for x in v);print(json.dumps({'digest_set_matches_pinned':True,'manifest_matches_pinned':True,'per_item_rejected':6},sort_keys=True,separators=(',',':')))\"",
+      "exit_code": 0,
+      "executed_utc": "2026-08-12T08:36:17.725531Z",
+      "digest_set_matches_pinned": true,
+      "manifest_matches_pinned": true,
+      "per_item_rejected": 6,
+      "private_identifier_literals_processed_ephemerally": true,
+      "plaintext_retained": false,
+      "plaintext_to_digest_mapping_retained": false,
+      "claim_scope": "denylist-derivation-integrity-only",
+      "semantic_non_disclosure_verified": false
+    },
+    "path_aliases_only": [
+      "<PRIVATE_PAPER_ROOT>",
+      "<PRIVATE_SOURCE_ROOT>",
+      "<TEMP_CLONE>"
+    ],
+    "public_files_read": [
+      "handoff/round_4.json at commit a18364d535e3691b49be1c6c9ce3de1a087be14d",
+      "handoff/ROUND_4_HANDOFF.md",
+      "handoff/INDEX.md",
+      "handoff/validate.py"
+    ]
+  },
+  "reproduce": [
+    "python -B handoff/validate.py --round 5 --selftest",
+    "python -B handoff/validate.py --selftest",
+    "python -B scripts/check_core_contamination.py .",
+    "git diff --check"
+  ]
+}
