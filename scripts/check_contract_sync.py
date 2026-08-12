@@ -247,6 +247,55 @@ def python_dict_keys(path: Path, name: str) -> set[str]:
     return set()
 
 
+def digest_sync_errors(contamination_script: Path, handoff_validator: Path) -> list[str]:
+    errors: list[str] = []
+    contamination_hashes = python_frozenset(
+        contamination_script, "PRIVATE_PROJECT_TOKEN_SHA256"
+    )
+    handoff_hashes = python_frozenset(
+        handoff_validator, "REQUEST_PRIVATE_PROJECT_TOKEN_SHA256"
+    )
+    contamination_manifest = python_literal(
+        contamination_script, "PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256"
+    )
+    handoff_manifest = python_literal(
+        handoff_validator, "REQUEST_PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256"
+    )
+    if contamination_hashes is None or handoff_hashes is None or contamination_hashes != handoff_hashes:
+        errors.append("private identifier digest sets differ between scripts and handoff validator")
+    if contamination_manifest is None or handoff_manifest is None or contamination_manifest != handoff_manifest:
+        errors.append("private identifier digest manifests differ between scripts and handoff validator")
+
+    contamination_mentions = python_frozenset(
+        contamination_script, "PROJECT_MENTION_SHA256"
+    )
+    handoff_mentions = python_frozenset(
+        handoff_validator, "REQUEST_PROJECT_MENTION_SHA256"
+    )
+    contamination_mention_count = python_constant(
+        contamination_script, "PROJECT_MENTION_COUNT"
+    )
+    handoff_mention_count = python_constant(
+        handoff_validator, "REQUEST_PROJECT_MENTION_COUNT"
+    )
+    contamination_mention_manifest = python_literal(
+        contamination_script, "PROJECT_MENTION_MANIFEST_SHA256"
+    )
+    handoff_mention_manifest = python_literal(
+        handoff_validator, "REQUEST_PROJECT_MENTION_MANIFEST_SHA256"
+    )
+    if contamination_mentions is None or handoff_mentions is None or contamination_mentions != handoff_mentions:
+        errors.append("project mention digest sets differ between scripts and handoff validator")
+    if contamination_mention_count is None or contamination_mention_count != handoff_mention_count:
+        errors.append("project mention digest counts differ between scripts and handoff validator")
+    if (
+        contamination_mention_manifest is None
+        or contamination_mention_manifest != handoff_mention_manifest
+    ):
+        errors.append("project mention digest manifests differ between scripts and handoff validator")
+    return errors
+
+
 def validate_contracts(root: Path) -> dict[str, Any]:
     errors: list[str] = []
     polish = read_utf8(root / "references/language_polish.md")
@@ -264,22 +313,7 @@ def validate_contracts(root: Path) -> dict[str, Any]:
 
     contamination_script = root / "scripts/check_core_contamination.py"
     handoff_validator = root / "handoff/validate.py"
-    contamination_hashes = python_frozenset(
-        contamination_script, "PRIVATE_PROJECT_TOKEN_SHA256"
-    )
-    handoff_hashes = python_frozenset(
-        handoff_validator, "REQUEST_PRIVATE_PROJECT_TOKEN_SHA256"
-    )
-    contamination_manifest = python_literal(
-        contamination_script, "PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256"
-    )
-    handoff_manifest = python_literal(
-        handoff_validator, "REQUEST_PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256"
-    )
-    if contamination_hashes is None or handoff_hashes is None or contamination_hashes != handoff_hashes:
-        errors.append("private identifier digest sets differ between scripts and handoff validator")
-    if contamination_manifest is None or handoff_manifest is None or contamination_manifest != handoff_manifest:
-        errors.append("private identifier digest manifests differ between scripts and handoff validator")
+    errors.extend(digest_sync_errors(contamination_script, handoff_validator))
 
     registry_commands = set(COMMAND_RE.findall(read_utf8(root / "references/command_registry.md")))
     description_commands = set(COMMAND_RE.findall(description_text(read_utf8(root / "SKILL.md"))))

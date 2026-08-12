@@ -47,6 +47,7 @@ ROUND3_ITEMS = {*(f"R3-U{i:02d}" for i in range(1, 11)), *(f"R3-OQ{i:02d}" for i
 ROUND4_UNVERIFIED_IDS = [f"R4-U{i:02d}" for i in range(1, 11)]
 ROUND4_BASE = "a52366983621b6481284f0c9a09f9fe3a866f2d8"
 ROUND4_PUBLISHED = "a18364d535e3691b49be1c6c9ce3de1a087be14d"
+ROUND5_BUNDLE_COMMIT = "bb388871f8a568f4a452fbae9dae98ac716a2705"
 ROUND4_PUBLISHED_JSON_SHA256 = "sha256:8a19becb2db78645f359f7cf9104f0d8af5ac567a0a100ea06dd987be813df4e"
 ROUND4_PUBLISHED_MANIFEST_SHA256 = "sha256:9180cfccbedef8f3f58b9c5b407f5a25ab2a0807c021012ccab77959a5416998"
 ROUND3_IMPLEMENTATION = "230dc4ddbedccb8fe263b4180d0b110dc6961bcf"
@@ -176,6 +177,15 @@ REQUEST_PRIVATE_PROJECT_TOKEN_COUNT = 6
 REQUEST_PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256 = (
     "bfc62c0661aa5e34baf279c924d405f1fbb8c028e74ffa0cc65682208b81d60a"
 )
+REQUEST_PROJECT_MENTION_SHA256 = frozenset(
+    {"d1a52efc266a3bf735265ebd8bf73166268049054784dfa42293f460bebbda5d"}
+)
+REQUEST_PROJECT_MENTION_COUNT = 1
+REQUEST_PROJECT_MENTION_MANIFEST_SHA256 = (
+    "7581fc6d5284feb16fbc9d885601cc9a97585999b71867a85a23845aaf21691c"
+)
+ROUND6_TARGET_SEMANTICS = "imitation-fidelity-to-author-approved-ai-assisted-target"
+CONVERGENCE_CLAIM_SCOPES = {"evaluator-only", "rule-direction", "structural"}
 ROUND5_DIGEST_RECOMPUTATION_COMMAND = (
     "python -B -c \"import hashlib,json,os,runpy;"
     "v=json.loads(os.environ['HELICON_F1R_AUTHORITATIVE_LIST_JSON']);"
@@ -246,6 +256,13 @@ def canonical_lf_sha256(value: bytes) -> str:
     return "sha256:" + hashlib.sha256(canonical_lf_bytes(value)).hexdigest()
 
 
+def first_difference_byte_offset(expected: bytes, actual: bytes) -> int | None:
+    for offset, (expected_byte, actual_byte) in enumerate(zip(expected, actual)):
+        if expected_byte != actual_byte:
+            return offset
+    return len(expected) if len(expected) != len(actual) else None
+
+
 def validate_private_token_hashes(private_token_hashes: frozenset[str]) -> None:
     require(
         isinstance(private_token_hashes, frozenset)
@@ -257,6 +274,24 @@ def validate_private_token_hashes(private_token_hashes: frozenset[str]) -> None:
     require(
         hashlib.sha256(manifest).hexdigest() == REQUEST_PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256,
         "private identifier digest set incomplete or replaced",
+    )
+
+
+def validate_project_mention_hashes(
+    project_mention_hashes: frozenset[str] = REQUEST_PROJECT_MENTION_SHA256,
+    expected_count: int = REQUEST_PROJECT_MENTION_COUNT,
+    expected_manifest_sha256: str = REQUEST_PROJECT_MENTION_MANIFEST_SHA256,
+) -> None:
+    require(
+        isinstance(project_mention_hashes, frozenset)
+        and len(project_mention_hashes) == expected_count
+        and all(re.fullmatch(r"[0-9a-f]{64}", digest) for digest in project_mention_hashes),
+        "project mention digest set missing or malformed",
+    )
+    manifest = ("\n".join(sorted(project_mention_hashes)) + "\n").encode("ascii")
+    require(
+        hashlib.sha256(manifest).hexdigest() == expected_manifest_sha256,
+        "project mention digest set incomplete or replaced",
     )
 
 
@@ -281,6 +316,23 @@ def validate_private_identifier_texts(
     )
 
 
+def validate_project_mention_texts(
+    texts: list[str],
+    project_mention_hashes: frozenset[str] = REQUEST_PROJECT_MENTION_SHA256,
+    expected_count: int = REQUEST_PROJECT_MENTION_COUNT,
+    expected_manifest_sha256: str = REQUEST_PROJECT_MENTION_MANIFEST_SHA256,
+) -> None:
+    validate_project_mention_hashes(
+        project_mention_hashes,
+        expected_count,
+        expected_manifest_sha256,
+    )
+    require(
+        not contains_private_identifier_digest(texts, project_mention_hashes),
+        "public handoff contains a project mention digest match",
+    )
+
+
 def validate_handoff_private_identifiers(handoff: Path) -> None:
     texts = [
         path.read_text(encoding="utf-8")
@@ -288,6 +340,7 @@ def validate_handoff_private_identifiers(handoff: Path) -> None:
         if path.is_file()
     ]
     validate_private_identifier_texts(texts)
+    validate_project_mention_texts(texts)
 
 
 def validate_handoff_gitattributes(value: bytes) -> None:
@@ -409,9 +462,18 @@ def validate_round4_postpublication(current: dict, published: dict, report: str)
 
 
 def validate_round5_request(
-    request: str, private_token_hashes: frozenset[str] = REQUEST_PRIVATE_PROJECT_TOKEN_SHA256
+    request: str,
+    private_token_hashes: frozenset[str] = REQUEST_PRIVATE_PROJECT_TOKEN_SHA256,
+    project_mention_hashes: frozenset[str] = REQUEST_PROJECT_MENTION_SHA256,
+    project_mention_count: int = REQUEST_PROJECT_MENTION_COUNT,
+    project_mention_manifest_sha256: str = REQUEST_PROJECT_MENTION_MANIFEST_SHA256,
 ) -> None:
     validate_private_token_hashes(private_token_hashes)
+    validate_project_mention_hashes(
+        project_mention_hashes,
+        project_mention_count,
+        project_mention_manifest_sha256,
+    )
     for marker in ROUND5_REQUIRED_REQUEST_MARKERS:
         require(marker in request, f"R4-2 request marker missing: {marker}")
     for alias in ROUND5_REQUIRED_REQUEST_ALIASES:
@@ -431,13 +493,57 @@ def validate_round5_request(
     )
     require(REQUEST_WINDOWS_PATH_RE.search(request) is None, "R4-2 request contains a Windows absolute or UNC path")
     validate_private_identifier_texts([request], private_token_hashes)
-
-
-def validate_r5_e002_input(request_evidence: dict, request_bytes: bytes) -> None:
-    require(
-        request_evidence["input_manifest_sha256"] == canonical_lf_sha256(request_bytes),
-        "R5-E002 input hash does not bind current canonical-LF authorization request",
+    validate_project_mention_texts(
+        [request],
+        project_mention_hashes,
+        project_mention_count,
+        project_mention_manifest_sha256,
     )
+
+
+def validate_r5_e002_input(
+    request_evidence: dict,
+    request_bytes: bytes,
+    expected_request_bytes: bytes,
+) -> None:
+    require(not request_bytes.startswith(b"\xef\xbb\xbf"), "R5-E002 authorization request contains a UTF-8 BOM")
+    expected_hash = request_evidence["input_manifest_sha256"]
+    actual_hash = canonical_lf_sha256(request_bytes)
+    if expected_hash != actual_hash:
+        offset = first_difference_byte_offset(
+            canonical_lf_bytes(expected_request_bytes),
+            canonical_lf_bytes(request_bytes),
+        )
+        raise ValidationError(
+            "R5-E002 canonical-LF input hash mismatch: "
+            f"expected={expected_hash} actual={actual_hash} "
+            f"first_difference_byte_offset={offset if offset is not None else 'none'}"
+        )
+
+
+def validate_round6_quality_boundary(data: dict) -> None:
+    if not isinstance(data.get("round"), int) or data["round"] < 6:
+        return
+    require(
+        data.get("target_semantics") == ROUND6_TARGET_SEMANTICS,
+        "round 6+ target_semantics boundary mismatch",
+    )
+    require(data.get("quality_claim_allowed") is False, "round 6+ quality claim must remain disallowed")
+
+    def walk(value: object) -> None:
+        if isinstance(value, dict):
+            if any("convergence" in str(key).casefold() for key in value):
+                require(
+                    value.get("claim_scope") in CONVERGENCE_CLAIM_SCOPES,
+                    "round 6+ convergence metric has a quality-implicating or missing claim_scope",
+                )
+            for nested in value.values():
+                walk(nested)
+        elif isinstance(value, list):
+            for nested in value:
+                walk(nested)
+
+    walk(data.get("metrics", {}))
 
 
 def validate_v1(data: dict, handoff: Path) -> dict:
@@ -1250,14 +1356,15 @@ def validate_v2_round5_repository(data: dict, handoff: Path) -> dict:
     request_path = repo / data["taskbook"]
     require(request_path.is_file(), "R4-2 authorization request missing")
     request_bytes = request_path.read_bytes()
+    request_evidence = evidence_by_id["R5-E002"]
+    expected_request_bytes = git(repo, "show", f"{ROUND5_BUNDLE_COMMIT}:{data['taskbook']}")
+    validate_r5_e002_input(request_evidence, request_bytes, expected_request_bytes)
     request = canonical_lf_bytes(request_bytes).decode("utf-8")
     validate_round5_request(request)
     validate_handoff_private_identifiers(handoff)
     attributes_path = handoff / ".gitattributes"
     require(attributes_path.is_file(), "handoff .gitattributes missing")
     validate_handoff_gitattributes(attributes_path.read_bytes())
-    request_evidence = evidence_by_id["R5-E002"]
-    validate_r5_e002_input(request_evidence, request_bytes)
     for claim_id in ROUND4_UNVERIFIED_IDS[:9]:
         require(claim_id in request, f"R4-2 request omits remaining claim: {claim_id}")
 
@@ -1269,6 +1376,7 @@ def validate_v2_round5_repository(data: dict, handoff: Path) -> dict:
 
 
 def validate_v2_policy(data: dict) -> dict:
+    validate_round6_quality_boundary(data)
     if data.get("round") == 4:
         return validate_v2_round4_policy(data)
     if data.get("round") == 5:
@@ -1304,9 +1412,18 @@ def expect_request_failure(
     request: str,
     label: str,
     private_token_hashes: frozenset[str] = REQUEST_PRIVATE_PROJECT_TOKEN_SHA256,
+    project_mention_hashes: frozenset[str] = REQUEST_PROJECT_MENTION_SHA256,
+    project_mention_count: int = REQUEST_PROJECT_MENTION_COUNT,
+    project_mention_manifest_sha256: str = REQUEST_PROJECT_MENTION_MANIFEST_SHA256,
 ) -> None:
     try:
-        validate_round5_request(request, private_token_hashes)
+        validate_round5_request(
+            request,
+            private_token_hashes,
+            project_mention_hashes,
+            project_mention_count,
+            project_mention_manifest_sha256,
+        )
     except ValidationError:
         return
     raise ValidationError(f"negative request selftest did not fail: {label}")
@@ -1468,17 +1585,55 @@ def selftest_v2_round5(data: dict, handoff: Path) -> int:
         item for task in data["tasks"] for item in task.get("evidence", []) if item.get("id") == "R5-E002"
     )
     crlf_request = canonical_lf_bytes(request_bytes).replace(b"\n", b"\r\n")
-    validate_r5_e002_input(request_evidence, crlf_request)
+    validate_r5_e002_input(request_evidence, crlf_request, request_bytes)
+    try:
+        validate_r5_e002_input(request_evidence, b"\xef\xbb\xbf" + request_bytes, request_bytes)
+    except ValidationError as exc:
+        require("UTF-8 BOM" in str(exc), "Round 5 BOM diagnostic is not explicit")
+    else:
+        raise ValidationError("negative repository selftest did not fail: Round 5 request BOM")
     changed_request = canonical_lf_bytes(request_bytes).replace(
         b"authorized_closure_claims=R4-U01,R4-U02", b"authorized_closure_claims=R4-U01", 1
     )
     try:
-        validate_r5_e002_input(request_evidence, changed_request)
-    except ValidationError:
-        pass
+        validate_r5_e002_input(request_evidence, changed_request, request_bytes)
+    except ValidationError as exc:
+        message = str(exc)
+        require(
+            "expected=sha256:" in message
+            and "actual=sha256:" in message
+            and re.search(r"first_difference_byte_offset=\d+", message) is not None,
+            "Round 5 content-drift diagnostic lacks hashes or byte offset",
+        )
     else:
         raise ValidationError("negative repository selftest did not fail: Round 5 request content drift")
     expect_request_failure(request, "Round 5 private identifier digest set missing", frozenset())
+    expect_request_failure(
+        request,
+        "Round 5 project mention digest set missing",
+        project_mention_hashes=frozenset(),
+    )
+    synthetic_project_canary = "SYNTHETIC_PROJECT_MENTION_CANARY"
+    synthetic_project_hashes = frozenset(
+        {hashlib.sha256(synthetic_project_canary.casefold().encode("utf-8")).hexdigest()}
+    )
+    synthetic_project_manifest = hashlib.sha256(
+        ("\n".join(sorted(synthetic_project_hashes)) + "\n").encode("ascii")
+    ).hexdigest()
+    expect_request_failure(
+        request + "\n" + synthetic_project_canary,
+        "Round 5 synthetic project mention match",
+        project_mention_hashes=synthetic_project_hashes,
+        project_mention_count=1,
+        project_mention_manifest_sha256=synthetic_project_manifest,
+    )
+    expect_request_failure(
+        request,
+        "Round 5 project mention manifest tamper",
+        project_mention_hashes=synthetic_project_hashes,
+        project_mention_count=1,
+        project_mention_manifest_sha256="0" * 64,
+    )
     synthetic_canary = "SYNTHETIC_PRIVATE_CANARY"
     synthetic_hash = frozenset({hashlib.sha256(synthetic_canary.casefold().encode("utf-8")).hexdigest()})
     synthetic_hashes = frozenset(
@@ -1530,7 +1685,47 @@ def selftest_v2_round5(data: dict, handoff: Path) -> int:
         fragment = ROUND5_EXACT_CONTRACT_FRAGMENTS[contract]
         require(request.count(fragment) == 1, f"request contract multiplicity mismatch: {contract}")
         expect_request_failure(request.replace(fragment, replacement, 1), f"Round 5 {label}")
-    return 31
+    return 35
+
+
+def selftest_round6_quality_boundary() -> int:
+    valid = {
+        "round": 6,
+        "target_semantics": ROUND6_TARGET_SEMANTICS,
+        "quality_claim_allowed": False,
+        "metrics": {
+            "structural_direction": {
+                "aggregate_convergence_percent": None,
+                "claim_scope": "structural",
+            }
+        },
+    }
+    validate_round6_quality_boundary(valid)
+    changed = copy.deepcopy(valid)
+    changed.pop("target_semantics")
+    try:
+        validate_round6_quality_boundary(changed)
+    except ValidationError:
+        pass
+    else:
+        raise ValidationError("negative selftest did not fail: Round 6 target semantics missing")
+    changed = copy.deepcopy(valid)
+    changed["quality_claim_allowed"] = True
+    try:
+        validate_round6_quality_boundary(changed)
+    except ValidationError:
+        pass
+    else:
+        raise ValidationError("negative selftest did not fail: Round 6 quality claim enabled")
+    changed = copy.deepcopy(valid)
+    changed["metrics"]["structural_direction"]["claim_scope"] = "paper-quality-improvement"
+    try:
+        validate_round6_quality_boundary(changed)
+    except ValidationError:
+        pass
+    else:
+        raise ValidationError("negative selftest did not fail: Round 6 quality-implicating convergence scope")
+    return 3
 
 
 def selftest_v2(data: dict, handoff: Path) -> int:
@@ -1569,6 +1764,8 @@ def main() -> int:
                 selftests += selftest_v2(data, handoff)
         else:
             raise ValidationError(f"unsupported handoff schema: {data.get('schema')}")
+    if args.selftest:
+        selftests += selftest_round6_quality_boundary()
     print(
         json.dumps(
             {

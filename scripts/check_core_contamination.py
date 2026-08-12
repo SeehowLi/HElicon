@@ -21,6 +21,13 @@ PRIVATE_PROJECT_TOKEN_COUNT = 6
 PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256 = (
     "bfc62c0661aa5e34baf279c924d405f1fbb8c028e74ffa0cc65682208b81d60a"
 )
+PROJECT_MENTION_SHA256 = frozenset(
+    {"d1a52efc266a3bf735265ebd8bf73166268049054784dfa42293f460bebbda5d"}
+)
+PROJECT_MENTION_COUNT = 1
+PROJECT_MENTION_MANIFEST_SHA256 = (
+    "7581fc6d5284feb16fbc9d885601cc9a97585999b71867a85a23845aaf21691c"
+)
 PRIVATE_TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 
 NUMERIC_FACT = re.compile(r"\b\d+(?:\.\d+)?\s*(?:x|X|%|ms|s|GB|MB|KB|bits?)(?![A-Za-z0-9])")
@@ -74,6 +81,18 @@ def line_has_private_token(line: str, private_token_hashes: frozenset[str]) -> b
     )
 
 
+def validate_project_mention_hashes(
+    project_mention_hashes: frozenset[str] = PROJECT_MENTION_SHA256,
+    expected_count: int = PROJECT_MENTION_COUNT,
+    expected_manifest_sha256: str = PROJECT_MENTION_MANIFEST_SHA256,
+) -> None:
+    validate_private_token_hashes(
+        project_mention_hashes,
+        expected_count,
+        expected_manifest_sha256,
+    )
+
+
 def allows_numeric_fact(rel: str, line: str) -> bool:
     """Allow explicit policy thresholds without weakening other checks."""
     if rel in NUMERIC_OK_FILES or NUMERIC_MARKER in line:
@@ -86,6 +105,7 @@ def scan_file(
     path: Path,
     root: Path,
     private_token_hashes: frozenset[str] = PRIVATE_PROJECT_TOKEN_SHA256,
+    project_mention_hashes: frozenset[str] = PROJECT_MENTION_SHA256,
 ) -> list[str]:
     rel = path.relative_to(root).as_posix()
     if ".git/" in rel:
@@ -100,10 +120,13 @@ def scan_file(
     try:
         text = path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
+        findings.append(f"{rel}: unscannable file (invalid UTF-8)")
         return findings
     for lineno, line in enumerate(text.splitlines(), start=1):
         if line_has_private_token(line, private_token_hashes):
             findings.append(f"{rel}:{lineno}: private identifier digest match")
+        if line_has_private_token(line, project_mention_hashes):
+            findings.append(f"{rel}:{lineno}: project mention digest match")
     suffix = path.suffix.lower()
     if suffix not in CORE_TEXT_SUFFIXES and not (
         rel.startswith("evals/") and suffix in EVAL_TEXT_SUFFIXES
@@ -128,6 +151,7 @@ def main() -> int:
     root = args.root.resolve()
     try:
         validate_private_token_hashes()
+        validate_project_mention_hashes()
     except ValueError as exc:
         print(f"Core contamination check configuration failed: {exc}")
         return 2

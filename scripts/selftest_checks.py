@@ -13,6 +13,7 @@ import check_ai_tells
 import build_target_profile
 import check_contract_sync
 import check_core_contamination as checker
+import check_live_skill_binding
 import extract_revision_direction
 import latex_guard
 import resolve_target_profile
@@ -26,11 +27,12 @@ def scan(
     rel: str,
     text: str,
     private_token_hashes: frozenset[str] = checker.PRIVATE_PROJECT_TOKEN_SHA256,
+    project_mention_hashes: frozenset[str] = checker.PROJECT_MENTION_SHA256,
 ) -> list[str]:
     path = root / rel
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
-    return checker.scan_file(path, root, private_token_hashes)
+    return checker.scan_file(path, root, private_token_hashes, project_mention_hashes)
 
 
 def has(findings: list[str], fragment: str) -> bool:
@@ -53,6 +55,22 @@ def rejects_digest_config(
     return False
 
 
+def rejects_project_mention_config(
+    project_mention_hashes: frozenset[str],
+    expected_count: int = checker.PROJECT_MENTION_COUNT,
+    expected_manifest_sha256: str = checker.PROJECT_MENTION_MANIFEST_SHA256,
+) -> bool:
+    try:
+        checker.validate_project_mention_hashes(
+            project_mention_hashes,
+            expected_count,
+            expected_manifest_sha256,
+        )
+    except ValueError:
+        return True
+    return False
+
+
 def ai_rules(path: Path, text: str) -> set[int]:
     path.write_text(text, encoding="utf-8")
     return {finding.rule for finding in check_ai_tells.scan(path)}
@@ -63,10 +81,13 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="helicon-selftest-") as temp:
         root = Path(temp)
         synthetic_tokens = ("ZZTESTTOKENALPHA", "ZZTESTPROJECTBETA")
-        synthetic_hashes = frozenset(
-            hashlib.sha256(token.casefold().encode("utf-8")).hexdigest()
-            for token in synthetic_tokens
+        synthetic_private_hashes = frozenset(
+            {hashlib.sha256(synthetic_tokens[0].casefold().encode("utf-8")).hexdigest()}
         )
+        synthetic_project_hashes = frozenset(
+            {hashlib.sha256(synthetic_tokens[1].casefold().encode("utf-8")).hexdigest()}
+        )
+        synthetic_hashes = synthetic_private_hashes | synthetic_project_hashes
         for index, sample in enumerate(("37%", "0.5%", "1.5x", "12 GB", "20 ms"), 1):
             findings = scan(root, f"references/numeric_{index}.md", sample)
             tests.append((f"numeric {sample}", has(findings, "numeric result-like token")))
@@ -88,11 +109,34 @@ def main() -> int:
         )
         tests.append(("whitelisted numeric table", not has(whitelisted, "numeric result-like token")))
 
-        blocked = scan(root, "references/pass_pipeline.md", synthetic_tokens[0], synthetic_hashes)
+        blocked = scan(
+            root,
+            "references/pass_pipeline.md",
+            synthetic_tokens[0],
+            synthetic_private_hashes,
+            frozenset(),
+        )
         tests.append(("private digest scan active", has(blocked, "private identifier digest match")))
 
-        project = scan(root, "references/pass_pipeline.md", synthetic_tokens[1], synthetic_hashes)
-        tests.append(("project digest scan active", has(project, "private identifier digest match")))
+        project = scan(
+            root,
+            "references/pass_pipeline.md",
+            synthetic_tokens[1],
+            frozenset(),
+            synthetic_project_hashes,
+        )
+        tests.append(("project digest scan active", has(project, "project mention digest match")))
+        project_case_variant = scan(
+            root,
+            "references/project_case_variant.md",
+            synthetic_tokens[1].swapcase(),
+            frozenset(),
+            synthetic_project_hashes,
+        )
+        tests.append((
+            "project mention digest scan is case folded",
+            has(project_case_variant, "project mention digest match"),
+        ))
 
         eprint = scan(root, "references/pass_pipeline.md", "See 2025/1234")
         tests.append(("ePrint still active", has(eprint, "ePrint-like identifier")))
@@ -142,6 +186,71 @@ def main() -> int:
                 frozenset(list(checker.PRIVATE_PROJECT_TOKEN_SHA256)[:-1]),
             ),
         ))
+        tests.append((
+            "project mention digest count mismatch is rejected",
+            rejects_project_mention_config(
+                checker.PROJECT_MENTION_SHA256,
+                checker.PROJECT_MENTION_COUNT + 1,
+            ),
+        ))
+        tests.append((
+            "project mention digest manifest mismatch is rejected",
+            rejects_project_mention_config(
+                checker.PROJECT_MENTION_SHA256,
+                expected_manifest_sha256="0" * 64,
+            ),
+        ))
+        tests.append((
+            "project mention digest deletion is rejected",
+            rejects_project_mention_config(frozenset()),
+        ))
+
+        contract_core = root / "contract-core.py"
+        contract_handoff = root / "contract-handoff.py"
+        contract_core.write_text(
+            "PRIVATE_PROJECT_TOKEN_SHA256=frozenset({'" + "a" * 64 + "'})\n"
+            "PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256='private-manifest'\n"
+            "PROJECT_MENTION_SHA256=frozenset({'" + "b" * 64 + "'})\n"
+            "PROJECT_MENTION_COUNT=1\n"
+            "PROJECT_MENTION_MANIFEST_SHA256='mention-manifest'\n",
+            encoding="utf-8",
+        )
+        contract_handoff.write_text(
+            "REQUEST_PRIVATE_PROJECT_TOKEN_SHA256=frozenset({'" + "a" * 64 + "'})\n"
+            "REQUEST_PRIVATE_PROJECT_TOKEN_MANIFEST_SHA256='private-manifest'\n"
+            "REQUEST_PROJECT_MENTION_SHA256=frozenset({'" + "b" * 64 + "'})\n"
+            "REQUEST_PROJECT_MENTION_COUNT=1\n"
+            "REQUEST_PROJECT_MENTION_MANIFEST_SHA256='mention-manifest'\n",
+            encoding="utf-8",
+        )
+        tests.append((
+            "digest synchronization accepts matching synthetic contracts",
+            not check_contract_sync.digest_sync_errors(contract_core, contract_handoff),
+        ))
+        contract_handoff.write_text(
+            contract_handoff.read_text(encoding="utf-8").replace("b" * 64, "c" * 64),
+            encoding="utf-8",
+        )
+        tests.append((
+            "digest synchronization rejects project mention set drift",
+            has(
+                check_contract_sync.digest_sync_errors(contract_core, contract_handoff),
+                "project mention digest sets differ",
+            ),
+        ))
+        contract_handoff.write_text(
+            contract_handoff.read_text(encoding="utf-8")
+            .replace("c" * 64, "b" * 64)
+            .replace("mention-manifest", "changed-manifest"),
+            encoding="utf-8",
+        )
+        tests.append((
+            "digest synchronization rejects project mention manifest drift",
+            has(
+                check_contract_sync.digest_sync_errors(contract_core, contract_handoff),
+                "project mention digest manifests differ",
+            ),
+        ))
 
         case_variant = scan(
             root,
@@ -163,6 +272,91 @@ def main() -> int:
         tests.append((
             "private digest scan covers suffix-filtered text",
             has(excluded_suffix, "private identifier digest match"),
+        ))
+
+        undecodable = root / "scripts" / "undecodable.py"
+        undecodable.write_bytes(b"\xff\xfe\x00")
+        undecodable_findings = checker.scan_file(undecodable, root)
+        tests.append((
+            "invalid UTF-8 is reported as unscannable",
+            has(undecodable_findings, "unscannable file"),
+        ))
+        with tempfile.TemporaryDirectory(prefix="helicon-invalid-utf8-") as invalid_temp:
+            invalid_root = Path(invalid_temp)
+            (invalid_root / "bad.txt").write_bytes(b"\xff\xfe\x00")
+            invalid_cli = subprocess.run(
+                [sys.executable, "-B", str(Path(__file__).parent / "check_core_contamination.py"), str(invalid_root)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding="utf-8",
+            )
+        tests.append((
+            "invalid UTF-8 makes the contamination CLI fail closed",
+            invalid_cli.returncode != 0 and "unscannable file" in invalid_cli.stdout,
+        ))
+
+        binding_cli = subprocess.run(
+            [sys.executable, "-B", str(Path(__file__).parent / "check_live_skill_binding.py")],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+        )
+        tests.append((
+            "live-skill binding defaults to not-executed",
+            binding_cli.returncode == 0
+            and json.loads(binding_cli.stdout) == {"status": "not-executed"},
+        ))
+        binding_source = root / "binding-source"
+        binding_installed = root / "binding-installed"
+        binding_source.mkdir()
+        binding_installed.mkdir()
+        (binding_source / "sample.txt").write_bytes(b"alpha\nbeta\n")
+        (binding_installed / "sample.txt").write_bytes(b"alpha\r\nbeta\r\n")
+        binding_match = check_live_skill_binding.compare(binding_source, binding_installed)
+        tests.append((
+            "live-skill binding canonicalizes UTF-8 line endings",
+            binding_match["source_manifest_sha256"] == binding_match["installed_manifest_sha256"]
+            and not binding_match["source_only"]
+            and not binding_match["installed_only"],
+        ))
+        (binding_installed / "sample.txt").write_text("changed\n", encoding="utf-8")
+        binding_drift = check_live_skill_binding.compare(binding_source, binding_installed)
+        tests.append((
+            "live-skill binding detects content tampering",
+            binding_drift["source_manifest_sha256"] != binding_drift["installed_manifest_sha256"],
+        ))
+        (binding_installed / "extra.txt").write_text("extra\n", encoding="utf-8")
+        binding_extra = check_live_skill_binding.compare(binding_source, binding_installed)
+        tests.append((
+            "live-skill binding reports installed-only paths",
+            binding_extra["installed_only"] == ["extra.txt"],
+        ))
+        binding_tamper_cli = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                str(Path(__file__).parent / "check_live_skill_binding.py"),
+                str(binding_installed),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+        )
+        tests.append((
+            "live-skill binding CLI exits nonzero on tampering",
+            binding_tamper_cli.returncode != 0
+            and set(json.loads(binding_tamper_cli.stdout))
+            == {
+                "source_manifest_sha256",
+                "installed_manifest_sha256",
+                "source_file_count",
+                "installed_file_count",
+                "source_only",
+                "installed_only",
+            },
         ))
 
         private_target = scan(root, "references/target_profile.json", "{}")
