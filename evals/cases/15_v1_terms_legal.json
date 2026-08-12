@@ -1,0 +1,6 @@
+{
+  "schema": "helicon-eval-case-v1", "id": "v1-terms-legal", "runner": "verifiability",
+  "input": {"mode": "immutable", "checker": "scripts/check_immutable_set.py", "before_fixture": "verifiability_before.txt", "after_fixture": "verifiability_clean.txt", "glossary_fixture": "verifiability_glossary.json"},
+  "expected": {"schema": "helicon-immutable-set-check-v1", "exit_code": 0, "passed": true, "category": "glossary_terms", "minimum_count": 0, "maximum_count": 0, "maximum_total": 0},
+  "assertion": "A legal rewrite retaining all frozen glossary terms and counts must pass.", "evidence_class": "self-authored-fixture", "provenance": "synthetic", "contains_real_manuscript_text": false
+}

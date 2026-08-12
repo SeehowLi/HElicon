@@ -23,6 +23,12 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 try:
+    import check_ai_tells  # noqa: E402
+    import check_claim_strength  # noqa: E402
+    import check_command_coverage  # noqa: E402
+    import check_immutable_set  # noqa: E402
+    import check_reference_reachability  # noqa: E402
+    import check_terminology_freeze  # noqa: E402
     import latex_guard  # noqa: E402
     import target_eval  # noqa: E402
 except ImportError as exc:
@@ -361,19 +367,107 @@ def run_target_eval_guards(case: dict[str, Any], temp_root: Path) -> dict[str, A
     )
 
 
+def synthetic_word_count(text: str) -> int:
+    import re
+
+    return len(re.findall(r"[A-Za-z]+(?:[-'][A-Za-z]+)*", text))
+
+
+def run_verifiability(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
+    inputs = case["input"]
+    expected = case["expected"]
+    mode = inputs["mode"]
+    checker = repo_path(inputs["checker"])
+    source_paths: list[Path] = []
+    args: list[str]
+
+    if mode == "ai-tells":
+        input_path = fixture(inputs["fixture"])
+        source_paths.append(input_path)
+        args = [str(input_path)]
+        if "max_density" in inputs:
+            args.extend(["--max-density", str(inputs["max_density"])])
+    else:
+        before = fixture(inputs["before_fixture"])
+        after_source = fixture(inputs["after_fixture"])
+        source_paths.extend([before, after_source])
+        text = after_source.read_text(encoding="utf-8")
+        for replacement in inputs.get("replacements", []):
+            if not isinstance(replacement, list) or len(replacement) != 2:
+                raise HarnessError(f"invalid replacement in {case['id']}")
+            old, new = replacement
+            if old not in text:
+                raise HarnessError(f"replacement source absent in {case['id']}: {old!r}")
+            text = text.replace(old, new)
+        after = temp_root / f"{case['id']}.txt"
+        after.write_text(text, encoding="utf-8")
+        source_paths.append(after)
+        args = [str(before), str(after)]
+        if mode in {"immutable", "terminology"}:
+            args.extend(["--glossary", str(fixture(inputs["glossary_fixture"]))])
+
+    result = command(checker, *args)
+    payload = json_stdout(result, case["id"])
+    counts = [synthetic_word_count(path.read_text(encoding="utf-8")) for path in source_paths]
+    checks: dict[str, bool] = {
+        "exit_code": result.returncode == expected["exit_code"],
+        "fixture_word_range": all(150 <= count <= 300 for count in counts),
+        "schema": payload.get("schema") == expected["schema"],
+    }
+    if "passed" in expected:
+        checks["passed"] = payload.get("passed") is expected["passed"]
+    if mode == "immutable":
+        category = expected["category"]
+        checks["category"] = payload["categories"][category]["violation_count"] >= expected.get("minimum_count", 1)
+        checks["total"] = payload["total_violations"] >= expected.get("minimum_total", 0)
+        if "maximum_count" in expected:
+            checks["category_maximum"] = payload["categories"][category]["violation_count"] <= expected["maximum_count"]
+        if "maximum_total" in expected:
+            checks["total_maximum"] = payload["total_violations"] <= expected["maximum_total"]
+    elif mode == "claim-strength":
+        checks["move_kind"] = any(
+            item["kind"].startswith(expected["kind"])
+            for item in payload["upward_moves"]
+        )
+        checks["move_count"] = payload["upward_move_count"] >= expected.get("minimum_count", 0)
+    elif mode == "terminology":
+        checks["replacement_kind"] = any(
+            item["kind"] == expected["kind"]
+            for item in payload["replacements"]
+        )
+        checks["replacement_count"] = payload["replacement_count"] >= expected.get("minimum_count", 0)
+    elif mode == "ai-tells":
+        checks["minimum_finding_count"] = payload["finding_count"] >= expected.get("minimum_finding_count", 0)
+        if "maximum_finding_count" in expected:
+            checks["maximum_finding_count"] = payload["finding_count"] <= expected["maximum_finding_count"]
+        checks["threshold"] = payload["threshold_exceeded"] is expected["threshold_exceeded"]
+    else:
+        raise HarnessError(f"unknown verifiability mode: {mode}")
+    return case_result(case, checks, {
+        "mode": mode,
+        "exit_code": result.returncode,
+        "fixture_word_counts": counts,
+        "finding_count": payload.get("finding_count"),
+        "total_violations": payload.get("total_violations"),
+        "upward_move_count": payload.get("upward_move_count"),
+        "replacement_count": payload.get("replacement_count"),
+    })
+
+
 RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "selftest": run_selftest,
     "router-contracts": run_router_contracts,
     "target-profile-hash": run_target_profile_hash,
     "revision-preflight": run_revision_preflight,
     "target-eval-guards": run_target_eval_guards,
+    "verifiability": run_verifiability,
 }
 
 
 def load_cases() -> list[dict[str, Any]]:
     paths = sorted(CASES.glob("*.json"))
-    if len(paths) != 5:
-        raise HarnessError(f"expected 5 case definitions, found {len(paths)}")
+    if len(paths) < 15:
+        raise HarnessError(f"expected at least 15 case definitions, found {len(paths)}")
     required = {
         "id", "input", "expected", "assertion", "evidence_class",
         "provenance", "contains_real_manuscript_text",
@@ -393,8 +487,10 @@ def load_cases() -> list[dict[str, Any]]:
             raise HarnessError(f"input and expected must be objects: {path.name}")
         if not isinstance(payload["assertion"], str) or not payload["assertion"].strip():
             raise HarnessError(f"assertion must be a non-empty string: {path.name}")
-        if payload["id"] not in RUNNERS:
-            raise HarnessError(f"unknown case id: {payload['id']}")
+        runner = payload.get("runner", payload["id"])
+        if runner not in RUNNERS:
+            raise HarnessError(f"unknown case runner: {runner}")
+        payload["runner"] = runner
         loaded.append(payload)
     if len({item["id"] for item in loaded}) != len(loaded):
         raise HarnessError("duplicate case id")
@@ -406,7 +502,7 @@ def main() -> int:
         cases = load_cases()
         with tempfile.TemporaryDirectory(prefix="helicon-evals-") as raw_temp:
             temp_root = Path(raw_temp)
-            results = [RUNNERS[case["id"]](case, temp_root) for case in cases]
+            results = [RUNNERS[case["runner"]](case, temp_root) for case in cases]
     except (
         HarnessError,
         OSError,

@@ -1689,9 +1689,10 @@ def selftest_v2_round5(data: dict, handoff: Path) -> int:
 
 
 def selftest_round6_quality_boundary() -> int:
+    global ROUND6_TARGET_SEMANTICS
     valid = {
         "round": 6,
-        "target_semantics": ROUND6_TARGET_SEMANTICS,
+        "target_semantics": "imitation-fidelity-to-author-approved-ai-assisted-target",
         "quality_claim_allowed": False,
         "metrics": {
             "structural_direction": {
@@ -1725,7 +1726,18 @@ def selftest_round6_quality_boundary() -> int:
         pass
     else:
         raise ValidationError("negative selftest did not fail: Round 6 quality-implicating convergence scope")
-    return 3
+    original_semantics = ROUND6_TARGET_SEMANTICS
+    try:
+        ROUND6_TARGET_SEMANTICS = "quality-improvement-validated"
+        try:
+            validate_round6_quality_boundary(valid)
+        except ValidationError:
+            pass
+        else:
+            raise ValidationError("negative selftest did not fail: Round 6 semantic constant mutation")
+    finally:
+        ROUND6_TARGET_SEMANTICS = original_semantics
+    return 4
 
 
 def selftest_v2(data: dict, handoff: Path) -> int:

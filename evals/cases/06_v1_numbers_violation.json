@@ -1,0 +1,6 @@
+{
+  "schema": "helicon-eval-case-v1", "id": "v1-numbers-violation", "runner": "verifiability",
+  "input": {"mode": "immutable", "checker": "scripts/check_immutable_set.py", "before_fixture": "verifiability_before.txt", "after_fixture": "verifiability_clean.txt", "glossary_fixture": "verifiability_glossary.json", "replacements": [["12 ms", "18 ms"]]},
+  "expected": {"schema": "helicon-immutable-set-check-v1", "exit_code": 1, "passed": false, "category": "numbers_with_units", "minimum_count": 1, "minimum_total": 1},
+  "assertion": "A changed synthetic unit-bearing latency must violate Iron Rule 1.", "evidence_class": "self-authored-fixture", "provenance": "synthetic", "contains_real_manuscript_text": false
+}

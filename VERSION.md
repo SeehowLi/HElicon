@@ -1,11 +1,11 @@
 # Version
 
-HElicon v1.3.1
+HElicon v1.4
 
-Status: released.
+Status: verifiability candidate; pass-pipeline integration is deferred.
 
 Design principle: long-term personal writing mentor, not project-specific.
 
 Project-specific work stays in external project packs.
 
-v1.3.1 focus: contract-checked AI-tell coverage, safe same-paper version grouping, and a screened target-exemplar layer that remains separate from descriptive style baselines.
+v1.4 focus: machine-readable immutable-set, claim-strength, terminology, AI-tell density, reference-reachability, and command-coverage checks backed only by synthetic regression fixtures.

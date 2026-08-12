@@ -13,7 +13,12 @@ import check_ai_tells
 import build_target_profile
 import check_contract_sync
 import check_core_contamination as checker
+import check_claim_strength
+import check_command_coverage
+import check_immutable_set
 import check_live_skill_binding
+import check_reference_reachability
+import check_terminology_freeze
 import extract_revision_direction
 import latex_guard
 import resolve_target_profile
@@ -88,6 +93,113 @@ def main() -> int:
             {hashlib.sha256(synthetic_tokens[1].casefold().encode("utf-8")).hexdigest()}
         )
         synthetic_hashes = synthetic_private_hashes | synthetic_project_hashes
+        correct_round6_contract = root / "round6_contract_ok.py"
+        correct_round6_contract.write_text(
+            'ROUND6_TARGET_SEMANTICS = "imitation-fidelity-to-author-approved-ai-assisted-target"\n',
+            encoding="utf-8",
+        )
+        tests.append((
+            "Round 6 target semantics has an independently hard-coded contract",
+            not check_contract_sync.round6_target_semantics_errors(correct_round6_contract),
+        ))
+        mutated_round6_contract = root / "round6_contract_mutated.py"
+        mutated_round6_contract.write_text(
+            'ROUND6_TARGET_SEMANTICS = "quality-improvement-validated"\n',
+            encoding="utf-8",
+        )
+        tests.append((
+            "Round 6 target semantics mutation fails the contract gate",
+            bool(check_contract_sync.round6_target_semantics_errors(mutated_round6_contract)),
+        ))
+
+        verifier_root = root / "verifiability"
+        verifier_root.mkdir()
+        small_glossary = verifier_root / "glossary.json"
+        small_glossary.write_text(json.dumps({
+            "entries": [{
+                "term": "ciphertext scheduler",
+                "abbreviation": "CS",
+                "forbidden_synonyms": ["encrypted scheduler"],
+                "forbidden_variants": ["ciphertext-scheduler"],
+            }]
+        }), encoding="utf-8")
+        math_before = verifier_root / "math_before.txt"
+        math_after = verifier_root / "math_after.txt"
+        math_before.write_text("A ciphertext scheduler evaluates $x + y$.\n", encoding="utf-8")
+        math_after.write_text("The ciphertext scheduler evaluates $x+\n y$.\n", encoding="utf-8")
+        immutable_whitespace = check_immutable_set.compare(math_before, math_after, small_glossary)
+        tests.append((
+            "immutable checker ignores math-only whitespace and line breaks",
+            immutable_whitespace["passed"] and immutable_whitespace["total_violations"] == 0,
+        ))
+
+        claim_before = verifier_root / "claim_before.txt"
+        claim_after = verifier_root / "claim_after.txt"
+        claim_before.write_text(
+            "The scheduler operates under the fixed workload assumption.\n", encoding="utf-8"
+        )
+        claim_after.write_text("The scheduler operates.\n", encoding="utf-8")
+        qualifier_result = check_claim_strength.compare(claim_before, claim_after)
+        tests.append((
+            "claim-strength checker rejects scope-qualifier deletion",
+            any(item["kind"] == "scope_qualifier_removed" for item in qualifier_result["upward_moves"]),
+        ))
+
+        term_before = verifier_root / "term_before.txt"
+        term_after = verifier_root / "term_after.txt"
+        term_before.write_text("The ciphertext scheduler runs.\n", encoding="utf-8")
+        term_after.write_text("The Ciphertext scheduler runs.\n", encoding="utf-8")
+        terminology_result = check_terminology_freeze.compare(term_before, term_after, small_glossary)
+        tests.append((
+            "terminology checker rejects case drift",
+            any(item["kind"] == "case_inconsistency" for item in terminology_result["replacements"]),
+        ))
+
+        graph_root = verifier_root / "graph"
+        (graph_root / "references").mkdir(parents=True)
+        (graph_root / "templates").mkdir()
+        (graph_root / "SKILL.md").write_text(
+            "references/command_registry.md references/intent_router.md references/pass_pipeline.md templates/linked.md\n",
+            encoding="utf-8",
+        )
+        for name in ("command_registry.md", "intent_router.md", "pass_pipeline.md"):
+            (graph_root / "references" / name).write_text("templates/linked.md\n", encoding="utf-8")
+        (graph_root / "templates" / "linked.md").write_text("linked\n", encoding="utf-8")
+        reachable_result = check_reference_reachability.analyze(graph_root)
+        tests.append((
+            "reference reachability accepts a fully reachable synthetic graph",
+            reachable_result["orphan_file_count"] == 0,
+        ))
+        (graph_root / "templates" / "orphan.md").write_text("orphan\n", encoding="utf-8")
+        orphan_result = check_reference_reachability.analyze(graph_root)
+        tests.append((
+            "reference reachability reports a synthetic orphan",
+            orphan_result["orphan_file_count"] == 1
+            and orphan_result["orphan_files"][0]["path"] == "templates/orphan.md",
+        ))
+
+        command_root = verifier_root / "commands"
+        (command_root / "references").mkdir(parents=True)
+        (command_root / "evals" / "cases").mkdir(parents=True)
+        (command_root / "SKILL.md").write_text("H-TEST\n", encoding="utf-8")
+        (command_root / "references" / "command_registry.md").write_text("H-TEST\n", encoding="utf-8")
+        router_path = command_root / "references" / "intent_router.md"
+        router_path.write_text("H-TEST\n", encoding="utf-8")
+        (command_root / "evals" / "cases" / "case.json").write_text(
+            json.dumps({"command": "H-TEST"}), encoding="utf-8"
+        )
+        covered_commands = check_command_coverage.analyze(command_root)
+        tests.append((
+            "command coverage accepts a four-column synthetic contract",
+            covered_commands["command_count"] == 1 and covered_commands["gap_count"] == 0,
+        ))
+        router_path.write_text("no command\n", encoding="utf-8")
+        command_gap = check_command_coverage.analyze(command_root)
+        tests.append((
+            "command coverage reports a missing router contract",
+            command_gap["gap_count"] == 1
+            and command_gap["gaps"][0]["missing"] == ["intent_router.md"],
+        ))
         for index, sample in enumerate(("37%", "0.5%", "1.5x", "12 GB", "20 ms"), 1):
             findings = scan(root, f"references/numeric_{index}.md", sample)
             tests.append((f"numeric {sample}", has(findings, "numeric result-like token")))

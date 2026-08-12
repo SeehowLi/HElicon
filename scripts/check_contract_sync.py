@@ -296,6 +296,17 @@ def digest_sync_errors(contamination_script: Path, handoff_validator: Path) -> l
     return errors
 
 
+def round6_target_semantics_errors(handoff_validator: Path) -> list[str]:
+    """Bind the public Round 6+ semantic boundary to an independent literal."""
+    observed = python_literal(handoff_validator, "ROUND6_TARGET_SEMANTICS")
+    if observed != "imitation-fidelity-to-author-approved-ai-assisted-target":
+        return [
+            "ROUND6_TARGET_SEMANTICS must equal "
+            "'imitation-fidelity-to-author-approved-ai-assisted-target'"
+        ]
+    return []
+
+
 def validate_contracts(root: Path) -> dict[str, Any]:
     errors: list[str] = []
     polish = read_utf8(root / "references/language_polish.md")
@@ -314,6 +325,7 @@ def validate_contracts(root: Path) -> dict[str, Any]:
     contamination_script = root / "scripts/check_core_contamination.py"
     handoff_validator = root / "handoff/validate.py"
     errors.extend(digest_sync_errors(contamination_script, handoff_validator))
+    errors.extend(round6_target_semantics_errors(handoff_validator))
 
     registry_commands = set(COMMAND_RE.findall(read_utf8(root / "references/command_registry.md")))
     description_commands = set(COMMAND_RE.findall(description_text(read_utf8(root / "SKILL.md"))))

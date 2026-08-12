@@ -1,0 +1,6 @@
+{
+  "schema": "helicon-eval-case-v1", "id": "v1-terms-violation", "runner": "verifiability",
+  "input": {"mode": "immutable", "checker": "scripts/check_immutable_set.py", "before_fixture": "verifiability_before.txt", "after_fixture": "verifiability_clean.txt", "glossary_fixture": "verifiability_glossary.json", "replacements": [["ciphertext scheduler", "encrypted scheduler"]]},
+  "expected": {"schema": "helicon-immutable-set-check-v1", "exit_code": 1, "passed": false, "category": "glossary_terms", "minimum_count": 1, "minimum_total": 1},
+  "assertion": "Removing a frozen glossary term must violate the immutable term set.", "evidence_class": "self-authored-fixture", "provenance": "synthetic", "contains_real_manuscript_text": false
+}

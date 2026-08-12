@@ -1,0 +1,23 @@
+{
+  "schema": "helicon-synthetic-glossary-v1",
+  "entries": [
+    {
+      "term": "ciphertext scheduler",
+      "abbreviation": "CS",
+      "forbidden_synonyms": ["encrypted scheduler"],
+      "forbidden_variants": ["ciphertext-scheduler", "ciphertext schedulers"]
+    },
+    {
+      "term": "homomorphic encryption",
+      "abbreviation": "HE",
+      "forbidden_synonyms": ["encrypted computing"],
+      "forbidden_variants": ["homomorphic-encryption"]
+    },
+    {
+      "term": "key switching",
+      "abbreviation": "KS",
+      "forbidden_synonyms": ["key conversion"],
+      "forbidden_variants": ["key-switching"]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "schema": "helicon-eval-case-v1", "id": "v1-claim-scope-violation", "runner": "verifiability",
+  "input": {"mode": "immutable", "checker": "scripts/check_immutable_set.py", "before_fixture": "verifiability_before.txt", "after_fixture": "verifiability_clean.txt", "glossary_fixture": "verifiability_glossary.json", "replacements": [["may place", "must place"]]},
+  "expected": {"schema": "helicon-immutable-set-check-v1", "exit_code": 1, "passed": false, "category": "claim_scope", "minimum_count": 1, "minimum_total": 1},
+  "assertion": "A modal-strength change inside an aligned synthetic scope must be detected.", "evidence_class": "self-authored-fixture", "provenance": "synthetic", "contains_real_manuscript_text": false
+}

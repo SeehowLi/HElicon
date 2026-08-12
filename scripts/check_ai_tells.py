@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Flag P5 rules 1-14 defined in references/language_polish.md.
+"""Quantify P5 AI-tell rules R1-R14 from language_polish.md.
 
 This script owns every numbered P5 audit rule. It does not own the separate
 Chinese-literal and sentence-level overclaim checks in check_style_rules.py.
+Future pass-pipeline contract: consume its single JSON object after P4; the
+default is report-only exit 0, while --max-density or --exit-code-on may make a
+configured violation exit 1. Input/configuration errors exit 2.
 """
 from __future__ import annotations
 
@@ -11,7 +14,6 @@ from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
 import re
-import sys
 from typing import Iterable
 
 EXTENSIONS = {".tex", ".md", ".txt"}
@@ -80,6 +82,11 @@ PATTERN_RULES = (
 
 class UserError(Exception):
     """A concise command-line error."""
+
+
+class JsonArgumentParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        raise UserError(message)
 
 
 def read_utf8(path: Path) -> str:
@@ -217,42 +224,62 @@ def scan(path: Path) -> list[Finding]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = JsonArgumentParser(description=__doc__)
     parser.add_argument("paths", nargs="+", help="files or directories")
     parser.add_argument("--severity", choices=("block", "warn", "info"), default="info", help="minimum severity to display")
     parser.add_argument("--exit-code-on", choices=("block", "warn", "info"), help="return nonzero when this severity or higher is found")
-    parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    parser.add_argument("--max-density", type=float, help="return exit 1 when total findings per 1000 words exceeds this value")
+    parser.add_argument("--json", action="store_true", help="accepted for backward compatibility; output is always JSON")
     return parser
 
 
 def main() -> int:
     parser = build_parser()
-    json_requested = "--json" in sys.argv
     try:
         args = parser.parse_args()
+        if args.max_density is not None and args.max_density < 0:
+            raise UserError("--max-density must be non-negative")
         files = collect_files(args.paths)
         all_findings = [finding for path in files for finding in scan(path)]
         shown = [finding for finding in all_findings if SEVERITY_RANK[finding.severity] >= SEVERITY_RANK[args.severity]]
-        if args.json:
-            print(json.dumps({
-                "files": [str(path) for path in files],
-                "findings": [asdict(item) for item in shown],
-                "finding_count": len(shown),
-            }, ensure_ascii=False, indent=2))
-        else:
-            for item in shown:
-                print(f"{item.file}:{item.line}:{item.column} | R{item.rule:02d} {item.severity} | {item.match} | {item.suggestion}")
-            print(f"AI-tell findings: {len(shown)} (P5 rules 1-14)")
+        word_count = sum(
+            len(re.findall(r"[A-Za-z]+(?:[-'][A-Za-z]+)*", read_utf8(path)))
+            for path in files
+        )
+        by_rule = []
+        for rule in range(1, 15):
+            hits = [item for item in shown if item.rule == rule]
+            by_rule.append({
+                "rule": f"R{rule:02d}",
+                "hit_count": len(hits),
+                "positions": [
+                    {"file": item.file, "line": item.line, "column": item.column}
+                    for item in hits
+                ],
+                "density_per_1000_words": round(1000.0 * len(hits) / max(word_count, 1), 6),
+            })
+        total_density = 1000.0 * len(shown) / max(word_count, 1)
+        threshold_exceeded = args.max_density is not None and total_density > args.max_density
+        print(json.dumps({
+            "schema": "helicon-ai-tell-check-v1",
+            "files": [str(path) for path in files],
+            "word_count": word_count,
+            "rules": by_rule,
+            "findings": [asdict(item) for item in shown],
+            "finding_count": len(shown),
+            "total_density_per_1000_words": round(total_density, 6),
+            "max_density": args.max_density,
+            "threshold_exceeded": threshold_exceeded,
+        }, ensure_ascii=False, indent=2))
         if args.exit_code_on:
             threshold = SEVERITY_RANK[args.exit_code_on]
             if any(SEVERITY_RANK[item.severity] >= threshold for item in all_findings):
                 return 1
+        if threshold_exceeded:
+            return 1
         return 0
-    except UserError as exc:
-        if json_requested:
-            print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False))
-        else:
-            print(f"error: {exc}", file=sys.stderr)
+    except (UserError, OSError, UnicodeError, ValueError, KeyError, TypeError) as exc:
+        print(json.dumps({"schema": "helicon-ai-tell-check-v1", "ok": False, "error": str(exc)}, ensure_ascii=False))
         return 2
 
 

@@ -1,0 +1,6 @@
+{
+  "schema": "helicon-eval-case-v1", "id": "v4-high-density", "runner": "verifiability",
+  "input": {"mode": "ai-tells", "checker": "scripts/check_ai_tells.py", "fixture": "ai_tells_dense.txt", "max_density": 1.0},
+  "expected": {"schema": "helicon-ai-tell-check-v1", "exit_code": 1, "minimum_finding_count": 8, "threshold_exceeded": true},
+  "assertion": "A deliberately dense synthetic paragraph must exceed the configured P5 density ceiling.", "evidence_class": "self-authored-fixture", "provenance": "synthetic", "contains_real_manuscript_text": false
+}

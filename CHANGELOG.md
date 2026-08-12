@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.4
+
+- 新增六项只读、单 JSON 输出的可验证性检查：不可变集合、claim strength、术语冻结、R1–R14 AI-tell 密度、reference/template 可达性与 H-* 命令覆盖矩阵。它们尚未接入 pass pipeline；本轮只建立可独立调用的检验器与未来调用契约。
+- 不可变集合报告分别覆盖带单位数字、LaTeX key、规范化数学、figure/table label 与 caption 编号引用、glossary 词项，以及对齐后的否定/模态/量词/比较/断言强度标记；任何变化返回 1，配置错误返回 2。
+- claim-strength 检查加入可扩展强度阶梯，检测否定或模态删除、比较方向翻转和作用域限定删除；术语检查读取合成 JSON glossary 并报告禁用同义词、大小写、缩写/全称和复数/连字符漂移的位置。
+- `check_ai_tells.py` 在既有 R1–R14 行为基础上新增逐规则命中数、位置、每千词密度、总密度和 `--max-density` 门限；零命中 synthetic fixture 被固定为零密度回归。
+- eval 套件新增 19 个 `helicon-eval-case-v1` 合成用例，所有文本均显式标记 `provenance=synthetic` 与 `contains_real_manuscript_text=false`。这些用例只证明检验器和拒绝分支可运行，输出继续保持 `capability_validated=false`。
+- 修复 Round 6+ target-semantics 自指门禁：contract sync 逐字符绑定 `imitation-fidelity-to-author-approved-ai-assisted-target`，handoff 负向 fixture 不再引用被测常量，并固定“常量被改写即失败”的回归。
+- 版本状态保持 verifiability candidate；真实论文质量、评审结果、录用概率和结构改善均不由本轮 synthetic 证据支持。
+
 ## v1.3.1
 
 - 修复规则 10 对证据型 `-ing` 收尾从句的误报：从句内含数字加单位、引用/交叉引用或明确机制动词短语时不再建议删除；空洞的伪深度从句仍会命中。

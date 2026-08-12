@@ -1,0 +1,6 @@
+{
+  "schema": "helicon-eval-case-v1", "id": "v2-negation-deleted", "runner": "verifiability",
+  "input": {"mode": "claim-strength", "checker": "scripts/check_claim_strength.py", "before_fixture": "verifiability_before.txt", "after_fixture": "verifiability_clean.txt", "replacements": [["does not claim", "claims"]]},
+  "expected": {"schema": "helicon-claim-strength-check-v1", "exit_code": 1, "passed": false, "kind": "negation_removed", "minimum_count": 1},
+  "assertion": "Deleting an explicit negation must be treated as claim strengthening.", "evidence_class": "self-authored-fixture", "provenance": "synthetic", "contains_real_manuscript_text": false
+}

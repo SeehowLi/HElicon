@@ -1,0 +1,18 @@
+This synthetic fixture presents a ciphertext scheduler for homomorphic encryption without representing any deployed system. Under the semi-honest assumption, the scheduler may place some encrypted tasks into two abstract queues. A toy score uses $q(x)=x^2+1$, while the only citation names a fabricated source \cite{syn:scheduler}. The synthetic study sets latency to 12 ms, memory to \SI{4}{GB}, and an illustrative acceptance rate to 75%. The values serve only as inputs to immutable-set checks. The discussion suggests that the first queue is faster than the second queue, yet it does not claim higher accuracy. In the synthetic setting, key switching remains a named operation rather than an implementation result.
+
+\begin{figure}
+\caption{Synthetic flow corresponding to Figure~\ref{fig:synthetic-flow}; no measurement is depicted.}
+\label{fig:synthetic-flow}
+\end{figure}
+
+\begin{table}
+\caption{Synthetic parameters associated with Table 2 and Eq.~\eqref{eq:synthetic-score}.}
+\label{tab:synthetic-parameters}
+\end{table}
+
+\begin{equation}
+q(x) = x^2 + 1
+\label{eq:synthetic-score}
+\end{equation}
+
+Additional neutral sentences give the fixture enough context for clause alignment. A local simulator loads public constants, constructs placeholder ciphertext objects, and records deterministic queue choices. No object stores a secret key or a real workload. The final paragraph retains the frozen terms ciphertext scheduler, homomorphic encryption, and key switching exactly as the glossary specifies them.
