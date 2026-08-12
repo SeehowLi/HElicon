@@ -1,0 +1,577 @@
+{
+  "schema": "helicon-handoff-v1",
+  "round": 3,
+  "status": "partial",
+  "branch": "main",
+  "head_commit": "230dc4ddbedccb8fe263b4180d0b110dc6961bcf",
+  "base_commit": "f26388dc027bc9eda019892db358530306e8d8b9",
+  "head_commit_scope": "Audited Round 3 implementation and evals commit. The commit containing this handoff is a metadata-only child; its own hash is intentionally not embedded because doing so would be self-referential. Verify the containing commit and handoff-only diff with reproduce[].",
+  "taskbook": "handoff/HELICON_ROUND3_TASKBOOK.md",
+  "taskbook_source": "Sanitized repository copy derived from the originating task; the raw transcript remains outside the repository.",
+  "generated_utc": "2026-08-12T02:30:10Z",
+  "evidence_environment": {
+    "HELICON_SKILL_ROOT": "<INSTALLED_SKILL_ROOT>",
+    "HELICON_PRIVATE_ROOT": "<PRIVATE_PAPER_ROOT>",
+    "HELICON_STAGE3_ROOT": "<PRIVATE_STAGE3_ROOT>",
+    "HELICON_CLEAN_CLONE": "<CLEAN_CLONE>"
+  },
+  "tasks": [
+    {
+      "id": "2",
+      "status": "done",
+      "evidence": [
+        {
+          "command": "python -B scripts/selftest_checks.py",
+          "exit_code": 0,
+          "key_output": "110 repository self-tests satisfied, including R02 coverage, R10 exemptions, target resolution, preservation, directional approval, and claim-scope guards.",
+          "evidence_class": "self-authored-fixture"
+        },
+        {
+          "command": "python -B scripts/check_contract_sync.py",
+          "exit_code": 0,
+          "key_output": "Rules R01-R14 registered; keyword behavior samples 32+11; command and baseline-threshold contracts synchronized.",
+          "evidence_class": "self-authored-fixture"
+        },
+        {
+          "command": "git merge-base --is-ancestor f26388dc027bc9eda019892db358530306e8d8b9 e4fa6eec83924367e28dd8cab341d434d3f2b6f4",
+          "exit_code": 0,
+          "key_output": "The target-layer branch head is an ancestor of the released main commit.",
+          "evidence_class": "independent-session"
+        },
+        {
+          "command": "git tag --points-at e4fa6eec83924367e28dd8cab341d434d3f2b6f4",
+          "exit_code": 0,
+          "key_output": "v1.3.1",
+          "evidence_class": "independent-session"
+        },
+        {
+          "command": "python -B \"$env:HELICON_SKILL_ROOT/scripts/check_skill_integrity.py\" \"$env:HELICON_SKILL_ROOT\"",
+          "exit_code": 0,
+          "key_output": "Installed skill integrity satisfied; body 359/500 and description 896/1024.",
+          "evidence_class": "independent-session"
+        }
+      ],
+      "note": "Stage 0 micro-bugs, behavioral contract checks, merge, tag, and installed-skill integrity are covered. Current source-to-installed byte parity and rollback behavior are tracked separately as unverified."
+    },
+    {
+      "id": "3",
+      "status": "partial",
+      "evidence": [
+        {
+          "command": "python -c \"import os,pathlib,sys; r=pathlib.Path(os.environ['HELICON_PRIVATE_ROOT'])/'.helicon'; q=['corpus/v2_authority.md','corpus/extraction_qc.md','corpus/versions.yaml','corpus/stages/v1.txt','corpus/stages/v2.md','corpus/stages/v3.txt']; sys.exit(0 if all((r/p).is_file() for p in q) else 1)\"",
+          "exit_code": 0,
+          "key_output": "All six canonical private corpus and quality-control artifacts exist.",
+          "evidence_class": "real-data"
+        },
+        {
+          "command": "python -c \"import hashlib,json,os,pathlib,sys; g=json.loads((pathlib.Path(os.environ['HELICON_STAGE3_ROOT'])/'.helicon/SOURCE_GUARD.json').read_text(encoding='utf-8')); ok=all(pathlib.Path(s['path']).is_file() and hashlib.sha256(pathlib.Path(s['path']).read_bytes()).hexdigest()==s['sha256'].replace('sha256:','',1).lower() for s in g['sources']); sys.exit(0 if ok else 1)\"",
+          "exit_code": 0,
+          "key_output": "Three protected source files exist and all three current hashes match the frozen guard.",
+          "evidence_class": "real-data"
+        }
+      ],
+      "note": "Corpus artifacts and immutable-source hashes are present, but the human extraction-QC confirmation and authority decision are not represented by an independently replayable sanitized summary."
+    },
+    {
+      "id": "4",
+      "status": "partial",
+      "evidence": [
+        {
+          "command": "python -c \"import collections,json,os,pathlib; r=pathlib.Path(os.environ['HELICON_STAGE3_ROOT'])/'.helicon/style'; p=json.loads((r/'target_profile.json').read_text(encoding='utf-8')); s=json.loads((r/'target_screening.json').read_text(encoding='utf-8')); f=next(iter(p['venue_profiles'].values()))['fields']; c=collections.Counter(v['source'] for v in f.values()); print(json.dumps({'profile_schema':p['schema'],'screening_schema':s['schema'],'fields':len(f),'sources':c,'holdouts':len(s['holdout_target_paragraphs'])}))\"",
+          "exit_code": 0,
+          "key_output": "Profile schema v3; screening schema v2; one venue profile; nine fields; five exemplar-sourced and four rule-sourced fields; six target hold-outs.",
+          "evidence_class": "real-data"
+        },
+        {
+          "command": "python -c \"import os,pathlib,sys; r=pathlib.Path(os.environ['HELICON_PRIVATE_ROOT'])/'.helicon'; q=['holdout_manifest.md','reviewer_patterns.md','style/revision_direction.json']; sys.exit(0 if all((r/p).is_file() for p in q) else 1)\"",
+          "exit_code": 0,
+          "key_output": "Private hold-out manifest, reviewer-pattern candidate report, and revision-direction report exist.",
+          "evidence_class": "real-data"
+        }
+      ],
+      "note": "The venue-aware target layer is active and consumed by Stage 3. Chronology, venue-confounding judgments, and reviewer-pattern abstraction are not independently replayable from a sanitized Stage 2 summary."
+    },
+    {
+      "id": "5",
+      "status": "partial",
+      "evidence": [
+        {
+          "command": "python -B \"$env:HELICON_STAGE3_ROOT/.helicon/style/stage3c/run_evals.py\"",
+          "exit_code": 0,
+          "key_output": "Independent-session preservation evaluation completed: 3/3 exact preservation, immutable set, trailer semantics, target resolution, and preflight checks satisfied.",
+          "evidence_class": "independent-session"
+        },
+        {
+          "command": "python -B \"$env:HELICON_STAGE3_ROOT/.helicon/style/stage3d/run_evals.py\"",
+          "exit_code": 0,
+          "key_output": "Independent-session rule-direction evaluation completed: L1 distance 6 to 1; 83.3333% rule-direction convergence; 3/3 cases improved; structural status insufficient-coverage with no structural headline.",
+          "evidence_class": "independent-session"
+        }
+      ],
+      "note": "Do-no-harm and rule-direction tracks have independent-session evidence. Structural directional efficacy remains unverified because only two of six eligible observations were scorable."
+    },
+    {
+      "id": "6",
+      "status": "done",
+      "evidence": [
+        {
+          "command": "python -B evals/run_all.py",
+          "exit_code": 0,
+          "key_output": "Five of five regression groups satisfied; 110 self-tests; pipeline_runnable=true; capability_validated=false.",
+          "evidence_class": "self-authored-fixture"
+        },
+        {
+          "command": "git clone --no-local https://github.com/SeehowLi/HElicon.git \"$env:HELICON_CLEAN_CLONE\"",
+          "exit_code": 0,
+          "key_output": "A fresh clone was created from the GitHub origin after the implementation commit was pushed.",
+          "evidence_class": "independent-session"
+        },
+        {
+          "command": "git -C \"$env:HELICON_CLEAN_CLONE\" checkout --detach 230dc4ddbedccb8fe263b4180d0b110dc6961bcf",
+          "exit_code": 0,
+          "key_output": "The fresh GitHub-origin clone resolved and checked out the exact audited implementation commit.",
+          "evidence_class": "independent-session"
+        },
+        {
+          "command": "python -B \"$env:HELICON_CLEAN_CLONE/evals/run_all.py\"",
+          "exit_code": 0,
+          "key_output": "The GitHub-origin clean clone satisfied 5/5 groups with pipeline_runnable=true and capability_validated=false.",
+          "evidence_class": "self-authored-fixture"
+        },
+        {
+          "command": "git -C \"$env:HELICON_CLEAN_CLONE\" status --porcelain",
+          "exit_code": 0,
+          "key_output": "The GitHub-origin clone remained clean after the regression run.",
+          "evidence_class": "independent-session"
+        },
+        {
+          "command": "python -c \"import hashlib,pathlib; r=pathlib.Path('evals'); f=sorted((p for p in r.rglob('*') if p.is_file()),key=lambda p:p.relative_to(r).as_posix()); m=''.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.relative_to(r).as_posix()+'\\n' for p in f); print(hashlib.sha256(m.encode()).hexdigest())\"",
+          "exit_code": 0,
+          "key_output": "Portable POSIX-path evals tree SHA-256 814f9f42d0b52e56a4d8f12e30e45cde8507a82164f66f78ee20ec4116c1edd4 over 12 files.",
+          "evidence_class": "independent-session"
+        }
+      ],
+      "note": "The committed repository evals layout is self-validating, and the exact implementation commit was verified in a fresh GitHub-origin clone. Synthetic evidence proves pipeline runnability only, not capability."
+    },
+    {
+      "id": "7",
+      "status": "done",
+      "evidence": [
+        {
+          "command": "python -m json.tool handoff/round_3.json",
+          "exit_code": 0,
+          "key_output": "Machine-readable handoff parsed successfully as JSON.",
+          "evidence_class": "independent-session"
+        },
+        {
+          "command": "python -B handoff/validate.py",
+          "exit_code": 0,
+          "key_output": "Required top-level and nested fields, enums, task notes, privacy/reproduce/candidate records, task statuses, headline metrics, and outstanding counts are consistent across JSON, Markdown, and INDEX.",
+          "evidence_class": "independent-session"
+        },
+        {
+          "command": "python -B scripts/check_core_contamination.py .",
+          "exit_code": 0,
+          "key_output": "Repository contamination check, including handoff files, reported no findings.",
+          "evidence_class": "independent-session"
+        },
+        {
+          "command": "$s=@(git status --short); $u=@(git ls-files --others --exclude-standard); [pscustomobject]@{tracked_modified=@($s|Where-Object { $_ -match '^ M ' }).Count; untracked_files=$u.Count}|ConvertTo-Json -Compress",
+          "exit_code": 0,
+          "key_output": "Zero tracked modified files and five untracked handoff files after the implementation commit and before the metadata-only handoff commit.",
+          "evidence_class": "independent-session"
+        }
+      ],
+      "note": "The JSON is the source of truth; the human-readable report mirrors its statuses, metrics, deviations, questions, and privacy boundary."
+    },
+    {
+      "id": "8",
+      "status": "done",
+      "evidence": [
+        {
+          "command": "python -B handoff/validate.py",
+          "exit_code": 0,
+          "key_output": "Round index matches the JSON round number and outstanding-item counts.",
+          "evidence_class": "independent-session"
+        }
+      ],
+      "note": "The round index records both legacy pre-handoff rounds and the current partial round."
+    }
+  ],
+  "unverified_claims": [
+    {
+      "claim": "The author visually confirmed all Stage 1 extraction-quality dimensions.",
+      "why_unverified": "The confirmation exists in the originating task conversation, not in a command-bearing sanitized artifact.",
+      "how_to_verify": "Repeat the human review of <PRIVATE_PAPER_ROOT>/.helicon/corpus/extraction_qc.md and write a sanitized stage1_summary.json with reviewer, time, and outcome."
+    },
+    {
+      "claim": "The PDF-derived middle version is the correct authority for substantive content.",
+      "why_unverified": "Authority selection includes a human content judgment and the current report has no machine-readable decision record.",
+      "how_to_verify": "Review the private authority report against the retained PDF-derived text and record a sanitized approval."
+    },
+    {
+      "claim": "Venue-confounded and page-budget-driven revisions were classified without attribution error.",
+      "why_unverified": "These classifications are partly heuristic and require author knowledge of the revision history.",
+      "how_to_verify": "Audit each private category with the author and record only aggregate confirmed/unknown counts."
+    },
+    {
+      "claim": "Every Stage 2 hold-out was excluded before all target-profile and direction calculations.",
+      "why_unverified": "Current manifests are consistent, but no independent timestamped rebuild transcript proves the full ordering.",
+      "how_to_verify": "Rebuild in an isolated private copy from the frozen manifest and compare profile/screening hashes."
+    },
+    {
+      "claim": "Reviewer-pattern abstraction preserves all useful semantics while leaking no private meaning.",
+      "why_unverified": "The contamination checker is lexical and cannot prove semantic privacy or completeness.",
+      "how_to_verify": "Perform a separate human privacy/content review before any candidate is promoted to core."
+    },
+    {
+      "claim": "The historical Stage 3C and Stage 3D process exit codes are independently embedded in their summaries.",
+      "why_unverified": "The independent tasks reported exit code 0, but the summary JSON files record run_completed rather than an explicit process exit_code field.",
+      "how_to_verify": "Run each evaluator once in a fresh private copy and persist command, exit_code, and summary hash together."
+    },
+    {
+      "claim": "The target layer improves paragraph structure on real manuscripts.",
+      "why_unverified": "Stage 3D structural coverage is insufficient; only two of six eligible observations are scorable and the aggregate is null.",
+      "how_to_verify": "Approve additional multi-sentence, immutable-compatible style-only targets with non-zero structural denominators."
+    },
+    {
+      "claim": "The metadata-only commit containing this handoff is remotely cloneable and contains no changes outside handoff relative to the implementation anchor.",
+      "why_unverified": "Evidence produced after the containing commit is pushed cannot be embedded in that same commit without creating another metadata commit. The implementation anchor has already been verified from the GitHub origin.",
+      "how_to_verify": "After publication, clone origin/main, resolve HEAD, run reproduce[], and verify that the diff from 230dc4ddbedccb8fe263b4180d0b110dc6961bcf touches only handoff/."
+    },
+    {
+      "claim": "All repository eval fixture prose is synthetic.",
+      "why_unverified": "The fixture provenance declaration and lexical contamination scan cannot mathematically prove authorship or origin.",
+      "how_to_verify": "Manually inspect the six short fixtures and compare their hashes with the reviewed inventory."
+    },
+    {
+      "claim": "The installed-skill backup can fully restore the current development state.",
+      "why_unverified": "A rollback drill was not performed, and the installed copy currently trails four Stage 4 maintenance files.",
+      "how_to_verify": "After an approved reinstall, compare the 90-file payload byte-for-byte and perform a disposable restore drill from the newest backup."
+    }
+  ],
+  "deviations": [
+    {
+      "what": "Round 3 stores a sanitized repository taskbook instead of the raw originating task transcript.",
+      "why": "The raw transcript contains private local paths that the repository contamination policy forbids.",
+      "impact": "A clone contains the complete audit contract with aliases, while line-by-line comparison to the original wording still requires the originating task transcript."
+    },
+    {
+      "what": "The real corpus used an abstract-only first version, a PDF-derived Markdown middle version, and a text third version.",
+      "why": "The author explicitly prioritized content and selected these authorities after Stage 1 preparation.",
+      "impact": "This supersedes the initial three-TeX extraction assumption without modifying any source TeX."
+    },
+    {
+      "what": "Stage 3 used two evaluation tracks instead of a single convergence headline.",
+      "why": "Raw cross-version pairs changed facts and claim scope, so they were unsuitable as style-only efficacy ground truth.",
+      "impact": "Do-no-harm is measured by Stage 3C; rule-direction change is measured by Stage 3D."
+    },
+    {
+      "what": "Stage 3D targets are author-approved, AI-assisted, style-only targets rather than raw third-version ground truth.",
+      "why": "This preserves immutable facts and isolates P3-P5 style behavior.",
+      "impact": "The 83.3333% metric applies only to rule-direction distance."
+    },
+    {
+      "what": "The first Stage 3D evaluator attempt stopped on a profile-hash prefix representation mismatch; only that harness comparison was repaired before the authorized rerun.",
+      "why": "The trace used a qualified sha256 value while the manifest stored a bare digest.",
+      "impact": "Frozen outputs were not regenerated; the subsequent single evaluation completed successfully."
+    },
+    {
+      "what": "No structural convergence percentage is reported.",
+      "why": "Structural metric coverage is insufficient and one case has a zero denominator.",
+      "impact": "The report avoids turning a sparse diagnostic into a capability claim."
+    },
+    {
+      "what": "The earlier one-off synthetic fixture that produced a 61.6% value was not preserved byte-for-byte.",
+      "why": "It had already been deleted before Stage 4 and was absent from reachable repository history.",
+      "impact": "Stage 4 rebuilt a current-contract regression suite and does not reuse that value as evidence."
+    },
+    {
+      "what": "evals and handoff are repository-only and excluded from installed skill payloads.",
+      "why": "They are audit assets, not runtime dependencies, and may contain repository test metadata.",
+      "impact": "Installed integrity does not require these directories; repository checks do."
+    },
+    {
+      "what": "head_commit intentionally identifies the audited implementation commit rather than the metadata-only commit containing this handoff.",
+      "why": "Embedding the containing commit's own hash would be self-referential and cannot be made stable.",
+      "impact": "Auditors resolve the containing commit from checkout HEAD and verify that its diff from head_commit is limited to handoff/."
+    },
+    {
+      "what": "The Stage 4 stop report used a Windows-backslash tree digest; Round 3 handoff replaces it with a POSIX-path digest.",
+      "why": "The file set and file hashes were identical, but the relative path separator inside the hash manifest was platform-dependent.",
+      "impact": "The canonical hash is now reproducible across operating systems; the earlier digest remains a Windows-path representation only."
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Should sanitized Stage 1 and Stage 2 summary JSON files be added in the next round?",
+      "options": [
+        "Add command-bearing summaries without private prose or target values.",
+        "Continue relying on private Markdown reports and chat confirmations."
+      ],
+      "recommendation": "Add the sanitized summaries so authority, QC, chronology, and exit codes become independently auditable."
+    },
+    {
+      "question": "Should structural directional evaluation be expanded?",
+      "options": [
+        "Approve additional multi-sentence style-only targets with non-zero structural distance.",
+        "Retain rule-direction evidence only."
+      ],
+      "recommendation": "Expand only after suitable immutable-compatible targets are available; do not relax admission gates."
+    },
+    {
+      "question": "Should the private reviewer-pattern candidates be promoted into core?",
+      "options": [
+        "Run a separate author privacy/content review and promote only approved abstractions.",
+        "Keep all candidates private."
+      ],
+      "recommendation": "Keep them private until a dedicated review round."
+    }
+  ],
+  "metrics": {
+    "repository_state": {
+      "snapshot_phase": "post-implementation-commit/pre-handoff-commit",
+      "implementation_commit": "230dc4ddbedccb8fe263b4180d0b110dc6961bcf",
+      "tracked_modified_files": 0,
+      "untracked_handoff_files": 5,
+      "handoff_files": 5,
+      "implementation_committed": true,
+      "implementation_pushed": true,
+      "github_origin_clone_verified": true
+    },
+    "repository_selftests": 110,
+    "contract_rule_count": 14,
+    "synthetic_eval_groups": {
+      "assertions_satisfied": 5,
+      "total": 5
+    },
+    "pipeline_runnable": true,
+    "capability_validated_by_synthetic_fixtures": false,
+    "evals_tree": {
+      "files": 12,
+      "bytes": 25899,
+      "sha256": "814f9f42d0b52e56a4d8f12e30e45cde8507a82164f66f78ee20ec4116c1edd4",
+      "hash_algorithm": "Sort relative POSIX paths; concatenate lowercase file SHA-256, two spaces, relative path, and LF; SHA-256 the UTF-8 manifest."
+    },
+    "protected_source_files": {
+      "matched": 3,
+      "total": 3
+    },
+    "target_layer": {
+      "profile_schema": "helicon-target-profile-v3",
+      "screening_schema": "helicon-target-screening-v2",
+      "field_count": 9,
+      "exemplar_source_count": 5,
+      "rule_source_count": 4,
+      "holdout_count": 6
+    },
+    "preservation_cases": {
+      "satisfied": 3,
+      "total": 3
+    },
+    "rule_directional_cases": {
+      "improved": 3,
+      "total": 3,
+      "before_l1": 6,
+      "output_l1": 1,
+      "convergence_percent": 83.3333
+    },
+    "structural_direction": {
+      "status": "insufficient-coverage",
+      "headline_allowed": false,
+      "eligible_observations": 6,
+      "scorable_observations": 2,
+      "zero_denominator_cases": 1,
+      "aggregate_convergence_percent": null,
+      "no_regression": true
+    },
+    "skill_limits": {
+      "body_lines": 359,
+      "body_limit": 500,
+      "description_characters": 896,
+      "description_limit": 1024
+    }
+  },
+  "privacy": {
+    "path_redaction": true,
+    "path_aliases": {
+      "<PRIVATE_SOURCE_ROOT>": "Original protected source-file locations outside the repository.",
+      "<PRIVATE_PAPER_ROOT>": "Private corpus and Stage 1-2 project-pack root.",
+      "<PRIVATE_STAGE3_ROOT>": "Isolated private Stage 3 evaluation workspace.",
+      "<INSTALLED_SKILL_ROOT>": "Local installed HElicon skill root.",
+      "<CLEAN_CLONE>": "Ephemeral clean clone created from the GitHub origin."
+    },
+    "files_read": [
+      {
+        "path": "<PRIVATE_PAPER_ROOT>/.helicon/corpus/v2_authority.md",
+        "type": "private authority report; existence only in this handoff audit"
+      },
+      {
+        "path": "<PRIVATE_PAPER_ROOT>/.helicon/corpus/extraction_qc.md",
+        "type": "private extraction-QC report; existence only in this handoff audit"
+      },
+      {
+        "path": "<PRIVATE_PAPER_ROOT>/.helicon/corpus/versions.yaml",
+        "type": "private version metadata; existence only in this handoff audit"
+      },
+      {
+        "path": "<PRIVATE_PAPER_ROOT>/.helicon/corpus/stages/v1.txt",
+        "type": "private corpus stage; existence only"
+      },
+      {
+        "path": "<PRIVATE_PAPER_ROOT>/.helicon/corpus/stages/v2.md",
+        "type": "private corpus stage; existence only"
+      },
+      {
+        "path": "<PRIVATE_PAPER_ROOT>/.helicon/corpus/stages/v3.txt",
+        "type": "private corpus stage; existence only"
+      },
+      {
+        "path": "<PRIVATE_PAPER_ROOT>/.helicon/holdout_manifest.md",
+        "type": "private hold-out metadata; existence only"
+      },
+      {
+        "path": "<PRIVATE_PAPER_ROOT>/.helicon/reviewer_patterns.md",
+        "type": "private reviewer-pattern report; existence only"
+      },
+      {
+        "path": "<PRIVATE_PAPER_ROOT>/.helicon/style/revision_direction.json",
+        "type": "private direction report; existence only"
+      },
+      {
+        "path": "<PRIVATE_SOURCE_ROOT>/version-1.tex",
+        "type": "protected source; SHA-256 only"
+      },
+      {
+        "path": "<PRIVATE_SOURCE_ROOT>/version-2.tex",
+        "type": "protected source; SHA-256 only"
+      },
+      {
+        "path": "<PRIVATE_SOURCE_ROOT>/version-3.tex",
+        "type": "protected source; SHA-256 only"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/SOURCE_GUARD.json",
+        "type": "source path and digest metadata"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/target_profile.json",
+        "type": "schema, field-source counts, and hash only"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/target_screening.json",
+        "type": "schema and hold-out count only"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3c/stage3c_summary.json",
+        "type": "sanitized independent-session summary"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3c/cases.json",
+        "type": "sanitized case and evidence metadata"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3c/reports/C01.json",
+        "type": "sanitized per-case contract metadata"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3c/reports/C02.json",
+        "type": "sanitized per-case contract metadata"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3c/reports/C03.json",
+        "type": "sanitized per-case contract metadata"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/corpus/prepare_stage3b.py",
+        "type": "private harness source; logic inspected without manuscript prose"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/corpus/prepare_stage3c.py",
+        "type": "private harness source; logic inspected without manuscript prose"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3b/run_evals.py",
+        "type": "private harness source; logic inspected without manuscript prose"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3c/run_evals.py",
+        "type": "private harness source; logic inspected without manuscript prose"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3d/stage3d_summary.json",
+        "type": "sanitized independent-session summary"
+      },
+      {
+        "path": "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3d/cases.json",
+        "type": "sanitized approval and evidence metadata"
+      }
+    ],
+    "private_outputs": [
+      "<PRIVATE_PAPER_ROOT>/.helicon/corpus/",
+      "<PRIVATE_PAPER_ROOT>/.helicon/holdout_manifest.md",
+      "<PRIVATE_PAPER_ROOT>/.helicon/reviewer_patterns.md",
+      "<PRIVATE_PAPER_ROOT>/.helicon/style/",
+      "<PRIVATE_PAPER_ROOT>/.helicon/style/revision_direction.json",
+      "<PRIVATE_STAGE3_ROOT>/.helicon/corpus/",
+      "<PRIVATE_STAGE3_ROOT>/.helicon/style/target_profile.json",
+      "<PRIVATE_STAGE3_ROOT>/.helicon/style/target_screening.json",
+      "<PRIVATE_STAGE3_ROOT>/.helicon/style/migration_v3/",
+      "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3/",
+      "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3b/",
+      "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3c/",
+      "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3d_candidate_review/",
+      "<PRIVATE_STAGE3_ROOT>/.helicon/style/stage3d/",
+      "<PRIVATE_STAGE3_ROOT>/.helicon/style/target_traces/"
+    ],
+    "private_content_detected_by_checks": false,
+    "private_content_check_basis": "Automated lexical, path, artifact-name, and repository-location contamination checks; semantic non-disclosure remains an unverified human-review boundary.",
+    "repo_contamination_check": {
+      "command": "python -B scripts/check_core_contamination.py .",
+      "exit_code": 0
+    }
+  },
+  "reproduce": [
+    "python -B scripts/selftest_checks.py",
+    "python -B scripts/check_contract_sync.py",
+    "python -B scripts/check_skill_integrity.py .",
+    "python -B scripts/check_core_contamination.py .",
+    "python -B evals/run_all.py",
+    "python -m json.tool handoff/round_3.json",
+    "python -B handoff/validate.py",
+    "git diff --check",
+    "git diff --exit-code 230dc4ddbedccb8fe263b4180d0b110dc6961bcf HEAD -- . ':(exclude)handoff/**'"
+  ],
+  "next_round_candidates": [
+    {
+      "item": "Clone the published metadata-only child from origin/main and independently replay reproduce[].",
+      "reason": "This closes the one evidence gap that cannot be embedded into the commit it verifies.",
+      "priority": "high"
+    },
+    {
+      "item": "Add sanitized Stage 1 and Stage 2 machine-readable summaries with command and exit_code.",
+      "reason": "Current private reports do not provide an independently replayable evidence chain.",
+      "priority": "high"
+    },
+    {
+      "item": "Persist command and process exit_code in every future private evaluator summary.",
+      "reason": "run_completed alone does not preserve the process-level evidence required by the handoff protocol.",
+      "priority": "high"
+    },
+    {
+      "item": "Expand structural directional coverage with author-approved, immutable-compatible targets.",
+      "reason": "Current rule-direction evidence is useful, but structural efficacy remains unverified.",
+      "priority": "medium"
+    },
+    {
+      "item": "Review private reviewer-pattern candidates in a dedicated privacy/content round.",
+      "reason": "No candidate should enter core without explicit author approval.",
+      "priority": "medium"
+    },
+    {
+      "item": "Resynchronize the installed payload after publication and verify it plus the rollback backup.",
+      "reason": "Installed integrity passes, but exact current source parity and rollback behavior are not yet persisted as command-bearing evidence.",
+      "priority": "low"
+    }
+  ]
+}
