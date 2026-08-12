@@ -152,19 +152,14 @@ def term_counter(text: str, terms: list[str]) -> Counter[str]:
     return +counts
 
 
-def claim_counter(before: str, after: str) -> tuple[Counter[str], Counter[str]]:
-    before_scopes = latex_guard.claim_scopes(before)
-    after_scopes = latex_guard.claim_scopes(after)
-    alignment = latex_guard.align_claim_scopes(before_scopes, after_scopes)
-    removed: Counter[str] = Counter()
-    added: Counter[str] = Counter()
-    for name, pattern, collapse in CLAIM_PATTERNS:
-        delta = latex_guard.marker_diff(before_scopes, after_scopes, alignment, pattern, collapse_per_scope=collapse)
-        removed.update({f"{name}:{key}": count for key, count in delta["removed"].items()})
-        added.update({f"{name}:{key}": count for key, count in delta["added"].items()})
-    # The caller expects before/after counters. Shared entries cancel when the
-    # ordinary multiset diff is computed below.
-    return removed, added
+def claim_counter(text: str) -> Counter[str]:
+    """Count normalized marker classes without binding them to sentence order."""
+    prose = latex_guard.prose_for_claim_scope(text)
+    values: Counter[str] = Counter()
+    for name, pattern, _collapse in CLAIM_PATTERNS:
+        markers = latex_guard.scope_markers(prose, pattern, collapse_per_scope=False)
+        values.update({f"{name}:{marker}": count for marker, count in markers.items()})
+    return values
 
 
 def expanded(counter: Counter[str]) -> list[str]:
@@ -188,21 +183,6 @@ def category_report(before: Counter[str], after: Counter[str]) -> dict[str, Any]
     }
 
 
-def delta_report(removed: Counter[str], added: Counter[str]) -> dict[str, Any]:
-    """Report a pre-aligned delta without cancelling scope moves globally."""
-    removed_items = expanded(removed)
-    added_items = expanded(added)
-    return {
-        "added": added_items,
-        "removed": removed_items,
-        "changed": [
-            {"before": old, "after": new}
-            for old, new in zip(removed_items, added_items)
-        ],
-        "violation_count": max(len(added_items), len(removed_items)),
-    }
-
-
 def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[str, Any]:
     before = read_text(before_path)
     after = read_text(after_path)
@@ -218,8 +198,7 @@ def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[st
         name: category_report(extractor(before), extractor(after))
         for name, extractor in extractors.items()
     }
-    claim_removed, claim_added = claim_counter(before, after)
-    categories["claim_scope"] = delta_report(claim_removed, claim_added)
+    categories["claim_scope"] = category_report(claim_counter(before), claim_counter(after))
     total = sum(item["violation_count"] for item in categories.values())
     return {
         "schema": "helicon-immutable-set-check-v1",

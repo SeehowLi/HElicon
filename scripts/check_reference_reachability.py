@@ -48,6 +48,11 @@ def read_utf8(path: Path) -> str:
         raise UserError(f"cannot read {path}: {exc}") from exc
 
 
+def canonical_utf8_size(path: Path) -> int:
+    text = read_utf8(path).replace("\r\n", "\n").replace("\r", "\n")
+    return len(text.encode("utf-8"))
+
+
 def inside(path: Path, root: Path) -> bool:
     try:
         path.relative_to(root)
@@ -114,7 +119,7 @@ def analyze(root: Path) -> dict[str, Any]:
     for path in sorted(targets, key=lambda item: item.relative_to(root).as_posix()):
         rows.append({
             "path": path.relative_to(root).as_posix(),
-            "bytes": path.stat().st_size,
+            "bytes": canonical_utf8_size(path),
             "reachable": path in reachable,
             "referenced_by": sorted(
                 parent.relative_to(root).as_posix() for parent in parents.get(path, set())

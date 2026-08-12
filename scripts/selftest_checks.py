@@ -133,6 +133,55 @@ def main() -> int:
             immutable_whitespace["passed"] and immutable_whitespace["total_violations"] == 0,
         ))
 
+        scope_joined = (
+            "The synthetic protocol is secure in the semi-honest model, and each ciphertext "
+            "carries $N/2$ slots. It records 12.4 ms and 3.2 GB as shown in "
+            "\\eqref{eq:synthetic} and \\cite{synthetic}; see \\ref{sec:synthetic}. "
+            "We do not claim lower cost. It has higher latency for most database sizes.\n"
+        )
+        scope_split = scope_joined.replace(
+            "semi-honest model, and each ciphertext",
+            "semi-honest model. Each ciphertext",
+        )
+        scope_variants = (
+            ("sentence splitting", scope_joined, scope_split),
+            ("sentence joining", scope_split, scope_joined),
+            (
+                "sentence reordering",
+                "Each request may finish. Most batches do not fail.\n",
+                "Most batches do not fail. Each request may finish.\n",
+            ),
+            (
+                "claim-marker case changes",
+                "Each request may finish, but most batches do not fail.\n",
+                "EACH request MAY finish, but MOST batches do NOT fail.\n",
+            ),
+        )
+        for index, (label, before_text, after_text) in enumerate(scope_variants, 1):
+            scope_before = verifier_root / f"scope_before_{index}.txt"
+            scope_after = verifier_root / f"scope_after_{index}.txt"
+            scope_before.write_text(before_text, encoding="utf-8")
+            scope_after.write_text(after_text, encoding="utf-8")
+            scope_result = check_immutable_set.compare(scope_before, scope_after, small_glossary)
+            scope_report = scope_result["categories"]["claim_scope"]
+            tests.append((
+                f"immutable claim-scope multiset ignores {label}",
+                scope_report["violation_count"] == 0
+                and not scope_report["changed"],
+            ))
+
+        scope_before = verifier_root / "scope_violation_before.txt"
+        scope_after = verifier_root / "scope_violation_after.txt"
+        scope_before.write_text("The scheduler may serve each request.\n", encoding="utf-8")
+        scope_after.write_text("The scheduler must serve all requests.\n", encoding="utf-8")
+        scope_violation = check_immutable_set.compare(scope_before, scope_after, small_glossary)
+        scope_changes = scope_violation["categories"]["claim_scope"]["changed"]
+        tests.append((
+            "immutable claim-scope multiset retains real changes without identical pairs",
+            scope_violation["categories"]["claim_scope"]["violation_count"] > 0
+            and all(item["before"] != item["after"] for item in scope_changes),
+        ))
+
         claim_before = verifier_root / "claim_before.txt"
         claim_after = verifier_root / "claim_after.txt"
         claim_before.write_text(
@@ -152,8 +201,39 @@ def main() -> int:
         terminology_result = check_terminology_freeze.compare(term_before, term_after, small_glossary)
         tests.append((
             "terminology checker rejects case drift",
-            any(item["kind"] == "case_inconsistency" for item in terminology_result["replacements"]),
+            terminology_result["active_rule_count"] == 2
+            and any(item["kind"] == "case_inconsistency" for item in terminology_result["replacements"]),
         ))
+
+        terminology_script = Path(__file__).resolve().parent / "check_terminology_freeze.py"
+        invalid_glossaries = (
+            (
+                "misspelled terminology rule field is a configuration error",
+                {"entries": [{"term": "ciphertext scheduler", "forbidden_synonnyms": ["encrypted scheduler"]}]},
+            ),
+            (
+                "empty avoid list is a terminology configuration error",
+                {"entries": [{"term": "ciphertext scheduler", "avoid": []}]},
+            ),
+        )
+        for index, (label, payload) in enumerate(invalid_glossaries, 1):
+            invalid_glossary = verifier_root / f"invalid_glossary_{index}.json"
+            invalid_glossary.write_text(json.dumps(payload), encoding="utf-8")
+            invalid_result = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    str(terminology_script),
+                    str(term_before),
+                    str(term_after),
+                    "--glossary",
+                    str(invalid_glossary),
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            tests.append((label, invalid_result.returncode == 2))
 
         graph_root = verifier_root / "graph"
         (graph_root / "references").mkdir(parents=True)
@@ -169,6 +249,24 @@ def main() -> int:
         tests.append((
             "reference reachability accepts a fully reachable synthetic graph",
             reachable_result["orphan_file_count"] == 0,
+        ))
+        graph_crlf_root = verifier_root / "graph_crlf"
+        for relative in (
+            "SKILL.md",
+            "references/command_registry.md",
+            "references/intent_router.md",
+            "references/pass_pipeline.md",
+            "templates/linked.md",
+        ):
+            source = graph_root / relative
+            target = graph_crlf_root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            canonical = source.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
+            target.write_bytes(canonical.replace("\n", "\r\n").encode("utf-8"))
+        reachable_crlf = check_reference_reachability.analyze(graph_crlf_root)
+        tests.append((
+            "reference reachability canonicalizes LF and CRLF byte totals",
+            reachable_result["total_bytes"] == reachable_crlf["total_bytes"],
         ))
         (graph_root / "templates" / "orphan.md").write_text("orphan\n", encoding="utf-8")
         orphan_result = check_reference_reachability.analyze(graph_root)

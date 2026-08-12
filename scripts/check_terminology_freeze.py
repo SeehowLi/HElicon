@@ -48,7 +48,7 @@ def read_text(path: Path) -> str:
         raise UserError(f"cannot read {path}: {exc}") from exc
 
 
-def load_glossary(path: Path) -> list[dict[str, Any]]:
+def load_glossary(path: Path) -> tuple[list[dict[str, Any]], int]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -73,13 +73,24 @@ def load_glossary(path: Path) -> list[dict[str, Any]]:
             raise UserError(f"glossary entry {index} has invalid forbidden_synonyms")
         if not isinstance(variants, list) or not all(isinstance(item, str) and item.strip() for item in variants):
             raise UserError(f"glossary entry {index} has invalid forbidden_variants")
+        if not synonyms and not variants:
+            raise UserError(
+                f"glossary entry {index} requires a non-empty forbidden_synonyms "
+                "or forbidden_variants array"
+            )
         normalized.append({
             "term": entry["term"].strip(),
             "abbreviation": abbreviation.strip() if isinstance(abbreviation, str) else None,
             "forbidden_synonyms": [item.strip() for item in synonyms],
             "forbidden_variants": [item.strip() for item in variants],
         })
-    return normalized
+    active_rule_count = sum(
+        len(entry["forbidden_synonyms"]) + len(entry["forbidden_variants"])
+        for entry in normalized
+    )
+    if active_rule_count == 0:
+        raise UserError("glossary has no active forbidden synonym or variant rules")
+    return normalized, active_rule_count
 
 
 def matches(text: str, value: str, *, ignore_case: bool = True) -> list[re.Match[str]]:
@@ -104,7 +115,7 @@ def added_matches(before: str, after: str, value: str) -> list[re.Match[str]]:
 def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[str, Any]:
     before = read_text(before_path)
     after = read_text(after_path)
-    entries = load_glossary(glossary_path)
+    entries, active_rule_count = load_glossary(glossary_path)
     replacements: list[Replacement] = []
     for entry in entries:
         term = entry["term"]
@@ -150,6 +161,7 @@ def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[st
         "before": str(before_path),
         "after": str(after_path),
         "glossary": str(glossary_path),
+        "active_rule_count": active_rule_count,
         "replacements": payload,
         "replacement_count": len(payload),
         "passed": not payload,
@@ -157,7 +169,17 @@ def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[st
 
 
 def main() -> int:
-    parser = JsonArgumentParser(description=__doc__)
+    parser = JsonArgumentParser(
+        description=__doc__,
+        epilog=(
+            'Glossary JSON schema:\n'
+            '{"entries":[{"term":"required string","abbreviation":"optional string or null",'
+            '"forbidden_synonyms":["string",...],"forbidden_variants":["string",...]}]}\n'
+            "Each entry must have a non-empty term and at least one non-empty item across "
+            "forbidden_synonyms and forbidden_variants. Both fields, when present, must be arrays."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("before")
     parser.add_argument("after")
     parser.add_argument("--glossary", required=True)
