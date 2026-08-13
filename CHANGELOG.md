@@ -6,6 +6,7 @@
 - 保留已发布的 v1 阶梯 count 与 manifest 常量，新增并列的 anchored v2 复合 manifest，将阶梯与锚点共同纳入 fail-closed 自校验；锚点、count 或任一 manifest 漂移均由合成回归拒绝。
 - 恢复十九个 FHE 领域术语及其连字符变体，使 L0 的 immutable glossary-term 计数保护恢复为 119 个词条、135 条活动规则；九个容易造成通用词计数误报的条目继续保持删除。
 - 合成回归固定三个非安全语境不阻断、三个真实密码学升级仍阻断，以及恢复术语的出现次数变化仍被 immutable gate 检出；这些结果只验证机械检查路径，不构成论文质量或真实数据能力证据。
+- 已知限制：密码学阶梯的三条裸词阶梯采用两词锚点窗口，已消除 `computational/statistical`、`approximate/exact`、`selective/adaptive` 在非安全语境下的阻断级误报；代价是锚点不相邻的真实升级会漏报（外部审计实测五例中漏四例），双档 candidate 报告已排入后续轮次。
 
 ## v1.7
 
