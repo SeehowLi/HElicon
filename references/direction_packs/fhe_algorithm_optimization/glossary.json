@@ -1,0 +1,400 @@
+{
+  "schema": "helicon-lexicon-v1",
+  "layer": "L1",
+  "direction": "fhe_algorithm_optimization",
+  "entries": [
+    {
+      "term": "CoeffToSlot",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Coeff To Slot"
+      ]
+    },
+    {
+      "term": "SlotToCoeff",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Slot To Coeff"
+      ]
+    },
+    {
+      "term": "EvalMod",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Eval Mod"
+      ]
+    },
+    {
+      "term": "EvalRound",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Eval Round"
+      ]
+    },
+    {
+      "term": "ModRaise",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Mod Raise"
+      ]
+    },
+    {
+      "term": "ModDown",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Mod Down"
+      ]
+    },
+    {
+      "term": "ModUp",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Mod Up"
+      ]
+    },
+    {
+      "term": "ModSwitch",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Mod Switch"
+      ]
+    },
+    {
+      "term": "homomorphic modular reduction",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphic modulo reduction"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "modulus raising",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "modulo raising"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "bootstrapping depth",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "bootstrap depth"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "bootstrapping latency",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "bootstrap latency"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "bootstrapping precision",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "bootstrap precision"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "bootstrapping critical path",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "bootstrapping critical-path"
+      ]
+    },
+    {
+      "term": "bootstrappable ciphertext",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "bootstrapable ciphertext"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "amortized throughput",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "amortized through put"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "amortized time",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "amortize time"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "scale management",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "scales management"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "scale alignment",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "scales alignment"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "level budget",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "levels budget"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "remaining level",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "remained level"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "lazy rescaling",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "lazily rescaling"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "lazy relinearization",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "lazily relinearization"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "sign-function approximation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "signal function approximation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "homomorphic floor function",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphic floor operation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "homomorphic sign evaluation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphic signal evaluation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "comparison operator",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "compare operator"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "Hermite interpolation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "Hermit interpolation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "Fourier series",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "Fourier serie"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "Fourier extension",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "Fourier extend"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "Taylor expansion",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "Taylor extension"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "homomorphic DFT",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "homomorphic D F T"
+      ]
+    },
+    {
+      "term": "discrete Fourier transform",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "discrete Fourier transformation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "number theoretic transform",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "number theory transform"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "tensor product",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "tensored product"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "automorphism",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "automorphysm"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "ring degree",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "ring-degree"
+      ]
+    },
+    {
+      "term": "ring packing",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "rings packing"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "transciphering",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "trans-ciphering",
+        "trans ciphering"
+      ]
+    },
+    {
+      "term": "scheme conversion",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "schemes conversion"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "precision loss",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "precision-loss"
+      ]
+    },
+    {
+      "term": "worst-case noise",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "worst case noise"
+      ]
+    },
+    {
+      "term": "average-case noise",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "average case noise"
+      ]
+    },
+    {
+      "term": "error growth",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "errors growth"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "depth-heavy",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "depth heavy"
+      ]
+    },
+    {
+      "term": "rotation count",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "rotations count"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "key-switching cost",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "key switching-cost"
+      ]
+    },
+    {
+      "term": "quantized encoding",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "quantize encoding"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "critical path",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "critical-path"
+      ]
+    }
+  ]
+}

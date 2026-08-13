@@ -1,0 +1,21 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "markdown-bilingual-layout",
+  "runner": "layered-glossary",
+  "input": {
+    "script": "scripts/glossary_md_to_json.py",
+    "args": ["repo:evals/fixtures/glossary_layout_bilingual.synthetic.md", "-o", "{output}"]
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "entries": [
+        {"term": "request lattice", "abbreviation": null, "forbidden_synonyms": ["legacy lattice", "old lattice"], "forbidden_variants": ["request-lattice"]}
+      ]
+    }
+  },
+  "assertion": "The bilingual layout uses Recommended English and discards Acceptable alternatives.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

@@ -1,0 +1,375 @@
+{
+  "schema": "helicon-lexicon-v1",
+  "layer": "L1",
+  "direction": "security_top_conference_writing",
+  "entries": [
+    {
+      "term": "deployment model",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "deploy model"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "adversary capability",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "adversaries capability"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "security guarantee",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "secure guarantee"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "bounded leakage",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "bound leakage"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "leakage profile",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "leak profile"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "interaction barrier",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "interactions barrier"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "operator expressiveness",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "operators expressiveness"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "functional completeness",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "function completeness"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "precision at scale",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "precisions at scale"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "usability-efficiency dilemma",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "usability efficiency dilemma"
+      ]
+    },
+    {
+      "term": "end-to-end evaluation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "end to end evaluation"
+      ]
+    },
+    {
+      "term": "workload-level evaluation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "workload level evaluation"
+      ]
+    },
+    {
+      "term": "full-system evaluation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "full system evaluation"
+      ]
+    },
+    {
+      "term": "microbenchmark",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "micro benchmark"
+      ]
+    },
+    {
+      "term": "fair baseline",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "fairly baseline"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "comparable parameter",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "comparable parameters setting"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "realistic workload",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "realistically workload"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "motivating example",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "motivate example"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "key observation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "keys observation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "key insight",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "core inspiration"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "technical framing",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "technical packaging"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "paper positioning",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "article positioning"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "narrative arc",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "story line"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "contribution claim",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "contributions claim"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "claim scope",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "claims scope"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "reviewer concern",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "reviewers concern"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "reviewer risk",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "reviewers risk"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "limitation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "limitations statement section"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "related-work positioning",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "related work-positioning"
+      ]
+    },
+    {
+      "term": "capability contrast",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "capabilities contrast"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "threat surface",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "threats surface"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "asset",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "assets protection scope"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "deployment assumption",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "deploy assumption"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "interaction model",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "interactions model"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "scale realism",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "scales realism"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "utility-security trade-off",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "utility security trade-off"
+      ]
+    },
+    {
+      "term": "engineering integration",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "engineer integration"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "artifact evaluation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "artifacts evaluation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "problem framing",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "problems framing"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "bottleneck diagram",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "bottlenecks diagram"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "sentence function order",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "sentences function order"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "abstract structure",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "abstracts structure"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "introduction arc",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "introductions arc"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "evaluation narrative",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "evaluations narrative"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "client burden",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "clients burden"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "practical deployment barrier",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "practically deployment barrier"
+      ],
+      "forbidden_variants": []
+    }
+  ]
+}

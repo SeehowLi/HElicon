@@ -1,0 +1,19 @@
+{
+  "schema": "helicon-lexicon-v1",
+  "layer": "L1",
+  "direction": "synthetic_direction",
+  "entries": [
+    {
+      "term": "synthetic scheduler",
+      "abbreviation": null,
+      "forbidden_synonyms": ["obsolete scheduler"],
+      "forbidden_variants": ["synthetic scheduling"]
+    },
+    {
+      "term": "batch window",
+      "abbreviation": null,
+      "forbidden_synonyms": ["window batch"],
+      "forbidden_variants": []
+    }
+  ]
+}

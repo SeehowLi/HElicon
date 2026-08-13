@@ -1,0 +1,24 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "layered-project-absent",
+  "runner": "layered-glossary",
+  "input": {
+    "script": "scripts/glossary_build.py",
+    "layer_files": [
+      {"source": "evals/fixtures/layered_core.synthetic.json", "target": "references/fhe_lexicon.json"}
+    ],
+    "args": ["--root", "{root}", "-o", "{output}"]
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "project_layer": "absent",
+      "project_layer_entry_count": 0,
+      "conflict_count": 0
+    }
+  },
+  "assertion": "Omitting the project glossary is valid and is reported as an absent L2 layer.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

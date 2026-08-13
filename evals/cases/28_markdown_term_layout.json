@@ -1,0 +1,24 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "markdown-term-layout",
+  "runner": "layered-glossary",
+  "input": {
+    "script": "scripts/glossary_md_to_json.py",
+    "args": ["repo:evals/fixtures/glossary_layout_term.synthetic.md", "-o", "{output}"]
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "schema": "helicon-lexicon-v1",
+      "layer": "L2",
+      "direction": null,
+      "entries": [
+        {"term": "batch window", "abbreviation": null, "forbidden_synonyms": ["window batch", "legacy window"], "forbidden_variants": ["batch-window"]}
+      ]
+    }
+  },
+  "assertion": "The four-column Markdown layout maps its first column and Avoid forms into an L2 entry.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

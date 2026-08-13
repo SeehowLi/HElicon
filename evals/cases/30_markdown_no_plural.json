@@ -1,0 +1,21 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "markdown-no-plural",
+  "runner": "layered-glossary",
+  "input": {
+    "script": "scripts/glossary_md_to_json.py",
+    "args": ["repo:evals/fixtures/glossary_no_plural.synthetic.md", "-o", "{output}"]
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "entries": [
+        {"term": "ciphertext buffer", "abbreviation": null, "forbidden_synonyms": ["legacy buffer"], "forbidden_variants": ["ciphertext-buffer"]}
+      ]
+    }
+  },
+  "assertion": "Markdown conversion derives only the space-to-hyphen variant and never invents a plural.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

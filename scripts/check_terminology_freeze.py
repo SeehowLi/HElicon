@@ -112,6 +112,16 @@ def added_matches(before: str, after: str, value: str) -> list[re.Match[str]]:
     return matches(after, value)[before_count:]
 
 
+def is_sentence_initial_capitalization(text: str, match: re.Match[str], term: str) -> bool:
+    observed = match.group(0)
+    if not term or observed != term[0].upper() + term[1:] or observed == term:
+        return False
+    if match.start() == 0:
+        return True
+    prefix = text[:match.start()]
+    return bool(re.search(r"(?:[.!?:][ \t]+|\n[ \t]*)\Z", prefix))
+
+
 def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[str, Any]:
     before = read_text(before_path)
     after = read_text(after_path)
@@ -131,7 +141,7 @@ def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[st
             )
 
         for match in matches(after, term):
-            if match.group(0) != term:
+            if match.group(0) != term and not is_sentence_initial_capitalization(after, match, term):
                 replacements.append(Replacement(term, "case_inconsistency", match.group(0), location(after, match.start())))
 
         abbreviation = entry["abbreviation"]

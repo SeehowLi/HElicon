@@ -1,0 +1,362 @@
+{
+  "schema": "helicon-lexicon-v1",
+  "layer": "L1",
+  "direction": "encrypted_knn_search",
+  "entries": [
+    {
+      "term": "encrypted kNN",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "encrypt kNN"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "secure k-NN classification",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "secure k NN classification"
+      ]
+    },
+    {
+      "term": "approximate nearest neighbor search",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "approximated nearest neighbor search"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "top-k",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "top k"
+      ]
+    },
+    {
+      "term": "top-k selection",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "top k selection"
+      ]
+    },
+    {
+      "term": "top-k correctness",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "top k correctness"
+      ]
+    },
+    {
+      "term": "oblivious top-k",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "oblivious top k"
+      ]
+    },
+    {
+      "term": "encrypted ranking",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "encrypt ranking"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "ranking leakage",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "rank leakage"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "order statistic",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "ordered statistic"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "fractional ranking",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "fraction ranking"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "rank selection",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "ranks selection"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "homomorphic sorting",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphical sorting"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "sorting network",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "sort network"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "swap-based",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "swap based"
+      ]
+    },
+    {
+      "term": "comparison depth",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "comparison-depth"
+      ]
+    },
+    {
+      "term": "comparison function",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "compare function"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "indicator function",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "indicate function"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "distance comparison",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "distances comparison"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "distance metric",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "distances metric"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "distance computation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "distances computation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "tie handling",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "ties handle"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "duplicate handling",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "duplicates handle"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "argmax",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "arg max",
+        "arg-max"
+      ]
+    },
+    {
+      "term": "argmin",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "arg min",
+        "arg-min"
+      ]
+    },
+    {
+      "term": "max-pooling",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "max pooling",
+        "maxpooling"
+      ]
+    },
+    {
+      "term": "query privacy",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "queries privacy"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "query vector",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "queries vector"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "database record",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "databases record"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "database size",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "databases size"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "query dimension",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "queries dimension"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "private vector search",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "privacy vector search"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "graph-based index",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "graph based index"
+      ]
+    },
+    {
+      "term": "private information retrieval",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "privacy information retrieval"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "oblivious RAM",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "oblivious-RAM"
+      ]
+    },
+    {
+      "term": "two-server setting",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "two server setting"
+      ]
+    },
+    {
+      "term": "retrieval pipeline",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "retrievals pipeline"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "classification accuracy",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "classify accuracy"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "recall",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "recalls rate"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "permutation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "permutate operation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "ordering primitive",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "order primitive"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "selection circuit",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "select circuit"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "high-dimensional",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "high dimensional"
+      ]
+    },
+    {
+      "term": "one-hot encoding",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "one hot encoding"
+      ]
+    }
+  ]
+}

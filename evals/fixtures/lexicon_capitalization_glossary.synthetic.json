@@ -1,0 +1,25 @@
+{
+  "schema": "helicon-lexicon-v1",
+  "layer": "L0",
+  "direction": null,
+  "entries": [
+    {
+      "term": "ciphertext",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": ["cipher text"]
+    },
+    {
+      "term": "ciphertext packing",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": ["ciphertext-packing"]
+    },
+    {
+      "term": "ring dimension",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": ["ring-dimension"]
+    }
+  ]
+}

@@ -431,11 +431,14 @@ def run_verifiability(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
         )
         checks["move_count"] = payload["upward_move_count"] >= expected.get("minimum_count", 0)
     elif mode == "terminology":
-        checks["replacement_kind"] = any(
-            item["kind"] == expected["kind"]
-            for item in payload["replacements"]
-        )
+        if "kind" in expected:
+            checks["replacement_kind"] = any(
+                item["kind"] == expected["kind"]
+                for item in payload["replacements"]
+            )
         checks["replacement_count"] = payload["replacement_count"] >= expected.get("minimum_count", 0)
+        if "maximum_count" in expected:
+            checks["replacement_count_maximum"] = payload["replacement_count"] <= expected["maximum_count"]
     elif mode == "ai-tells":
         checks["minimum_finding_count"] = payload["finding_count"] >= expected.get("minimum_finding_count", 0)
         if "maximum_finding_count" in expected:
@@ -454,6 +457,47 @@ def run_verifiability(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
     })
 
 
+def run_layered_glossary(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
+    inputs = case["input"]
+    case_root = temp_root / case["id"] / "repository"
+    case_root.mkdir(parents=True)
+    for item in inputs.get("layer_files", []):
+        source = repo_path(item["source"])
+        target = (case_root / item["target"]).resolve()
+        if case_root.resolve() not in target.parents:
+            raise HarnessError(f"invalid layered target in {case['id']}")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+
+    output = temp_root / case["id"] / "output.json"
+    args: list[str] = []
+    for raw in inputs["args"]:
+        if raw == "{root}":
+            args.append(str(case_root))
+        elif raw == "{output}":
+            args.append(str(output))
+        elif raw.startswith("repo:"):
+            args.append(str(repo_path(raw[5:])))
+        else:
+            args.append(raw)
+    result = command(repo_path(inputs["script"]), *args)
+    payload = json_stdout(result, case["id"])
+    output_matches = output.is_file() and json.loads(output.read_text(encoding="utf-8")) == payload
+    checks = {
+        "exit_code": result.returncode == case["expected"]["exit_code"],
+        "output_file_matches": output_matches,
+        **{
+            f"field:{name}": payload.get(name) == value
+            for name, value in case["expected"]["fields"].items()
+        },
+    }
+    return case_result(case, checks, {
+        "exit_code": result.returncode,
+        "output_file_matches": output_matches,
+        "checked_fields": sorted(case["expected"]["fields"]),
+    })
+
+
 RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "selftest": run_selftest,
     "router-contracts": run_router_contracts,
@@ -461,6 +505,7 @@ RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "revision-preflight": run_revision_preflight,
     "target-eval-guards": run_target_eval_guards,
     "verifiability": run_verifiability,
+    "layered-glossary": run_layered_glossary,
 }
 
 

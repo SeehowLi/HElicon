@@ -1,0 +1,28 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "layered-l0-only",
+  "runner": "layered-glossary",
+  "input": {
+    "script": "scripts/glossary_build.py",
+    "layer_files": [
+      {"source": "evals/fixtures/layered_core.synthetic.json", "target": "references/fhe_lexicon.json"}
+    ],
+    "args": ["--root", "{root}", "-o", "{output}"]
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "schema": "helicon-glossary-build-v1",
+      "direction": null,
+      "core_layer_entry_count": 1,
+      "direction_layer_entry_count": 0,
+      "merged_entry_count": 1,
+      "active_rule_count": 2,
+      "conflict_count": 0
+    }
+  },
+  "assertion": "Omitting direction emits the synthetic L0 layer alone with a clean exit.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

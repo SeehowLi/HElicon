@@ -197,13 +197,75 @@ def main() -> int:
         term_before = verifier_root / "term_before.txt"
         term_after = verifier_root / "term_after.txt"
         term_before.write_text("The ciphertext scheduler runs.\n", encoding="utf-8")
-        term_after.write_text("The Ciphertext scheduler runs.\n", encoding="utf-8")
+        term_after.write_text("A Ciphertext scheduler runs.\n", encoding="utf-8")
         terminology_result = check_terminology_freeze.compare(term_before, term_after, small_glossary)
         tests.append((
             "terminology checker rejects case drift",
             terminology_result["active_rule_count"] == 2
             and any(item["kind"] == "case_inconsistency" for item in terminology_result["replacements"]),
         ))
+
+        capitalization_glossary = verifier_root / "capitalization_glossary.json"
+        capitalization_glossary.write_text(json.dumps({
+            "entries": [
+                {
+                    "term": "ciphertext",
+                    "abbreviation": None,
+                    "forbidden_synonyms": [],
+                    "forbidden_variants": ["cipher text"],
+                },
+                {
+                    "term": "ciphertext packing",
+                    "abbreviation": None,
+                    "forbidden_synonyms": [],
+                    "forbidden_variants": ["ciphertext-packing"],
+                },
+                {
+                    "term": "ring dimension",
+                    "abbreviation": None,
+                    "forbidden_synonyms": [],
+                    "forbidden_variants": ["ring-dimension"],
+                },
+            ]
+        }), encoding="utf-8")
+        capitalization_before = verifier_root / "capitalization_before.txt"
+        capitalization_before.write_text(
+            "The scheme is instantiated with a fixed ring dimension, and ciphertext packing matters.\n",
+            encoding="utf-8",
+        )
+        capitalization_cases = (
+            (
+                "terminology checker permits sentence-initial capitalization after splitting",
+                "The scheme is instantiated with a fixed ring dimension. Ciphertext packing matters.\n",
+                0,
+            ),
+            (
+                "terminology checker rejects mid-sentence capitalization",
+                "The scheme is instantiated with a fixed ring dimension, and Ciphertext packing matters.\n",
+                2,
+            ),
+            (
+                "terminology checker rejects all-uppercase terms",
+                "The scheme is instantiated with a fixed RING DIMENSION, and ciphertext packing matters.\n",
+                1,
+            ),
+            (
+                "terminology checker rejects camel-case terms",
+                "The scheme is instantiated with a fixed ring dimension, and CipherText matters.\n",
+                1,
+            ),
+        )
+        for index, (label, after_text, expected_count) in enumerate(capitalization_cases, 1):
+            capitalization_after = verifier_root / f"capitalization_after_{index}.txt"
+            capitalization_after.write_text(after_text, encoding="utf-8")
+            result = check_terminology_freeze.compare(
+                capitalization_before, capitalization_after, capitalization_glossary
+            )
+            tests.append((
+                label,
+                result["replacement_count"] == expected_count
+                and all(item["kind"] == "case_inconsistency" for item in result["replacements"]),
+            ))
 
         terminology_script = Path(__file__).resolve().parent / "check_terminology_freeze.py"
         invalid_glossaries = (

@@ -1,0 +1,13 @@
+{
+  "schema": "helicon-lexicon-v1",
+  "layer": "L0",
+  "direction": null,
+  "entries": [
+    {
+      "term": "synthetic scheduler",
+      "abbreviation": null,
+      "forbidden_synonyms": ["legacy scheduler"],
+      "forbidden_variants": ["synthetic-scheduler"]
+    }
+  ]
+}

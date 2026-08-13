@@ -1,0 +1,39 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "layered-conflict",
+  "runner": "layered-glossary",
+  "input": {
+    "script": "scripts/glossary_build.py",
+    "layer_files": [
+      {"source": "evals/fixtures/layered_core.synthetic.json", "target": "references/fhe_lexicon.json"},
+      {"source": "evals/fixtures/layered_direction.synthetic.json", "target": "references/direction_packs/synthetic_direction/glossary.json"}
+    ],
+    "args": ["--root", "{root}", "--direction", "synthetic_direction", "-o", "{output}"]
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "schema": "helicon-glossary-build-v1",
+      "core_layer_entry_count": 1,
+      "direction_layer_entry_count": 2,
+      "merged_entry_count": 2,
+      "active_rule_count": 3,
+      "conflict_count": 1,
+      "project_layer": "absent",
+      "conflicts": [
+        {
+          "term": "synthetic scheduler",
+          "overridden_layer": "L0",
+          "overridden_file": "references/fhe_lexicon.json",
+          "overriding_layer": "L1",
+          "overriding_file": "references/direction_packs/synthetic_direction/glossary.json",
+          "overridden_fields": ["forbidden_synonyms", "forbidden_variants"]
+        }
+      ]
+    }
+  },
+  "assertion": "A synthetic L1 entry overrides its same-name L0 entry and records one conflict.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

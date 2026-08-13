@@ -1,0 +1,376 @@
+{
+  "schema": "helicon-lexicon-v1",
+  "layer": "L1",
+  "direction": "fhe_systems",
+  "entries": [
+    {
+      "term": "FHE library",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "FHE libraries implementation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "FHE compiler",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "FHE compile"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "compiler lowering",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "compile lowering"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "runtime",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "run time system"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "scheme switching",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "schemes switching"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "cross-scheme compilation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "cross scheme compilation"
+      ]
+    },
+    {
+      "term": "unified representation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "unify representation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "hardware abstraction layer",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "hardwares abstraction layer"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "backend-aware implementation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "backend aware implementation"
+      ]
+    },
+    {
+      "term": "performance portability",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "performances portability"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "workflow friction",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "workflows friction"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "operator compatibility",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "operators compatibility"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "automatic parameter selection",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "automatical parameter selection"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "parameter generation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "parameters generation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "compiler-friendly mode",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "compiler friendly mode"
+      ]
+    },
+    {
+      "term": "user-friendly mode",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "user friendly mode"
+      ]
+    },
+    {
+      "term": "abstraction boundary",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "abstract boundary"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "system boundary",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "systems boundary"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "encrypted database",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "encrypt database"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "hybrid query",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "hybrids query"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "relational query",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "relation query"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "vectorized data search",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "vectorize data search"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "query expressiveness",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "queries expressiveness"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "query class",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "queries class"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "full table scan",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "full tables scan"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "batched query",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "batch queries evaluation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "end-to-end workload",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "end to end workload"
+      ]
+    },
+    {
+      "term": "operator microbenchmark",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "operator micro-benchmark",
+        "operator micro benchmark"
+      ]
+    },
+    {
+      "term": "compile time",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "compile-time"
+      ]
+    },
+    {
+      "term": "memory bandwidth",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "memories bandwidth"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "hardware accelerator",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "hardwares accelerator"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "GPU implementation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "GPUs implementation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "multi-backend",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "multi backend"
+      ]
+    },
+    {
+      "term": "artifact availability",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "artifacts availability"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "open-source library",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "open source-library"
+      ]
+    },
+    {
+      "term": "expert hand-tuning",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "expert hand tuning"
+      ]
+    },
+    {
+      "term": "deployable system",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "deployment system architecture"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "capability coverage",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "capabilities coverage"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "application developer",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "applications developer"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "integration friction",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "integrations friction"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "SQL query",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "SQL queries evaluation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "data ordering",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "datas ordering"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "quantized fully homomorphic encryption",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "quantize fully homomorphic encryption"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "word-level operation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "word level operation"
+      ]
+    },
+    {
+      "term": "bit-level operation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "bit level operation"
+      ]
+    },
+    {
+      "term": "plug-in backend",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "plug in backend"
+      ]
+    }
+  ]
+}

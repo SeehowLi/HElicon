@@ -1,0 +1,392 @@
+{
+  "schema": "helicon-lexicon-v1",
+  "layer": "L1",
+  "direction": "private_llm_inference",
+  "entries": [
+    {
+      "term": "secure transformer inference",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "security transformer inference"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "private inference",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "privacy inference"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "privacy-preserving LLM inference",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "privacy preserving LLM inference"
+      ]
+    },
+    {
+      "term": "non-interactivity",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "non interactivity"
+      ]
+    },
+    {
+      "term": "offline-online paradigm",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "offline online paradigm"
+      ]
+    },
+    {
+      "term": "offline phase",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "off-line phase"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "online phase",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "on-line phase"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "client-side burden",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "client side burden"
+      ]
+    },
+    {
+      "term": "server-side latency",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "server side latency"
+      ]
+    },
+    {
+      "term": "user-side overhead",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "user side overhead"
+      ]
+    },
+    {
+      "term": "communication round",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "communications round"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "model confidentiality",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "model secrecy"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "input privacy",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "input confidentiality"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "model utility",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "models utility"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "utility preservation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "utility preserve"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "homomorphic softmax",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphic soft max"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "softmax",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "soft max",
+        "soft-max"
+      ]
+    },
+    {
+      "term": "LayerNorm",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Layer Norm"
+      ]
+    },
+    {
+      "term": "layer normalization",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "layers normalization"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "activation approximation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "activate approximation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "packing format",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "packing formats conversion"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "format conversion",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "formats conversion"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "diagonal packing",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "diagonally packing"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "column packing",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "columns packing"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "row-by-row encoding",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "row by row encoding"
+      ]
+    },
+    {
+      "term": "interleaved batching",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "interleave batching"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "homomorphic matrix multiplication",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphic matrixes multiplication"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "plaintext-ciphertext matrix multiplication",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "plaintext ciphertext matrix multiplication"
+      ]
+    },
+    {
+      "term": "ciphertext-ciphertext matrix multiplication",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "ciphertext ciphertext matrix multiplication"
+      ]
+    },
+    {
+      "term": "linear layer",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "linear layers computation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "nonlinear layer",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "non linear layer"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "transformer",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "transformers architecture"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "large language model",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "large languages model"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "token",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "tokens length"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "pre-trained",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "pre trained"
+      ]
+    },
+    {
+      "term": "fine-tuned",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "fine tuned"
+      ]
+    },
+    {
+      "term": "secure two-party inference",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "secure two party inference"
+      ]
+    },
+    {
+      "term": "hybrid protocol",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "hybrids protocol"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "secret sharing",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "secrets sharing"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "garbled circuit",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "garble circuit"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "oblivious transfer",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "oblivion transfer"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "depth consumption per layer",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "depth consumption per-layer"
+      ]
+    },
+    {
+      "term": "ciphertext compression",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "ciphertexts compression"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "slot folding",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "slots folding"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "user preprocessing cost",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "users preprocessing cost"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "end-to-end inference",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "end to end inference"
+      ]
+    },
+    {
+      "term": "model architecture",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "models architecture"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "GELU",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "GE LU"
+      ]
+    }
+  ]
+}

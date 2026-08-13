@@ -1,0 +1,24 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "mid-sentence-capitalization",
+  "runner": "verifiability",
+  "input": {
+    "mode": "terminology",
+    "checker": "scripts/check_terminology_freeze.py",
+    "before_fixture": "lexicon_capitalization.synthetic.txt",
+    "after_fixture": "lexicon_capitalization.synthetic.txt",
+    "glossary_fixture": "lexicon_capitalization_glossary.synthetic.json",
+    "replacements": [["and ciphertext packing matters", "and Ciphertext packing matters"]]
+  },
+  "expected": {
+    "schema": "helicon-terminology-freeze-check-v1",
+    "exit_code": 1,
+    "passed": false,
+    "kind": "case_inconsistency",
+    "minimum_count": 2
+  },
+  "assertion": "Capitalizing an overlapping lowercase term mid-sentence still reports both case inconsistencies.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

@@ -362,3 +362,20 @@ Repair missed synchronization after long discussion, context loss, or unsynchron
 ### H-REOPEN
 
 Reopen a title, abstract, section, claim, or decision after new evidence, contradiction, reviewer risk, or scope change. Do not patch. Return the target, reason, old conclusion, still-valid parts, needed changes, risk of leaving it closed, and the recommended discussion, decision, or iteration command.
+
+## Layered lexicon assets
+
+The public direction-pack and terminology assets are reachable through these explicit paths:
+
+- references/direction_packs/README.md
+- references/direction_packs/fhe_algorithm_optimization/focused_writing_knowledge.md
+- references/direction_packs/private_llm_inference/focused_writing_knowledge.md
+- references/direction_packs/encrypted_knn_search/focused_writing_knowledge.md
+- references/direction_packs/fhe_systems/focused_writing_knowledge.md
+- references/direction_packs/security_top_conference_writing/focused_writing_knowledge.md
+- references/fhe_lexicon.json
+- references/direction_packs/fhe_algorithm_optimization/glossary.json
+- references/direction_packs/private_llm_inference/glossary.json
+- references/direction_packs/encrypted_knn_search/glossary.json
+- references/direction_packs/fhe_systems/glossary.json
+- references/direction_packs/security_top_conference_writing/glossary.json

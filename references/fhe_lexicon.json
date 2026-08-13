@@ -1,0 +1,967 @@
+{
+  "schema": "helicon-lexicon-v1",
+  "layer": "L0",
+  "direction": null,
+  "entries": [
+    {
+      "term": "fully homomorphic encryption",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "full homomorphic encryption"
+      ],
+      "forbidden_variants": [
+        "fully-homomorphic encryption"
+      ]
+    },
+    {
+      "term": "homomorphic encryption",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphical encryption"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "leveled homomorphic encryption",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "level homomorphic encryption"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "approximate homomorphic encryption",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "approximated homomorphic encryption"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "RNS-CKKS",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "CKKS-RNS"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "TFHE-rs",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "TFHE rs"
+      ]
+    },
+    {
+      "term": "OpenFHE",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Open FHE"
+      ]
+    },
+    {
+      "term": "Microsoft SEAL",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Microsoft-SEAL"
+      ]
+    },
+    {
+      "term": "HElib",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "HE Lib"
+      ]
+    },
+    {
+      "term": "ciphertext",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "cipher text",
+        "cipher-text"
+      ]
+    },
+    {
+      "term": "plaintext",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "plain text",
+        "plain-text"
+      ]
+    },
+    {
+      "term": "ciphertext modulus",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "cipher modulus"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "plaintext space",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "plain text space"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "message space",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "messages space"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "modulus chain",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "modulo chain"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "modulus switching",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "modulo switching",
+        "moduli switching"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "modulus consumption",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "modulo consumption"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "modulus budget",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "modulo budget"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "coefficient modulus",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "coefficients modulus"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "residue number system",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "residual number system"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "ring dimension",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "ring-dimension"
+      ]
+    },
+    {
+      "term": "security parameter",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "secure parameter"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "parameter set",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "parameters set"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "bootstrapping",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "bootstraping"
+      ],
+      "forbidden_variants": [
+        "boot-strapping",
+        "boot strapping"
+      ]
+    },
+    {
+      "term": "functional bootstrapping",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "function bootstrapping"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "programmable bootstrapping",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "programable bootstrapping"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "blind rotation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "blinded rotation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "rescaling",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "re-scaling",
+        "re scaling"
+      ]
+    },
+    {
+      "term": "relinearization",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "re linearization"
+      ]
+    },
+    {
+      "term": "key switching",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "key change"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "rotation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "rotate operation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "rotation key",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "rotational key"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "evaluation key",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "evaluate key"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "bootstrapping key",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "bootstraping key"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "packing",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "packaging"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "ciphertext packing",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "ciphertext-packing"
+      ]
+    },
+    {
+      "term": "homomorphic computation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphic calculation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "computation over ciphertexts",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "ciphertext calculation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "homomorphic evaluation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphical evaluation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "homomorphic comparison",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphic compare"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "homomorphic multiplication",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphical multiplication"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "homomorphically encrypted",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "homomorphic encrypted"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "approximate arithmetic",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "approximated arithmetic"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "gadget decomposition",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "gadgets decomposition"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "digit decomposition",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "digits decomposition"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "linear transform",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "linear transformation step"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "multiplicative depth",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "multiplication depth"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "depth consumption",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "depth consuming"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "bit precision",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "bit-precision"
+      ]
+    },
+    {
+      "term": "approximation error",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "approximate error",
+        "approximate noise"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "polynomial approximation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "polynomials approximation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "minimax approximation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "mini-max approximation",
+        "mini max approximation"
+      ]
+    },
+    {
+      "term": "Chebyshev polynomial",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "Chebychev polynomial"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "Chebyshev interpolation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "Chebychev interpolation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "Paterson-Stockmeyer",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Paterson Stockmeyer"
+      ]
+    },
+    {
+      "term": "baby-step giant-step",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "baby step giant step",
+        "babystep giantstep"
+      ]
+    },
+    {
+      "term": "noise growth",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "noise growing"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "failure probability",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "failure-probability"
+      ]
+    },
+    {
+      "term": "error variance",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "errors variance"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "rounding error",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "round error"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "word-sized",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "word sized"
+      ]
+    },
+    {
+      "term": "fixed-point",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "fixed point"
+      ]
+    },
+    {
+      "term": "semi-honest",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "semihonest"
+      ],
+      "forbidden_variants": [
+        "semi honest"
+      ]
+    },
+    {
+      "term": "honest-but-curious",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "honest but curious"
+      ]
+    },
+    {
+      "term": "IND-CPA",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "IND CPA"
+      ]
+    },
+    {
+      "term": "threat model",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "threat-modeling"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "leakage boundary",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "privacy boundary"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "leakage surface",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "leak surface"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "access-pattern leakage",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "access leakage"
+      ],
+      "forbidden_variants": [
+        "access pattern leakage"
+      ]
+    },
+    {
+      "term": "two-party computation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "two party computation"
+      ]
+    },
+    {
+      "term": "multiparty computation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "multi party computation"
+      ]
+    },
+    {
+      "term": "non-colluding",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "non colluding"
+      ]
+    },
+    {
+      "term": "privacy-preserving",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "privacy preserving"
+      ]
+    },
+    {
+      "term": "non-interactive",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "non interactive"
+      ]
+    },
+    {
+      "term": "secure computation",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "secured computation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "secure inference",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "secured inference"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "key recovery",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "keys recovery"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "circuit privacy",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "circuits privacy"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "end-to-end",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "end to end"
+      ]
+    },
+    {
+      "term": "throughput",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "handling capacity"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "amortized",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "amortizing time"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "baseline",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "base line"
+      ]
+    },
+    {
+      "term": "ablation study",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "ablation analysis"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "communication overhead",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "communication burden"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "deployment bottleneck",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "implementation difficulty"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "real-world",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "real-word"
+      ]
+    },
+    {
+      "term": "multi-threaded",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "multi threaded"
+      ]
+    },
+    {
+      "term": "closed-form",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "closed form solution"
+      ]
+    },
+    {
+      "term": "hardware acceleration",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "hardwares acceleration"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "GPU-accelerated",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "GPU accelerated"
+      ]
+    },
+    {
+      "term": "memory footprint",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "memories footprint"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "fair comparison",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "fairly comparison"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "reproducibility",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "reproducibly"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "nonlinear function",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "non linear function"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "activation function",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "activate function"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "lookup table",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "lookup-table"
+      ]
+    },
+    {
+      "term": "inner product",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "inner products computation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "matrix multiplication",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "matrixes multiplication"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "matrix-vector multiplication",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "matrix vector multiplication"
+      ]
+    },
+    {
+      "term": "matrix-matrix multiplication",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "matrix matrix multiplication"
+      ]
+    },
+    {
+      "term": "coefficient encoding",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "coefficients encoding"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "slot encoding",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "slots encoding"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "sparse secret",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "sparsed secret"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "plaintext modulus",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "plaintexts modulus"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "decryption",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "decrypting operation"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "client",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "client user side"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "server",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "servers side"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "preprocessing",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "pre process"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "interaction round",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "interaction-round"
+      ]
+    },
+    {
+      "term": "bandwidth",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "band width"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "scalability",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "scalable ability"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "correctness",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "correctnesses"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "utility",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "utilities loss"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "accuracy",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "accuracies"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "latency",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "latencies overhead"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "overhead",
+      "abbreviation": null,
+      "forbidden_synonyms": [
+        "over head"
+      ],
+      "forbidden_variants": []
+    },
+    {
+      "term": "bottleneck",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "bottle neck"
+      ]
+    },
+    {
+      "term": "trade-off",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "trade off"
+      ]
+    }
+  ]
+}
