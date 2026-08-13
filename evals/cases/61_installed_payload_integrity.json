@@ -1,0 +1,20 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "installed-payload-integrity",
+  "runner": "installed-payload",
+  "input": {
+    "scenario": "installed",
+    "integrity_checker": "scripts/check_skill_integrity.py"
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "payload_mode": "installed",
+      "handoff_digest_sync": "skipped-installed-payload"
+    }
+  },
+  "assertion": "A synthetic installed payload excludes handoff and passes integrity with an explicit installed-mode skip record.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

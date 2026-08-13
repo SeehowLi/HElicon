@@ -890,13 +890,23 @@ def main() -> int:
         tests.append(("repository .helicon blocked", has(hidden_style, "private .helicon artifact")))
 
         scripts_dir = Path(__file__).resolve().parent
+        repository_root = scripts_dir.parent
+        exclusion_source = (scripts_dir / "check_live_skill_binding.py").read_text(encoding="utf-8")
+        parsed_source_exclusions = check_live_skill_binding.parse_python_exclusions(exclusion_source)
         install_ps1 = (scripts_dir / "install.ps1").read_text(encoding="utf-8")
         install_sh = (scripts_dir / "install.sh").read_text(encoding="utf-8")
-        excluded = '".git", ".agents", ".helicon", "__pycache__", "evals", "handoff"'
-        tests.append(("PowerShell installer excludes repository-only roots", excluded in install_ps1))
+        installer_exclusions = check_live_skill_binding.validate_installer_exclusions(
+            install_ps1, install_sh, parsed_source_exclusions
+        )
         tests.append((
-            "shell installer excludes repository-only roots",
-            ".git|.agents|.helicon|__pycache__|evals|handoff)" in install_sh,
+            "PowerShell installer exclusions match the shared payload contract",
+            installer_exclusions["powershell"]
+            == frozenset(check_live_skill_binding.SOURCE_EXCLUSIONS),
+        ))
+        tests.append((
+            "shell installer exclusions match the shared payload contract",
+            installer_exclusions["shell"]
+            == frozenset(check_live_skill_binding.SOURCE_EXCLUSIONS),
         ))
         tests.append((
             "installers remove nested Python bytecode",
@@ -904,6 +914,119 @@ def main() -> int:
             and '-Filter "*.pyc"' in install_ps1
             and "-name '__pycache__'" in install_sh
             and "-name '*.pyc'" in install_sh,
+        ))
+        exclusion_mutations = {
+            "PowerShell": (
+                install_ps1.replace('"handoff"', '"handoff-mutated"', 1),
+                install_sh,
+                check_live_skill_binding.SOURCE_EXCLUSIONS,
+            ),
+            "shell": (
+                install_ps1,
+                install_sh.replace("|handoff)", "|handoff-mutated)", 1),
+                check_live_skill_binding.SOURCE_EXCLUSIONS,
+            ),
+            "shared source": (
+                install_ps1,
+                install_sh,
+                check_live_skill_binding.parse_python_exclusions(
+                    exclusion_source.replace(', "handoff"', "", 1)
+                ),
+            ),
+        }
+        for label, values in exclusion_mutations.items():
+            rejected = False
+            try:
+                check_live_skill_binding.validate_installer_exclusions(*values)
+            except ValueError:
+                rejected = True
+            tests.append((f"{label} exclusion drift fails closed", rejected))
+
+        integrity_script = scripts_dir / "check_skill_integrity.py"
+        simulated_payload = root / "simulated-installed-payload"
+        check_live_skill_binding.copy_source_payload(repository_root, simulated_payload)
+        installed_integrity = subprocess.run(
+            [sys.executable, "-B", str(integrity_script), str(simulated_payload), "--json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        installed_payload = json.loads(installed_integrity.stdout)
+        tests.append((
+            "simulated installed payload passes integrity in installed mode",
+            installed_integrity.returncode == 0
+            and installed_payload.get("payload_mode") == "installed"
+            and installed_payload.get("contract_sync", {}).get("handoff_digest_sync")
+            == "skipped-installed-payload",
+        ))
+        tests.append((
+            "simulated installed payload excludes repository-only roots and bytecode",
+            all(not (simulated_payload / name).exists() for name in check_live_skill_binding.SOURCE_EXCLUSIONS)
+            and not any(simulated_payload.rglob("__pycache__"))
+            and not any(simulated_payload.rglob("*.pyc")),
+        ))
+
+        source_integrity = subprocess.run(
+            [sys.executable, "-B", str(integrity_script), str(repository_root), "--json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        source_payload = json.loads(source_integrity.stdout)
+        tests.append((
+            "source repository enforces handoff digest synchronization",
+            source_integrity.returncode == 0
+            and source_payload.get("payload_mode") == "source"
+            and source_payload.get("contract_sync", {}).get("handoff_digest_sync") == "enforced",
+        ))
+
+        tampered_source = root / "tampered-source-payload"
+        check_live_skill_binding.copy_source_payload(repository_root, tampered_source)
+        (tampered_source / "handoff").mkdir()
+        tampered_integrity = subprocess.run(
+            [sys.executable, "-B", str(integrity_script), str(tampered_source), "--json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        tests.append((
+            "source-shaped payload without handoff validator fails closed",
+            tampered_integrity.returncode != 0
+            and json.loads(tampered_integrity.stdout).get("payload_mode") == "source",
+        ))
+        tampered_validator = tampered_source / "handoff" / "validate.py"
+        tampered_validator.write_bytes(b"\xff\xfe")
+        non_utf8_integrity = subprocess.run(
+            [sys.executable, "-B", str(integrity_script), str(tampered_source), "--json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        tests.append((
+            "source-shaped payload with non-UTF-8 handoff validator fails closed",
+            non_utf8_integrity.returncode != 0,
+        ))
+        tampered_validator.unlink()
+        tampered_validator.mkdir()
+        unreadable_integrity = subprocess.run(
+            [sys.executable, "-B", str(integrity_script), str(tampered_source), "--json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        tests.append((
+            "source-shaped payload with unreadable handoff validator fails closed",
+            unreadable_integrity.returncode != 0,
         ))
 
         tests.append(("AI-tell rule 1", 1 in ai_rules(root / "rule1.txt", "This is a groundbreaking method.")))

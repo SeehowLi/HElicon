@@ -28,6 +28,7 @@ try:
     import check_claim_strength  # noqa: E402
     import check_command_coverage  # noqa: E402
     import check_immutable_set  # noqa: E402
+    import check_live_skill_binding  # noqa: E402
     import check_reference_reachability  # noqa: E402
     import check_terminology_freeze  # noqa: E402
     import latex_guard  # noqa: E402
@@ -754,6 +755,80 @@ def run_direction_binding(case: dict[str, Any], temp_root: Path) -> dict[str, An
     return case_result(case, checks, details)
 
 
+def run_installed_payload(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
+    inputs = case["input"]
+    expected = case["expected"]
+    scenario = inputs["scenario"]
+    integrity_checker = repo_path(inputs["integrity_checker"])
+    case_root = temp_root / case["id"]
+    case_root.mkdir()
+
+    if scenario in {"installed", "tampered-handoff"}:
+        payload_root = case_root / "payload"
+        check_live_skill_binding.copy_source_payload(ROOT, payload_root)
+        if scenario == "tampered-handoff":
+            (payload_root / "handoff").mkdir()
+        result = command(integrity_checker, str(payload_root), "--json")
+        payload = json_stdout(result, case["id"])
+        details = {
+            "exit_code": result.returncode,
+            "payload_mode": payload.get("payload_mode"),
+            "handoff_digest_sync": payload.get("contract_sync", {}).get("handoff_digest_sync"),
+        }
+    elif scenario == "source":
+        result = command(integrity_checker, str(ROOT), "--json")
+        payload = json_stdout(result, case["id"])
+        details = {
+            "exit_code": result.returncode,
+            "payload_mode": payload.get("payload_mode"),
+            "handoff_digest_sync": payload.get("contract_sync", {}).get("handoff_digest_sync"),
+        }
+    elif scenario in {"exclusions-consistent", "exclusions-mutated"}:
+        powershell = repo_path(inputs["install_ps1"]).read_text(encoding="utf-8")
+        shell = repo_path(inputs["install_sh"]).read_text(encoding="utf-8")
+        source_text = repo_path(inputs["source_script"]).read_text(encoding="utf-8")
+        source_exclusions = check_live_skill_binding.parse_python_exclusions(source_text)
+        if scenario == "exclusions-consistent":
+            observed = check_live_skill_binding.validate_installer_exclusions(
+                powershell, shell, source_exclusions
+            )
+            details = {
+                "exit_code": 0,
+                "sets_equal": len(set(map(frozenset, observed.values()))) == 1,
+            }
+        else:
+            mutations = [
+                (powershell.replace('"handoff"', '"handoff-mutated"', 1), shell,
+                 source_exclusions),
+                (powershell, shell.replace("|handoff)", "|handoff-mutated)", 1),
+                 source_exclusions),
+                (powershell, shell,
+                 check_live_skill_binding.parse_python_exclusions(
+                     source_text.replace(', "handoff"', "", 1)
+                 )),
+            ]
+            mutation_exit_codes: list[int] = []
+            for values in mutations:
+                try:
+                    check_live_skill_binding.validate_installer_exclusions(*values)
+                except ValueError:
+                    mutation_exit_codes.append(2)
+                else:
+                    mutation_exit_codes.append(0)
+            details = {
+                "exit_code": 2 if all(code != 0 for code in mutation_exit_codes) else 0,
+                "mutation_exit_codes": mutation_exit_codes,
+            }
+    else:
+        raise HarnessError(f"unsupported installed-payload scenario: {scenario}")
+
+    checks = {
+        "exit_code": details["exit_code"] == expected["exit_code"],
+        **{name: details.get(name) == value for name, value in expected.get("fields", {}).items()},
+    }
+    return case_result(case, checks, details)
+
+
 RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "selftest": run_selftest,
     "router-contracts": run_router_contracts,
@@ -766,6 +841,7 @@ RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "direction-matrix": run_direction_matrix,
     "mechanical-contract": run_mechanical_contract,
     "direction-binding": run_direction_binding,
+    "installed-payload": run_installed_payload,
 }
 
 

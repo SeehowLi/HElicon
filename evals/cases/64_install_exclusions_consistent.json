@@ -1,0 +1,22 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "install-exclusions-consistent",
+  "runner": "installed-payload",
+  "input": {
+    "scenario": "exclusions-consistent",
+    "integrity_checker": "scripts/check_skill_integrity.py",
+    "source_script": "scripts/check_live_skill_binding.py",
+    "install_ps1": "scripts/install.ps1",
+    "install_sh": "scripts/install.sh"
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "sets_equal": true
+    }
+  },
+  "assertion": "Static parsing confirms both installers use the unchanged shared exclusion set.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

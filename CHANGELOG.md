@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.9.1
+
+- 契约同步检查区分源码仓库与安装载荷：源码仓库继续强制 handoff 摘要绑定，安装载荷在不存在 handoff 目录时显式记录跳过；存在 handoff 目录但 validator 缺失、不可读或非 UTF-8 时继续 fail closed。
+- 完整性检查新增 `payload_mode`，安装排除集合由单一公共常量供 live-binding、模拟安装与静态安装器一致性测试复用；既有 REQUIRED 清单保持不变。
+- 合成回归覆盖安装载荷、源码仓库、handoff 篡改以及 PowerShell、shell、公共排除清单三方漂移；这些结果只验证安装形态与拒绝路径，不构成真实稿件能力或论文质量证据。
+
 ## v1.9
 
 - 项目 bootstrap 新增可选方向绑定，并在缺省时显式写入 `direction: null`；已有项目可通过独立脚本设置方向，覆盖非空值需要显式 `--force`。

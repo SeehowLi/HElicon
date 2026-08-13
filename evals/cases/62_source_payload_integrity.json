@@ -1,0 +1,20 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "source-payload-integrity",
+  "runner": "installed-payload",
+  "input": {
+    "scenario": "source",
+    "integrity_checker": "scripts/check_skill_integrity.py"
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "payload_mode": "source",
+      "handoff_digest_sync": "enforced"
+    }
+  },
+  "assertion": "The public source checkout keeps handoff digest synchronization enforced and passes integrity in source mode.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

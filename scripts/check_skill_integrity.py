@@ -134,7 +134,12 @@ def validate(root: Path) -> dict[str, Any]:
     missing = [relative for relative in REQUIRED if not (root / relative).is_file()]
     errors.extend(f"missing required file: {relative}" for relative in missing)
     if missing and "SKILL.md" in missing:
-        return {"root": str(root), "passed": False, "errors": errors}
+        return {
+            "root": str(root),
+            "payload_mode": "source" if (root / "handoff").is_dir() else "installed",
+            "passed": False,
+            "errors": errors,
+        }
 
     skill_text = read_utf8(root / "SKILL.md")
     description_chars, body_lines = skill_limits(skill_text)
@@ -168,6 +173,7 @@ def validate(root: Path) -> dict[str, Any]:
 
     return {
         "root": str(root),
+        "payload_mode": contract_sync["payload_mode"],
         "passed": not errors,
         "description_chars": description_chars,
         "body_lines": body_lines,

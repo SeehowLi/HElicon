@@ -1,0 +1,20 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "handoff-tamper-rejected",
+  "runner": "installed-payload",
+  "input": {
+    "scenario": "tampered-handoff",
+    "integrity_checker": "scripts/check_skill_integrity.py"
+  },
+  "expected": {
+    "exit_code": 1,
+    "fields": {
+      "payload_mode": "source",
+      "handoff_digest_sync": "error"
+    }
+  },
+  "assertion": "A source-shaped synthetic payload with a handoff directory but no validator fails closed.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

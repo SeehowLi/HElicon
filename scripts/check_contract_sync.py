@@ -323,9 +323,22 @@ def validate_contracts(root: Path) -> dict[str, Any]:
     errors.extend(f"rule behavior: {error}" for error in behavior["errors"])
 
     contamination_script = root / "scripts/check_core_contamination.py"
+    handoff_dir = root / "handoff"
     handoff_validator = root / "handoff/validate.py"
-    errors.extend(digest_sync_errors(contamination_script, handoff_validator))
-    errors.extend(round6_target_semantics_errors(handoff_validator))
+    if not handoff_dir.is_dir():
+        payload_mode = "installed"
+        handoff_digest_sync = "skipped-installed-payload"
+    else:
+        payload_mode = "source"
+        try:
+            read_utf8(handoff_validator)
+        except (OSError, UnicodeError) as exc:
+            handoff_digest_sync = "error"
+            errors.append(f"source handoff validator is missing, unreadable, or non-UTF-8: {exc}")
+        else:
+            handoff_digest_sync = "enforced"
+            errors.extend(digest_sync_errors(contamination_script, handoff_validator))
+            errors.extend(round6_target_semantics_errors(handoff_validator))
 
     registry_commands = set(COMMAND_RE.findall(read_utf8(root / "references/command_registry.md")))
     description_commands = set(COMMAND_RE.findall(description_text(read_utf8(root / "SKILL.md"))))
@@ -401,6 +414,8 @@ def validate_contracts(root: Path) -> dict[str, Any]:
 
     return {
         "passed": not errors,
+        "payload_mode": payload_mode,
+        "handoff_digest_sync": handoff_digest_sync,
         "documented_rules": sorted(documented_rules),
         "emitted_rules": sorted(emitted_rules),
         "missing_rules": missing_rules,

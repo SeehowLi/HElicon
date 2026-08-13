@@ -1,5 +1,15 @@
 # Version
 
+HElicon v1.9.1
+
+Status: installed-payload integrity regression fix; synthetic regression only.
+
+Design principle: long-term personal writing mentor, not project-specific.
+
+Project-specific work stays in external project packs.
+
+v1.9.1 focus: payload-aware contract synchronization and install-shape regression coverage.
+
 HElicon v1.9
 
 Status: project-direction binding candidate; synthetic regression only.
