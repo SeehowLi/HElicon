@@ -98,6 +98,48 @@ def matches(text: str, value: str, *, ignore_case: bool = True) -> list[re.Match
     return list(re.finditer(rf"(?<![A-Za-z0-9]){re.escape(value)}(?![A-Za-z0-9])", text, flags))
 
 
+def mask_latex_regions(text: str) -> str:
+    """Blank non-prose LaTeX regions without changing offsets or line numbers."""
+    spans: list[tuple[int, int]] = []
+    patterns = (
+        r"\\begin\s*\{\s*(?:equation|align|gather)\*?\s*\}.*?"
+        r"\\end\s*\{\s*(?:equation|align|gather)\*?\s*\}",
+        r"\\\[.*?\\\]",
+        r"(?<!\\)(\${1,2}).*?(?<!\\)\1",
+    )
+    for pattern in patterns:
+        spans.extend(match.span() for match in re.finditer(pattern, text, re.DOTALL | re.IGNORECASE))
+
+    for match in re.finditer(r"\\([A-Za-z]+)\*?", text):
+        spans.append(match.span())
+        command = match.group(1).casefold()
+        if not (
+            command.endswith("ref")
+            or command.endswith("label")
+            or "cite" in command
+        ):
+            continue
+        cursor = match.end()
+        while True:
+            whitespace = re.match(r"\s*", text[cursor:])
+            cursor += whitespace.end() if whitespace else 0
+            optional = re.match(r"\[[^\]]*\]", text[cursor:], re.DOTALL)
+            if optional is None:
+                break
+            spans.append((cursor, cursor + optional.end()))
+            cursor += optional.end()
+        argument = re.match(r"\{[^{}]*\}", text[cursor:], re.DOTALL)
+        if argument is not None:
+            spans.append((cursor, cursor + argument.end()))
+
+    masked = list(text)
+    for start, end in spans:
+        for index in range(start, end):
+            if masked[index] != "\n":
+                masked[index] = " "
+    return "".join(masked)
+
+
 def location(text: str, offset: int) -> dict[str, int]:
     prior = text.rfind("\n", 0, offset)
     return {
@@ -122,9 +164,33 @@ def is_sentence_initial_capitalization(text: str, match: re.Match[str], term: st
     return bool(re.search(r"(?:[.!?:][ \t]+|\n[ \t]*)\Z", prefix))
 
 
+def added_case_inconsistencies(before: str, after: str, term: str) -> list[re.Match[str]]:
+    """Return only newly added noncanonical case forms outside sentence starts."""
+    before_counts: dict[str, int] = {}
+    for match in matches(before, term):
+        observed = match.group(0)
+        if observed == term or is_sentence_initial_capitalization(before, match, term):
+            continue
+        before_counts[observed] = before_counts.get(observed, 0) + 1
+
+    added: list[re.Match[str]] = []
+    remaining = before_counts.copy()
+    for match in matches(after, term):
+        observed = match.group(0)
+        if observed == term or is_sentence_initial_capitalization(after, match, term):
+            continue
+        if remaining.get(observed, 0):
+            remaining[observed] -= 1
+        else:
+            added.append(match)
+    return added
+
+
 def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[str, Any]:
     before = read_text(before_path)
     after = read_text(after_path)
+    before_prose = mask_latex_regions(before)
+    after_prose = mask_latex_regions(after)
     entries, active_rule_count = load_glossary(glossary_path)
     replacements: list[Replacement] = []
     for entry in entries:
@@ -132,24 +198,25 @@ def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[st
         for synonym in entry["forbidden_synonyms"]:
             replacements.extend(
                 Replacement(term, "forbidden_synonym", match.group(0), location(after, match.start()))
-                for match in added_matches(before, after, synonym)
+                for match in added_matches(before_prose, after_prose, synonym)
             )
         for variant in entry["forbidden_variants"]:
             replacements.extend(
                 Replacement(term, "plural_or_hyphen_variant", match.group(0), location(after, match.start()))
-                for match in added_matches(before, after, variant)
+                for match in added_matches(before_prose, after_prose, variant)
             )
 
-        for match in matches(after, term):
-            if match.group(0) != term and not is_sentence_initial_capitalization(after, match, term):
-                replacements.append(Replacement(term, "case_inconsistency", match.group(0), location(after, match.start())))
+        replacements.extend(
+            Replacement(term, "case_inconsistency", match.group(0), location(after, match.start()))
+            for match in added_case_inconsistencies(before_prose, after_prose, term)
+        )
 
         abbreviation = entry["abbreviation"]
         if abbreviation:
-            before_full = bool(matches(before, term))
-            before_short = bool(matches(before, abbreviation, ignore_case=False))
-            after_full = bool(matches(after, term))
-            after_short_matches = matches(after, abbreviation, ignore_case=False)
+            before_full = bool(matches(before_prose, term))
+            before_short = bool(matches(before_prose, abbreviation, ignore_case=False))
+            after_full = bool(matches(after_prose, term))
+            after_short_matches = matches(after_prose, abbreviation, ignore_case=False)
             if before_full and not before_short and after_short_matches:
                 replacements.extend(
                     Replacement(term, "abbreviation_full_name_mix", match.group(0), location(after, match.start()))
@@ -158,7 +225,7 @@ def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[st
             elif before_short and not before_full and after_full:
                 replacements.extend(
                     Replacement(term, "abbreviation_full_name_mix", match.group(0), location(after, match.start()))
-                    for match in matches(after, term)
+                    for match in matches(after_prose, term)
                 )
 
     unique = {

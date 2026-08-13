@@ -1,0 +1,23 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "terminology-existing-case-unchanged",
+  "runner": "verifiability",
+  "input": {
+    "mode": "terminology",
+    "checker": "scripts/check_terminology_freeze.py",
+    "before_fixture": "terminology_latex.synthetic.tex",
+    "after_fixture": "terminology_latex.synthetic.tex",
+    "glossary_fixture": "terminology_latex_glossary.synthetic.json"
+  },
+  "expected": {
+    "schema": "helicon-terminology-freeze-check-v1",
+    "exit_code": 0,
+    "passed": true,
+    "minimum_count": 0,
+    "maximum_count": 0
+  },
+  "assertion": "A pre-existing noncanonical case form with unchanged multiplicity is not re-reported.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

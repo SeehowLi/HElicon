@@ -1,5 +1,15 @@
 # Version
 
+HElicon v1.9.2
+
+Status: terminology-diff regression fix; synthetic regression only.
+
+Design principle: long-term personal writing mentor, not project-specific.
+
+Project-specific work stays in external project packs.
+
+v1.9.2 focus: differential case checks and LaTeX-aware terminology matching.
+
 HElicon v1.9.1
 
 Status: installed-payload integrity regression fix; synthetic regression only.

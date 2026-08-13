@@ -1,0 +1,25 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "terminology-mid-sentence-regression",
+  "runner": "verifiability",
+  "input": {
+    "mode": "terminology",
+    "checker": "scripts/check_terminology_freeze.py",
+    "before_fixture": "terminology_latex.synthetic.tex",
+    "after_fixture": "terminology_latex.synthetic.tex",
+    "glossary_fixture": "terminology_latex_glossary.synthetic.json",
+    "replacements": [["The ciphertext monitor then records", "The synthetic Ciphertext monitor then records"]]
+  },
+  "expected": {
+    "schema": "helicon-terminology-freeze-check-v1",
+    "exit_code": 1,
+    "passed": false,
+    "kind": "case_inconsistency",
+    "minimum_count": 1,
+    "maximum_count": 1
+  },
+  "assertion": "A new mid-sentence capitalization remains a blocking case inconsistency.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

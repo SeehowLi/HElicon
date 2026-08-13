@@ -1,0 +1,24 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "terminology-sentence-initial-regression",
+  "runner": "verifiability",
+  "input": {
+    "mode": "terminology",
+    "checker": "scripts/check_terminology_freeze.py",
+    "before_fixture": "terminology_latex.synthetic.tex",
+    "after_fixture": "terminology_latex.synthetic.tex",
+    "glossary_fixture": "terminology_latex_glossary.synthetic.json",
+    "replacements": [["The ciphertext monitor then records", "The prior stage ends. Ciphertext monitoring then records"]]
+  },
+  "expected": {
+    "schema": "helicon-terminology-freeze-check-v1",
+    "exit_code": 0,
+    "passed": true,
+    "minimum_count": 0,
+    "maximum_count": 0
+  },
+  "assertion": "The existing sentence-initial capitalization exemption remains active after differential matching.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

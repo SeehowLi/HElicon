@@ -1,0 +1,25 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "terminology-new-case",
+  "runner": "verifiability",
+  "input": {
+    "mode": "terminology",
+    "checker": "scripts/check_terminology_freeze.py",
+    "before_fixture": "terminology_latex.synthetic.tex",
+    "after_fixture": "terminology_latex.synthetic.tex",
+    "glossary_fixture": "terminology_latex_glossary.synthetic.json",
+    "replacements": [["The ciphertext scheduler coordinates", "The Ciphertext scheduler coordinates"]]
+  },
+  "expected": {
+    "schema": "helicon-terminology-freeze-check-v1",
+    "exit_code": 1,
+    "passed": false,
+    "kind": "case_inconsistency",
+    "minimum_count": 1,
+    "maximum_count": 1
+  },
+  "assertion": "A newly introduced mid-sentence case form is reported even when one old occurrence already exists.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

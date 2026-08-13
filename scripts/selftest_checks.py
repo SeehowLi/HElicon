@@ -516,6 +516,112 @@ def main() -> int:
                 and all(item["kind"] == "case_inconsistency" for item in result["replacements"]),
             ))
 
+        latex_glossary = verifier_root / "latex_terminology_glossary.json"
+        latex_glossary.write_text(json.dumps({
+            "entries": [{
+                "term": "ciphertext",
+                "abbreviation": "CT",
+                "forbidden_synonyms": ["encrypted payload"],
+                "forbidden_variants": ["cipher-text"],
+            }]
+        }), encoding="utf-8")
+        latex_before = verifier_root / "latex_before.tex"
+        latex_text = (
+            "The ciphertext scheduler remains stable. An existing CipherText form remains unchanged.\n"
+            "\\SafeCommand{value}\\label{sec:safe-anchor} See \\ref{sec:safe-anchor}, "
+            "\\eqref{sec:safe-anchor}, \\autoref{sec:safe-anchor}, \\Cref{sec:safe-anchor}, "
+            "and \\citep{sec:safe-anchor}.\n"
+            "The symbolic checks are $u + v$ and \\[u = v\\].\n"
+            "\\begin{equation}u=v\\end{equation}\n"
+            "\\begin{align}u&=v\\end{align}\n"
+            "\\begin{gather}u=v\\end{gather}\n"
+        )
+        latex_before.write_text(latex_text, encoding="utf-8")
+
+        identical = check_terminology_freeze.compare(latex_before, latex_before, latex_glossary)
+        identical_counts = {
+            kind: sum(item["kind"] == kind for item in identical["replacements"])
+            for kind in (
+                "forbidden_synonym", "plural_or_hyphen_variant",
+                "case_inconsistency", "abbreviation_full_name_mix",
+            )
+        }
+        tests.append((
+            "terminology zero-diff reports zero findings for every replacement kind",
+            identical["passed"] and identical["replacement_count"] == 0
+            and set(identical_counts.values()) == {0},
+        ))
+        tests.append((
+            "pre-existing case form with unchanged count is not re-reported",
+            identical_counts["case_inconsistency"] == 0,
+        ))
+
+        latex_mutations = (
+            (
+                "LaTeX command names are excluded from terminology matching",
+                latex_text.replace("\\SafeCommand", "\\Ciphertext"),
+            ),
+            (
+                "LaTeX label and reference keys are excluded from terminology matching",
+                latex_text.replace(
+                    "sec:safe-anchor",
+                    "sec:Ciphertext,encrypted payload,cipher-text,CT",
+                ),
+            ),
+            (
+                "inline math is excluded from all terminology kinds",
+                latex_text.replace("$u + v$", "$Ciphertext + encrypted payload + cipher-text + CT$"),
+            ),
+            (
+                "display math and equation-like environments are excluded from terminology matching",
+                latex_text.replace("\\[u = v\\]", "\\[Ciphertext + encrypted payload + cipher-text + CT\\]")
+                .replace("u=v\\end{equation}", "Ciphertext + encrypted payload + cipher-text + CT\\end{equation}")
+                .replace("u&=v\\end{align}", "Ciphertext + encrypted payload + cipher-text + CT\\end{align}")
+                .replace("u=v\\end{gather}", "Ciphertext + encrypted payload + cipher-text + CT\\end{gather}"),
+            ),
+        )
+        for index, (label, after_text) in enumerate(latex_mutations, 1):
+            latex_after = verifier_root / f"latex_masked_after_{index}.tex"
+            latex_after.write_text(after_text, encoding="utf-8")
+            masked_result = check_terminology_freeze.compare(
+                latex_before, latex_after, latex_glossary
+            )
+            tests.append((label, masked_result["replacement_count"] == 0))
+
+        differential_cases = (
+            (
+                "new mid-sentence case form is reported differentially",
+                latex_text.replace("The ciphertext scheduler", "The Ciphertext scheduler"),
+                "case_inconsistency",
+                1,
+            ),
+            (
+                "sentence-initial capitalization exemption remains active",
+                latex_text.replace(
+                    "The ciphertext scheduler remains stable.",
+                    "The scheduler remains stable. Ciphertext processing follows.",
+                ),
+                "case_inconsistency",
+                0,
+            ),
+            (
+                "forbidden synonym remains an added-match violation",
+                latex_text.replace("The ciphertext scheduler", "The encrypted payload scheduler"),
+                "forbidden_synonym",
+                1,
+            ),
+        )
+        for index, (label, after_text, kind, expected_count) in enumerate(differential_cases, 1):
+            latex_after = verifier_root / f"latex_differential_after_{index}.tex"
+            latex_after.write_text(after_text, encoding="utf-8")
+            result = check_terminology_freeze.compare(latex_before, latex_after, latex_glossary)
+            observed_count = sum(item["kind"] == kind for item in result["replacements"])
+            tests.append((
+                label,
+                observed_count == expected_count
+                and result["replacement_count"] == expected_count,
+            ))
+
         terminology_script = Path(__file__).resolve().parent / "check_terminology_freeze.py"
         invalid_glossaries = (
             (

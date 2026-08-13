@@ -1,0 +1,10 @@
+{
+  "entries": [
+    {
+      "term": "ciphertext",
+      "abbreviation": "CT",
+      "forbidden_synonyms": ["encrypted payload"],
+      "forbidden_variants": ["cipher-text"]
+    }
+  ]
+}

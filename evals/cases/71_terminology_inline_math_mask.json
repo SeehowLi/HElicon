@@ -1,0 +1,24 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "terminology-inline-math-mask",
+  "runner": "verifiability",
+  "input": {
+    "mode": "terminology",
+    "checker": "scripts/check_terminology_freeze.py",
+    "before_fixture": "terminology_latex.synthetic.tex",
+    "after_fixture": "terminology_latex.synthetic.tex",
+    "glossary_fixture": "terminology_latex_glossary.synthetic.json",
+    "replacements": [["$u + v$", "$Ciphertext + encrypted payload + cipher-text + CT$"]]
+  },
+  "expected": {
+    "schema": "helicon-terminology-freeze-check-v1",
+    "exit_code": 0,
+    "passed": true,
+    "minimum_count": 0,
+    "maximum_count": 0
+  },
+  "assertion": "Forms belonging to all four terminology kinds are ignored when introduced only inside inline math.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}
