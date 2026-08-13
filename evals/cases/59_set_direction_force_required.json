@@ -1,0 +1,18 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "set-direction-force-required",
+  "runner": "direction-binding",
+  "input": {
+    "scenario": "set-protected",
+    "script": "scripts/set_project_direction.py",
+    "direction": "encrypted_knn_search"
+  },
+  "expected": {
+    "exit_code": 2,
+    "fields": {"unchanged": true, "previous_value_reported": true}
+  },
+  "assertion": "A synthetic project with a non-null direction cannot be overwritten without force and remains byte-identical.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

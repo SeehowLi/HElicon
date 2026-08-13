@@ -77,13 +77,25 @@ def yaml_quote(value: str) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
-def project_yaml(name: str, paper_dir: Path, fp: dict[str, Any], now: str) -> str:
+def available_directions() -> tuple[str, ...]:
+    root = Path(__file__).resolve().parent.parent / "references" / "direction_packs"
+    return tuple(sorted(path.name for path in root.iterdir() if path.is_dir()))
+
+
+def project_yaml(
+    name: str,
+    paper_dir: Path,
+    fp: dict[str, Any],
+    now: str,
+    direction: str | None,
+) -> str:
     lines = [
         "schema: helicon-project-v1",
         f"name: {yaml_quote(name)}",
         f"paper_dir: {yaml_quote(str(paper_dir.resolve()))}",
         f"created_utc: {yaml_quote(now)}",
         f"last_action_utc: {yaml_quote(now)}",
+        f"direction: {yaml_quote(direction) if direction is not None else 'null'}",
         "fingerprint:",
         f"  title: {yaml_quote(str(fp['title']))}",
         f"  target_venue: {yaml_quote(str(fp['target_venue']))}",
@@ -166,7 +178,14 @@ def register(path: Path, paper_dir: Path, name: str, fp: dict[str, Any], now: st
         raise UserError(f"cannot update registry {path}: {exc}") from exc
 
 
-def bootstrap(paper_dir: Path, pack_dir: Path, name: str, registry_path: Path, mode: str) -> dict[str, Any]:
+def bootstrap(
+    paper_dir: Path,
+    pack_dir: Path,
+    name: str,
+    registry_path: Path,
+    mode: str,
+    direction: str | None,
+) -> dict[str, Any]:
     if not paper_dir.exists() or not paper_dir.is_dir():
         raise UserError(f"paper directory does not exist: {paper_dir}")
     now = datetime.now(timezone.utc).isoformat()
@@ -178,18 +197,22 @@ def bootstrap(paper_dir: Path, pack_dir: Path, name: str, registry_path: Path, m
         (pack_dir / "style" / "exemplars").mkdir(parents=True, exist_ok=True)
     except OSError as exc:
         raise UserError(f"cannot create project pack {pack_dir}: {exc}") from exc
-    write_new(pack_dir / "project.yaml", project_yaml(name, paper_dir, fp, now), created)
+    write_new(pack_dir / "project.yaml", project_yaml(name, paper_dir, fp, now, direction), created)
     for relative, content in skeletons(name).items():
         write_new(pack_dir / relative, content, created)
     register(registry_path, paper_dir, name, fp, now)
-    return {
+    result = {
         "mode": mode,
         "paper_dir": str(paper_dir.resolve()),
         "pack_dir": str(pack_dir.resolve()),
         "registry": str(registry_path.resolve()),
+        "direction": direction,
         "created_files": created,
         "fingerprint": fp,
     }
+    if direction is None:
+        result["direction_hint"] = "Use H-DIRECTION to set one later."
+    return result
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -198,6 +221,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("legacy_project_name", nargs="?", help="v1.2 project name")
     parser.add_argument("--paper-dir", help="paper directory for local .helicon layout")
     parser.add_argument("--name", help="project name; defaults to paper directory name")
+    parser.add_argument("--direction", choices=available_directions(), help="optional direction-pack directory name")
     parser.add_argument("--registry", default=str(Path.home() / ".helicon" / "registry.json"), help="registry JSON path")
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     return parser
@@ -214,7 +238,7 @@ def main() -> int:
                 raise UserError("do not combine --paper-dir with legacy positional arguments")
             paper_dir = Path(args.paper_dir)
             name = args.name or paper_dir.resolve().name
-            result = bootstrap(paper_dir, paper_dir / ".helicon", name, registry, "paper-local")
+            result = bootstrap(paper_dir, paper_dir / ".helicon", name, registry, "paper-local", args.direction)
         else:
             if not args.legacy_projects_root or not args.legacy_project_name:
                 raise UserError("use --paper-dir <paper> [--name <name>] or legacy <projects_root> <project_name>")
@@ -228,13 +252,22 @@ def main() -> int:
                 paper_dir.mkdir(parents=True, exist_ok=True)
             except OSError as exc:
                 raise UserError(f"cannot create legacy project directory {paper_dir}: {exc}") from exc
-            result = bootstrap(paper_dir, paper_dir, args.legacy_project_name, registry, "legacy-centralized")
+            result = bootstrap(
+                paper_dir,
+                paper_dir,
+                args.legacy_project_name,
+                registry,
+                "legacy-centralized",
+                args.direction,
+            )
         if args.json:
             print(json.dumps(result, ensure_ascii=False, indent=2))
         else:
             print(f"Created/updated project pack: {result['pack_dir']}")
             print(f"Registered: {result['registry']}")
             print(f"New files: {len(result['created_files'])}")
+            if result["direction"] is None:
+                print("Direction: absent; use H-DIRECTION to set one later.")
         return 0
     except UserError as exc:
         if json_requested:

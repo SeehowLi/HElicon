@@ -629,9 +629,9 @@ def run_mechanical_contract(case: dict[str, Any], temp_root: Path) -> dict[str, 
         shutil.copyfile(fixture(inputs["project_glossary_fixture"]), local_glossary)
 
     direction_match = re.search(
-        r"(?m)^direction:\s*([a-z0-9_]+)\s*$", project_yaml.read_text(encoding="utf-8")
+        r"(?m)^direction:\s*(null|[a-z0-9_]+)\s*$", project_yaml.read_text(encoding="utf-8")
     )
-    direction = direction_match.group(1) if direction_match else None
+    direction = direction_match.group(1) if direction_match and direction_match.group(1) != "null" else None
     merged = temp_root / case["id"] / "merged.json"
     build_args = ["--root", str(case_root)]
     if direction:
@@ -693,6 +693,67 @@ def run_mechanical_contract(case: dict[str, Any], temp_root: Path) -> dict[str, 
     return case_result(case, checks, details)
 
 
+def project_direction(text: str) -> str | None:
+    match = re.search(r'(?m)^direction:\s*(null|"[^"]+")\s*$', text)
+    if not match:
+        raise HarnessError("project.yaml has no parseable top-level direction")
+    return None if match.group(1) == "null" else json.loads(match.group(1))
+
+
+def run_direction_binding(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
+    inputs = case["input"]
+    expected = case["expected"]
+    scenario = inputs["scenario"]
+    case_root = temp_root / case["id"]
+    case_root.mkdir(parents=True)
+
+    details: dict[str, Any]
+    if scenario.startswith("bootstrap"):
+        paper = case_root / "synthetic-paper"
+        paper.mkdir()
+        (paper / "main.tex").write_text(
+            "\\documentclass{article}\n\\title{Synthetic Direction Fixture}\n"
+            "\\begin{document}\nSynthetic fixture only.\n\\end{document}\n",
+            encoding="utf-8",
+        )
+        args = ["--paper-dir", str(paper), "--registry", str(case_root / "registry.json"), "--json"]
+        if "direction" in inputs:
+            args.extend(["--direction", inputs["direction"]])
+        result = command(repo_path(inputs["script"]), *args)
+        manifest = paper / ".helicon" / "project.yaml"
+        actual_direction = project_direction(manifest.read_text(encoding="utf-8")) if manifest.is_file() else None
+        details = {
+            "exit_code": result.returncode,
+            "direction": actual_direction,
+            "legal_values_listed": all(value in result.stderr for value in inputs.get("legal_values", [])),
+        }
+    elif scenario == "set-protected":
+        pack = case_root / ".helicon"
+        pack.mkdir()
+        manifest = pack / "project.yaml"
+        original = (
+            'schema: helicon-project-v1\nname: "Synthetic"\n'
+            'direction: "private_llm_inference"\nfingerprint:\n  title: "Keep"\n'
+        )
+        manifest.write_text(original, encoding="utf-8")
+        result = command(
+            repo_path(inputs["script"]), str(pack), "--direction", inputs["direction"]
+        )
+        details = {
+            "exit_code": result.returncode,
+            "unchanged": manifest.read_text(encoding="utf-8") == original,
+            "previous_value_reported": 'Previous direction: "private_llm_inference"' in result.stdout,
+        }
+    else:
+        raise HarnessError(f"unsupported direction-binding scenario: {scenario}")
+
+    checks = {
+        "exit_code": details["exit_code"] == expected["exit_code"],
+        **{name: details.get(name) == value for name, value in expected.get("fields", {}).items()},
+    }
+    return case_result(case, checks, details)
+
+
 RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "selftest": run_selftest,
     "router-contracts": run_router_contracts,
@@ -704,6 +765,7 @@ RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "crypto-contract": run_crypto_contract,
     "direction-matrix": run_direction_matrix,
     "mechanical-contract": run_mechanical_contract,
+    "direction-binding": run_direction_binding,
 }
 
 

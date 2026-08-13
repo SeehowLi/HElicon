@@ -10,6 +10,7 @@ import tempfile
 from pathlib import Path
 
 import check_ai_tells
+import bootstrap_project_pack
 import build_target_profile
 import check_contract_sync
 import check_core_contamination as checker
@@ -23,6 +24,7 @@ import extract_revision_direction
 import latex_guard
 import resolve_target_profile
 import revision_preflight
+import set_project_direction
 import target_eval
 import style_fingerprint
 
@@ -2294,6 +2296,73 @@ def main() -> int:
                 and item["status"] == "diverged_from_exact_match"
                 for item in exact_report["unconverged_dimensions"]
             ),
+        ))
+
+        directions = bootstrap_project_pack.available_directions()
+        tests.append((
+            "project direction choices come from installed direction-pack directories",
+            directions == tuple(sorted(directions))
+            and "private_llm_inference" in directions
+            and all((Path(bootstrap_project_pack.__file__).resolve().parent.parent / "references" / "direction_packs" / item).is_dir() for item in directions),
+        ))
+        synthetic_fp = {
+            "title": "Synthetic Direction Project",
+            "target_venue": "",
+            "key_terms": [],
+            "sections": [],
+            "content_hash": "sha256:" + "0" * 64,
+        }
+        directed_yaml = bootstrap_project_pack.project_yaml(
+            "Synthetic", root, synthetic_fp, "2026-01-01T00:00:00+00:00", "private_llm_inference"
+        )
+        null_yaml = bootstrap_project_pack.project_yaml(
+            "Synthetic", root, synthetic_fp, "2026-01-01T00:00:00+00:00", None
+        )
+        tests.append((
+            "bootstrap project YAML appends a selected direction immediately before fingerprint",
+            'direction: "private_llm_inference"\nfingerprint:' in directed_yaml,
+        ))
+        tests.append((
+            "bootstrap project YAML records an absent direction as null",
+            "direction: null\nfingerprint:" in null_yaml,
+        ))
+
+        inserted_pack = root / "direction-insert"
+        inserted_pack.mkdir()
+        inserted_path = inserted_pack / "project.yaml"
+        inserted_path.write_text(
+            'schema: helicon-project-v1\nname: "Synthetic"\nfingerprint:\n  title: "Keep"\n',
+            encoding="utf-8",
+        )
+        set_project_direction.update_project_yaml(inserted_path, "encrypted_knn_search", False)
+        tests.append((
+            "direction setter inserts before fingerprint without changing other project fields",
+            inserted_path.read_text(encoding="utf-8")
+            == 'schema: helicon-project-v1\nname: "Synthetic"\ndirection: "encrypted_knn_search"\nfingerprint:\n  title: "Keep"\n',
+        ))
+
+        protected_pack = root / "direction-protected"
+        protected_pack.mkdir()
+        protected_path = protected_pack / "project.yaml"
+        protected_text = (
+            'schema: helicon-project-v1\nname: "Synthetic"\n'
+            'direction: "private_llm_inference"\nfingerprint:\n  title: "Keep"\n'
+        )
+        protected_path.write_text(protected_text, encoding="utf-8")
+        refused = False
+        try:
+            set_project_direction.update_project_yaml(protected_path, "encrypted_knn_search", False)
+        except set_project_direction.UserError:
+            refused = True
+        tests.append((
+            "direction setter refuses a non-null overwrite without force",
+            refused and protected_path.read_text(encoding="utf-8") == protected_text,
+        ))
+        set_project_direction.update_project_yaml(protected_path, "encrypted_knn_search", True)
+        tests.append((
+            "direction setter force-replaces only the top-level direction",
+            protected_path.read_text(encoding="utf-8")
+            == protected_text.replace('direction: "private_llm_inference"', 'direction: "encrypted_knn_search"'),
         ))
 
     failed = [name for name, passed in tests if not passed]

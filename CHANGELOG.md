@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.9
+
+- 项目 bootstrap 新增可选方向绑定，并在缺省时显式写入 `direction: null`；已有项目可通过独立脚本设置方向，覆盖非空值需要显式 `--force`。
+- 机械核验契约与项目记忆追加 L0-only 的显式报告要求，方向缺失必须在 trailer 中标记 `direction_layer=absent`，不得静默退化。
+- 合成回归覆盖 bootstrap 的指定方向、空方向、非法方向、非空覆盖保护，以及空方向只加载 L0；这些结果只证明绑定与拒绝路径可运行，不构成真实稿件能力或论文质量证据。
+
 ## v1.8
 
 - 将 immutable-set、claim-strength、terminology-freeze 与 AI-tell 检查按固定顺序接入 P3-P7 的交付前机械核验契约，并明确临时合并词表的解析、回滚、告警与清理边界；既有 pass 职责与路由语义保持不变。

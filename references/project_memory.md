@@ -71,3 +71,9 @@ This budget is a hard rule. A convenient whole-pack load is not a reason to cons
 ## Memory boundaries
 
 Project facts remain in `.helicon/`; reusable writing rules remain in HElicon core; direction-specific abstractions remain in direction packs. A memory patch must name its destination and must never promote unpublished prose or project identifiers into the core.
+
+## Direction binding
+
+`project.yaml` stores a top-level `direction` field so the mechanical verifier can select one public L1 direction pack. Bootstrap writes `null` when no direction is selected; `H-DIRECTION` uses `scripts/set_project_direction.py` to set or deliberately replace it without changing other project fields.
+
+The legal values follow the existing direction-pack partition: `fhe_algorithm_optimization` for FHE algorithm optimization, `private_llm_inference` for private LLM inference, `encrypted_knn_search` for encrypted kNN search, `fhe_systems` for FHE systems work, and `security_top_conference_writing` for security top-conference writing. A null or missing value intentionally selects L0 only and must be reported as `direction_layer=absent`.

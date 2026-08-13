@@ -84,6 +84,7 @@ REQUIRED = (
     "scripts/check_command_coverage.py",
     "scripts/export_dossier.py",
     "scripts/bootstrap_project_pack.py",
+    "scripts/set_project_direction.py",
     "scripts/install.sh",
     "scripts/install.ps1",
     "scripts/extract_pdf_text.py",

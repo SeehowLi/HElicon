@@ -1,0 +1,15 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "bootstrap-direction-present",
+  "runner": "direction-binding",
+  "input": {
+    "scenario": "bootstrap-present",
+    "script": "scripts/bootstrap_project_pack.py",
+    "direction": "private_llm_inference"
+  },
+  "expected": {"exit_code": 0, "fields": {"direction": "private_llm_inference"}},
+  "assertion": "A synthetic bootstrap with an explicit private-LLM direction records that top-level project field.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

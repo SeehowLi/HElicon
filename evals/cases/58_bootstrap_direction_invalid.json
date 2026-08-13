@@ -1,0 +1,22 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "bootstrap-direction-invalid",
+  "runner": "direction-binding",
+  "input": {
+    "scenario": "bootstrap-invalid",
+    "script": "scripts/bootstrap_project_pack.py",
+    "direction": "synthetic_invalid_direction",
+    "legal_values": [
+      "encrypted_knn_search",
+      "fhe_algorithm_optimization",
+      "fhe_systems",
+      "private_llm_inference",
+      "security_top_conference_writing"
+    ]
+  },
+  "expected": {"exit_code": 2, "fields": {"legal_values_listed": true}},
+  "assertion": "An invalid synthetic project direction exits two and lists every installed legal direction.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

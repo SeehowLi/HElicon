@@ -87,6 +87,8 @@ For every rewriting pass from P3 through P7, generate a candidate and run these 
 
 Build `<MERGED>` with `python -B scripts/glossary_build.py --direction <DIRECTION> [--project <PACK>/local_glossary.md] -o <TMP>`. Resolve `<DIRECTION>` from `project.yaml`; when it is missing, omit `--direction` and use L0 only. When `local_glossary.md` is absent, omit `--project`, allowing `project_layer=absent`. Store `<TMP>` only in a temporary directory and delete it after delivery; never write it into the repository or project pack.
 
+When `direction` is null or missing, run L0-only and state `direction_layer=absent` explicitly in the trailer; a missing direction layer must never pass silently.
+
 ## Anti-drift rule
 
 threshold: when no qualified target profile exists, if the target section's style metrics are already inside the personal baseline band of plus or minus 1.5 standard deviations, P5 and P6 refuse to run. Report: `already within baseline; further editing would create drift rather than improvement`.
