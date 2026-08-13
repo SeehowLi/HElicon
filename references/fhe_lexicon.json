@@ -823,6 +823,177 @@
         "total time"
       ],
       "forbidden_variants": []
+    },
+    {
+      "term": "Chebyshev interpolation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Chebyshev-interpolation"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "Chebyshev polynomial",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "Chebyshev-polynomial"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "approximate arithmetic",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "approximate-arithmetic"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "approximate homomorphic encryption",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "approximate-homomorphic-encryption"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "blind rotation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "blind-rotation"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "bootstrapping key",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "bootstrapping-key"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "coefficient modulus",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "coefficient-modulus"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "evaluation key",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "evaluation-key"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "homomorphic encryption",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "homomorphic-encryption"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "homomorphic evaluation",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "homomorphic-evaluation"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "homomorphic multiplication",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "homomorphic-multiplication"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "inner product",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "inner-product"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "message space",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "message-space"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "noise growth",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "noise-growth"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "parameter set",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "parameter-set"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "plaintext modulus",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "plaintext-modulus"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "programmable bootstrapping",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "programmable-bootstrapping"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "residue number system",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "residue-number-system"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
+    },
+    {
+      "term": "security parameter",
+      "abbreviation": null,
+      "forbidden_synonyms": [],
+      "forbidden_variants": [
+        "security-parameter"
+      ],
+      "source": "fhe_lexicon_freeze.md#frozen-categories / V1-count-protection"
     }
   ]
 }

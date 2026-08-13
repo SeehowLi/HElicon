@@ -526,6 +526,11 @@ def run_crypto_contract(case: dict[str, Any], temp_root: Path) -> dict[str, Any]
             'CRYPTO_LADDER_MANIFEST_SHA256 = "bd698e056038d59be3c38c9479b94721a33d9f6bfd881eee3ef37a7c73957b3e"',
             'CRYPTO_LADDER_MANIFEST_SHA256 = "0d698e056038d59be3c38c9479b94721a33d9f6bfd881eee3ef37a7c73957b3e"',
         ),
+        "anchor": ('"TFHE",\n    ),', '"TFHE", "POLY",\n    ),'),
+        "anchored_manifest": (
+            'CRYPTO_LADDER_ANCHORED_MANIFEST_SHA256 = "eef87d52f5b29469d79ea2d69706616458f1b8112106beb244a6ae783d861421"',
+            'CRYPTO_LADDER_ANCHORED_MANIFEST_SHA256 = "0ef87d52f5b29469d79ea2d69706616458f1b8112106beb244a6ae783d861421"',
+        ),
     }
     return_codes: dict[str, int] = {}
     errors: dict[str, str] = {}
@@ -540,10 +545,11 @@ def run_crypto_contract(case: dict[str, Any], temp_root: Path) -> dict[str, Any]
         return_codes[name] = result.returncode
         errors[name] = str(payload.get("error", ""))
     checks = {
-        "count_exit_code": return_codes["count"] == case["expected"]["exit_code"],
-        "manifest_exit_code": return_codes["manifest"] == case["expected"]["exit_code"],
-        "count_error": "ladder" in errors["count"],
-        "manifest_error": "manifest" in errors["manifest"],
+        **{
+            f"{name}_exit_code": code == case["expected"]["exit_code"]
+            for name, code in return_codes.items()
+        },
+        **{f"{name}_error": "ladder" in errors[name] for name in mutations},
     }
     return case_result(case, checks, {"return_codes": return_codes})
 

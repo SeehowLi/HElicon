@@ -1,0 +1,22 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "crypto-anchor-false-positives",
+  "runner": "verifiability",
+  "input": {
+    "mode": "claim-strength",
+    "checker": "scripts/check_claim_strength.py",
+    "before_fixture": "crypto_anchor_false_before.synthetic.txt",
+    "after_fixture": "crypto_anchor_false_after.synthetic.txt"
+  },
+  "expected": {
+    "schema": "helicon-claim-strength-check-v1",
+    "exit_code": 0,
+    "passed": true,
+    "minimum_count": 0,
+    "crypto_upward_moves_ladders": []
+  },
+  "assertion": "Bare tier words outside anchored security noun phrases do not create cryptographic upward moves.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

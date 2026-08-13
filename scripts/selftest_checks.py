@@ -220,18 +220,91 @@ def main() -> int:
             "cryptographic strength ladder manifest drift is rejected",
             mutated_crypto_rejected,
         ))
+        mutated_crypto_anchors = dict(check_claim_strength.CRYPTO_LADDER_ANCHORS)
+        mutated_crypto_anchors["exactness"] = mutated_crypto_anchors["exactness"] + ("polynomial",)
+        try:
+            check_claim_strength.validate_crypto_ladders(anchors=mutated_crypto_anchors)
+            mutated_crypto_anchors_rejected = False
+        except check_claim_strength.UserError:
+            mutated_crypto_anchors_rejected = True
+        tests.append((
+            "cryptographic strength ladder anchor drift is rejected",
+            mutated_crypto_anchors_rejected,
+        ))
+
+        anchor_false_positives = (
+            (
+                "privacy ladder ignores statistical analysis wording",
+                "The computational overhead is dominated by rotations. We omit a detailed analysis of the distance distribution.\n",
+                "The runtime overhead is dominated by rotations. We provide a statistical analysis of the distance distribution.\n",
+            ),
+            (
+                "exactness ladder ignores polynomial and index wording",
+                "We use an approximate polynomial for the sign function. The recovered index is recorded in all trials.\n",
+                "We use a Chebyshev polynomial for the sign function. The exact index is recorded in all trials.\n",
+            ),
+            (
+                "adaptivity ladder ignores batching wording",
+                "The scheme uses selective batching for the linear layer.\n",
+                "The scheme uses adaptive batching for the linear layer.\n",
+            ),
+            (
+                "cryptographic anchor does not cross punctuation",
+                "The synthetic label is computational, privacy is discussed separately.\n",
+                "The synthetic label is statistical, privacy is discussed separately.\n",
+            ),
+        )
+        for index, (label, before_text, after_text) in enumerate(anchor_false_positives, 1):
+            before_path = verifier_root / f"anchor_false_before_{index}.txt"
+            after_path = verifier_root / f"anchor_false_after_{index}.txt"
+            before_path.write_text(before_text, encoding="utf-8")
+            after_path.write_text(after_text, encoding="utf-8")
+            result = check_claim_strength.compare(before_path, after_path)
+            tests.append((label, result["passed"] and not result["crypto_upward_moves"]))
+
+        anchored_upgrades = (
+            (
+                "anchored adaptive-security upgrade still blocks",
+                "The protocol is secure under selective security.\n",
+                "The protocol is secure under adaptive security.\n",
+                "security_adaptivity",
+            ),
+            (
+                "anchored statistical-privacy upgrade still blocks",
+                "The protocol provides computational privacy.\n",
+                "The protocol provides statistical privacy.\n",
+                "privacy_guarantee",
+            ),
+            (
+                "anchored exact-arithmetic upgrade still blocks",
+                "The scheme uses approximate homomorphic arithmetic.\n",
+                "The scheme uses exact homomorphic arithmetic.\n",
+                "exactness",
+            ),
+        )
+        for index, (label, before_text, after_text, ladder) in enumerate(anchored_upgrades, 1):
+            before_path = verifier_root / f"anchor_true_before_{index}.txt"
+            after_path = verifier_root / f"anchor_true_after_{index}.txt"
+            before_path.write_text(before_text, encoding="utf-8")
+            after_path.write_text(after_text, encoding="utf-8")
+            result = check_claim_strength.compare(before_path, after_path)
+            tests.append((
+                label,
+                not result["passed"]
+                and any(item["ladder"] == ladder for item in result["crypto_upward_moves"]),
+            ))
 
         crypto_low = (
             "Adversary A is semi-honest. Adversary B is honest-but-curious. Security is selective. "
             "Trial A is IND-CPA secure. Trial B is IND-CCA secure. It assumes static corruption. "
-            "Guarantee A is computational. Guarantee B is statistical. Construction A is somewhat "
+            "Guarantee A provides computational privacy. Guarantee B provides statistical privacy. Construction A is somewhat "
             "homomorphic encryption. Construction B is leveled homomorphic encryption. Its result "
             "is approximate. It permits bounded leakage.\n"
         )
         crypto_high = (
             "Adversary A is malicious. Adversary B is malicious. Security is adaptive. Trial A is "
             "IND-CCA secure. Trial B is IND-CCA2 secure. It assumes adaptive corruption. Guarantee "
-            "A is statistical. Guarantee B is perfect. Construction A is leveled homomorphic "
+            "A provides statistical privacy. Guarantee B provides perfect privacy. Construction A is leveled homomorphic "
             "encryption. Construction B is fully homomorphic encryption. Its result is exact. It "
             "permits no leakage.\n"
         )
@@ -305,6 +378,27 @@ def main() -> int:
                 item["marker"].startswith("modality:")
                 for item in modal_relocation["claim_scope_relocation"]
             ),
+        ))
+
+        restored_terms_before = verifier_root / "restored_terms_before.txt"
+        restored_terms_after = verifier_root / "restored_terms_after.txt"
+        restored_terms_before.write_text(
+            "The synthetic configuration fixes the coefficient modulus, evaluation key, and homomorphic multiplication.\n",
+            encoding="utf-8",
+        )
+        restored_terms_after.write_text(
+            "The synthetic configuration fixes the coefficient modulus, auxiliary key, and homomorphic multiplication.\n",
+            encoding="utf-8",
+        )
+        restored_term_result = check_immutable_set.compare(
+            restored_terms_before,
+            restored_terms_after,
+            Path(__file__).resolve().parents[1] / "references" / "fhe_lexicon.json",
+        )
+        tests.append((
+            "restored L0 domain term counts remain immutable",
+            not restored_term_result["passed"]
+            and restored_term_result["categories"]["glossary_terms"]["violation_count"] >= 1,
         ))
 
         term_before = verifier_root / "term_before.txt"

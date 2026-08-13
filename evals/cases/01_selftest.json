@@ -8,7 +8,7 @@
   },
   "expected": {
     "exit_code": 0,
-    "minimum_pass_count": 158,
+    "minimum_pass_count": 167,
     "failure_marker_absent": true
   },
   "assertion": "Run the repository self-test and repository integrity/privacy checks with Python bytecode disabled; require clean exits and no failing self-test.",

@@ -56,6 +56,26 @@ CRYPTO_LADDERS: dict[str, tuple[tuple[str, ...], ...]] = {
 }
 CRYPTO_LADDER_COUNT = 8
 CRYPTO_LADDER_MANIFEST_SHA256 = "bd698e056038d59be3c38c9479b94721a33d9f6bfd881eee3ef37a7c73957b3e"
+# v1 constants above are published and immutable. This parallel v2 contract
+# adds noun-phrase anchors for the three ladders whose tiers are bare words.
+CRYPTO_LADDER_ANCHORS: dict[str, tuple[str, ...]] = {
+    "security_adaptivity": (
+        "security", "secure", "adversary", "corruption", "notion",
+        "chosen-message", "chosen-ciphertext", "soundness", "simulation",
+    ),
+    "privacy_guarantee": (
+        "privacy", "security", "secrecy", "indistinguishability", "hiding",
+        "binding", "zero-knowledge", "soundness", "correctness",
+    ),
+    "exactness": (
+        "arithmetic", "homomorphic", "encryption", "computation", "evaluation",
+        "result", "scheme", "HE", "CKKS", "BFV", "BGV", "TFHE",
+    ),
+}
+CRYPTO_LADDER_ANCHOR_COUNT = 3
+CRYPTO_LADDER_ANCHORED_MANIFEST_SHA256 = "eef87d52f5b29469d79ea2d69706616458f1b8112106beb244a6ae783d861421"
+WORD_RE = re.compile(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
+PUNCTUATION_RE = re.compile(r"[^\w\s-]")
 NEGATION_RE = re.compile(
     r"\b(?:not|no|never|without|neither|nor|none|cannot|can['’]t|"
     r"(?:is|are|was|were|do|does|did|has|have|had|would|should|could|might|must|need)n['’]t)\b",
@@ -127,12 +147,45 @@ def position(text: str, offset: int) -> dict[str, int]:
     }
 
 
-def ladder_occurrences(text: str, ladder: tuple[tuple[str, ...], ...]) -> list[tuple[int, str, int]]:
+def anchor_matches(observed: str, anchor: str) -> bool:
+    return observed == anchor if anchor.isupper() else observed.casefold() == anchor.casefold()
+
+
+def has_nearby_anchor(text: str, term_match: re.Match[str], anchors: tuple[str, ...]) -> bool:
+    words = list(WORD_RE.finditer(text))
+    term_index = next(
+        (index for index, word in enumerate(words) if word.start() == term_match.start()),
+        None,
+    )
+    if term_index is None:
+        return False
+    for anchor_index in range(max(0, term_index - 2), min(len(words), term_index + 3)):
+        if anchor_index == term_index:
+            continue
+        anchor_match = words[anchor_index]
+        if not any(anchor_matches(anchor_match.group(0), anchor) for anchor in anchors):
+            continue
+        left, right = sorted((term_match, anchor_match), key=lambda match: match.start())
+        if not PUNCTUATION_RE.search(text[left.end():right.start()]):
+            return True
+    return False
+
+
+def ladder_occurrences(
+    text: str,
+    ladder: tuple[tuple[str, ...], ...],
+    ladder_name: str | None = None,
+) -> list[tuple[int, str, int]]:
     lookup = {word.casefold(): level for level, group in enumerate(ladder) for word in group}
     if not lookup:
         return []
     pattern = re.compile(r"\b(?:" + "|".join(sorted(map(re.escape, lookup), key=len, reverse=True)) + r")\b", re.IGNORECASE)
-    return [(match.start(), match.group(0), lookup[match.group(0).casefold()]) for match in pattern.finditer(text)]
+    anchors = CRYPTO_LADDER_ANCHORS.get(ladder_name or "")
+    return [
+        (match.start(), match.group(0), lookup[match.group(0).casefold()])
+        for match in pattern.finditer(text)
+        if anchors is None or has_nearby_anchor(text, match, anchors)
+    ]
 
 
 def crypto_ladder_manifest(ladders: dict[str, tuple[tuple[str, ...], ...]]) -> bytes:
@@ -141,10 +194,25 @@ def crypto_ladder_manifest(ladders: dict[str, tuple[tuple[str, ...], ...]]) -> b
     ).encode("ascii")
 
 
+def crypto_ladder_anchored_manifest(
+    ladders: dict[str, tuple[tuple[str, ...], ...]],
+    anchors: dict[str, tuple[str, ...]],
+) -> bytes:
+    return json.dumps(
+        {"anchors": anchors, "ladders": ladders},
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("ascii")
+
+
 def validate_crypto_ladders(
     ladders: dict[str, tuple[tuple[str, ...], ...]] = CRYPTO_LADDERS,
     expected_count: int = CRYPTO_LADDER_COUNT,
     expected_manifest_sha256: str = CRYPTO_LADDER_MANIFEST_SHA256,
+    anchors: dict[str, tuple[str, ...]] = CRYPTO_LADDER_ANCHORS,
+    expected_anchor_count: int = CRYPTO_LADDER_ANCHOR_COUNT,
+    expected_anchored_manifest_sha256: str = CRYPTO_LADDER_ANCHORED_MANIFEST_SHA256,
 ) -> None:
     if len(ladders) != expected_count or any(
         len(levels) < 2
@@ -154,6 +222,17 @@ def validate_crypto_ladders(
         raise UserError("cryptographic strength ladder set missing or malformed")
     if hashlib.sha256(crypto_ladder_manifest(ladders)).hexdigest() != expected_manifest_sha256:
         raise UserError("cryptographic strength ladder manifest mismatch")
+    if (
+        len(anchors) != expected_anchor_count
+        or set(anchors) != {"security_adaptivity", "privacy_guarantee", "exactness"}
+        or any(not values or any(not isinstance(value, str) or not value for value in values) for values in anchors.values())
+    ):
+        raise UserError("cryptographic strength ladder anchor set missing or malformed")
+    if (
+        hashlib.sha256(crypto_ladder_anchored_manifest(ladders, anchors)).hexdigest()
+        != expected_anchored_manifest_sha256
+    ):
+        raise UserError("cryptographic strength ladder anchored manifest mismatch")
 
 
 def scope_spans(text: str) -> list[tuple[int, int, str]]:
@@ -183,8 +262,8 @@ def crypto_moves(before: str, after: str) -> tuple[list[CryptoMove], list[Crypto
     old_to_new = {old: new for old, new in alignment if old is not None and new is not None}
 
     for ladder_name, ladder in CRYPTO_LADDERS.items():
-        old = ladder_occurrences(before, ladder)
-        new = ladder_occurrences(after, ladder)
+        old = ladder_occurrences(before, ladder, ladder_name)
+        new = ladder_occurrences(after, ladder, ladder_name)
         if Counter(level for _offset, _word, level in old) == Counter(
             level for _offset, _word, level in new
         ):

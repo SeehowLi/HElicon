@@ -8,7 +8,7 @@
     "after_fixture": "crypto_strength_high.synthetic.txt"
   },
   "expected": {"exit_code": 2},
-  "assertion": "Mutating either the cryptographic ladder count or manifest makes the checker process fail closed.",
+  "assertion": "Mutating the cryptographic ladder count, frozen manifest, anchor set, or anchored manifest makes the checker process fail closed.",
   "evidence_class": "self-authored-fixture",
   "provenance": "synthetic",
   "contains_real_manuscript_text": false

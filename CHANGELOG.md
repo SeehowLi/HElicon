@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.7.1
+
+- 为 `security_adaptivity`、`privacy_guarantee` 与 `exactness` 的裸词阶梯增加同一短语内、两词窗口且不跨标点的密码学上下文锚点，消除 batching、statistical analysis、polynomial/index 等普通写作语境的阻断误报。
+- 保留已发布的 v1 阶梯 count 与 manifest 常量，新增并列的 anchored v2 复合 manifest，将阶梯与锚点共同纳入 fail-closed 自校验；锚点、count 或任一 manifest 漂移均由合成回归拒绝。
+- 恢复十九个 FHE 领域术语及其连字符变体，使 L0 的 immutable glossary-term 计数保护恢复为 119 个词条、135 条活动规则；九个容易造成通用词计数误报的条目继续保持删除。
+- 合成回归固定三个非安全语境不阻断、三个真实密码学升级仍阻断，以及恢复术语的出现次数变化仍被 immutable gate 检出；这些结果只验证机械检查路径，不构成论文质量或真实数据能力证据。
+
 ## v1.7
 
 - 删除词表中只会形成拼写错误、数一致错误或病句的禁用形式，并补入经筛选的公共 bilingual Avoid 规则；`precision`→`precision at scale` 与 `portability`→`performance portability` 会误伤独立常用词组，因误报风险未加入。
