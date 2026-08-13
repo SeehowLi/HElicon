@@ -424,12 +424,25 @@ def run_verifiability(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
             checks["category_maximum"] = payload["categories"][category]["violation_count"] <= expected["maximum_count"]
         if "maximum_total" in expected:
             checks["total_maximum"] = payload["total_violations"] <= expected["maximum_total"]
+        if "relocation_marker_prefix" in expected:
+            checks["relocation"] = any(
+                item["marker"].startswith(expected["relocation_marker_prefix"])
+                for item in payload["claim_scope_relocation"]
+            )
     elif mode == "claim-strength":
-        checks["move_kind"] = any(
-            item["kind"].startswith(expected["kind"])
-            for item in payload["upward_moves"]
-        )
+        if "kind" in expected:
+            checks["move_kind"] = any(
+                item["kind"].startswith(expected["kind"])
+                for item in payload["upward_moves"]
+            )
         checks["move_count"] = payload["upward_move_count"] >= expected.get("minimum_count", 0)
+        for field in ("crypto_upward_moves", "crypto_downward_moves", "crypto_relocations"):
+            expected_ladders = expected.get(f"{field}_ladders")
+            if expected_ladders is not None:
+                checks[field] = {item["ladder"] for item in payload[field]} == set(expected_ladders)
+            minimum = expected.get(f"minimum_{field}_count")
+            if minimum is not None:
+                checks[f"{field}_count"] = len(payload[field]) >= minimum
     elif mode == "terminology":
         if "kind" in expected:
             checks["replacement_kind"] = any(
@@ -453,6 +466,10 @@ def run_verifiability(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
         "finding_count": payload.get("finding_count"),
         "total_violations": payload.get("total_violations"),
         "upward_move_count": payload.get("upward_move_count"),
+        "crypto_upward_move_count": len(payload.get("crypto_upward_moves", [])),
+        "crypto_downward_move_count": len(payload.get("crypto_downward_moves", [])),
+        "crypto_relocation_count": len(payload.get("crypto_relocations", [])),
+        "claim_scope_relocation_count": payload.get("claim_scope_relocation_count"),
         "replacement_count": payload.get("replacement_count"),
     })
 
@@ -498,6 +515,93 @@ def run_layered_glossary(case: dict[str, Any], temp_root: Path) -> dict[str, Any
     })
 
 
+def run_crypto_contract(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
+    inputs = case["input"]
+    source = repo_path(inputs["script"]).read_text(encoding="utf-8")
+    before = fixture(inputs["before_fixture"])
+    after = fixture(inputs["after_fixture"])
+    mutations = {
+        "count": ("CRYPTO_LADDER_COUNT = 8", "CRYPTO_LADDER_COUNT = 7"),
+        "manifest": (
+            'CRYPTO_LADDER_MANIFEST_SHA256 = "bd698e056038d59be3c38c9479b94721a33d9f6bfd881eee3ef37a7c73957b3e"',
+            'CRYPTO_LADDER_MANIFEST_SHA256 = "0d698e056038d59be3c38c9479b94721a33d9f6bfd881eee3ef37a7c73957b3e"',
+        ),
+    }
+    return_codes: dict[str, int] = {}
+    errors: dict[str, str] = {}
+    for name, (old, new) in mutations.items():
+        if source.count(old) != 1:
+            raise HarnessError(f"crypto contract source drift: {name}")
+        script = temp_root / case["id"] / f"{name}.py"
+        script.parent.mkdir(parents=True, exist_ok=True)
+        script.write_text(source.replace(old, new), encoding="utf-8")
+        result = command(script, str(before), str(after))
+        payload = json_stdout(result, f"{case['id']} {name}")
+        return_codes[name] = result.returncode
+        errors[name] = str(payload.get("error", ""))
+    checks = {
+        "count_exit_code": return_codes["count"] == case["expected"]["exit_code"],
+        "manifest_exit_code": return_codes["manifest"] == case["expected"]["exit_code"],
+        "count_error": "ladder" in errors["count"],
+        "manifest_error": "manifest" in errors["manifest"],
+    }
+    return case_result(case, checks, {"return_codes": return_codes})
+
+
+def run_direction_matrix(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
+    inputs = case["input"]
+    glossary_paths: dict[str, Path] = {}
+    build_codes: dict[str, int] = {}
+    for direction in inputs["directions"]:
+        output = temp_root / case["id"] / f"{direction}.json"
+        output.parent.mkdir(parents=True, exist_ok=True)
+        result = command(
+            repo_path(inputs["builder"]), "--direction", direction, "-o", str(output)
+        )
+        json_stdout(result, f"{case['id']} build {direction}")
+        build_codes[direction] = result.returncode
+        glossary_paths[direction] = output
+
+    sources = {
+        name: (fixture(values["before_fixture"]), fixture(values["after_fixture"]))
+        for name, values in inputs["texts"].items()
+    }
+    matrix: dict[str, dict[str, int]] = {}
+    checker_codes: list[int] = []
+    for text_name, (before, after) in sources.items():
+        matrix[text_name] = {}
+        for direction, glossary in glossary_paths.items():
+            result = command(
+                repo_path(inputs["checker"]), str(before), str(after), "--glossary", str(glossary)
+            )
+            payload = json_stdout(result, f"{case['id']} {text_name} {direction}")
+            checker_codes.append(result.returncode)
+            matrix[text_name][direction] = payload["replacement_count"]
+    search, inference = inputs["directions"]
+    diagonal_dominates = (
+        matrix["search"][search] > matrix["search"][inference]
+        and matrix["inference"][inference] > matrix["inference"][search]
+    )
+    counts = [
+        synthetic_word_count(path.read_text(encoding="utf-8"))
+        for pair in sources.values()
+        for path in pair
+    ]
+    checks = {
+        "build_exit_codes": all(code == 0 for code in build_codes.values()),
+        "checker_exit_codes": all(code in (0, 1) for code in checker_codes),
+        "fixture_word_range": all(150 <= count <= 300 for count in counts),
+        "matrix": matrix == case["expected"]["matrix"],
+        "diagonal_dominates": diagonal_dominates is case["expected"]["diagonal_dominates"],
+    }
+    return case_result(case, checks, {
+        "matrix": matrix,
+        "diagonal_dominates": diagonal_dominates,
+        "direction_partition_failed": not diagonal_dominates,
+        "fixture_word_counts": counts,
+    })
+
+
 RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "selftest": run_selftest,
     "router-contracts": run_router_contracts,
@@ -506,6 +610,8 @@ RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "target-eval-guards": run_target_eval_guards,
     "verifiability": run_verifiability,
     "layered-glossary": run_layered_glossary,
+    "crypto-contract": run_crypto_contract,
+    "direction-matrix": run_direction_matrix,
 }
 
 

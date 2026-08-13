@@ -1,0 +1,32 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "crypto-ladders-upward",
+  "runner": "verifiability",
+  "input": {
+    "mode": "claim-strength",
+    "checker": "scripts/check_claim_strength.py",
+    "before_fixture": "crypto_strength_low.synthetic.txt",
+    "after_fixture": "crypto_strength_high.synthetic.txt"
+  },
+  "expected": {
+    "schema": "helicon-claim-strength-check-v1",
+    "exit_code": 1,
+    "passed": false,
+    "minimum_count": 0,
+    "minimum_crypto_upward_moves_count": 12,
+    "crypto_upward_moves_ladders": [
+      "adversary_model",
+      "security_adaptivity",
+      "security_indistinguishability",
+      "corruption",
+      "privacy_guarantee",
+      "scheme_scope",
+      "exactness",
+      "leakage"
+    ]
+  },
+  "assertion": "Every synthetic cryptographic ladder moves upward and blocks acceptance.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

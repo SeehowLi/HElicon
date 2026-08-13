@@ -156,14 +156,6 @@
       "forbidden_variants": []
     },
     {
-      "term": "level budget",
-      "abbreviation": null,
-      "forbidden_synonyms": [
-        "levels budget"
-      ],
-      "forbidden_variants": []
-    },
-    {
       "term": "remaining level",
       "abbreviation": null,
       "forbidden_synonyms": [
@@ -228,14 +220,6 @@
       "forbidden_variants": []
     },
     {
-      "term": "Fourier series",
-      "abbreviation": null,
-      "forbidden_synonyms": [
-        "Fourier serie"
-      ],
-      "forbidden_variants": []
-    },
-    {
       "term": "Fourier extension",
       "abbreviation": null,
       "forbidden_synonyms": [
@@ -280,14 +264,6 @@
       "abbreviation": null,
       "forbidden_synonyms": [
         "tensored product"
-      ],
-      "forbidden_variants": []
-    },
-    {
-      "term": "automorphism",
-      "abbreviation": null,
-      "forbidden_synonyms": [
-        "automorphysm"
       ],
       "forbidden_variants": []
     },

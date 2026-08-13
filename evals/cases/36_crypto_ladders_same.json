@@ -1,0 +1,24 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "crypto-ladders-same",
+  "runner": "verifiability",
+  "input": {
+    "mode": "claim-strength",
+    "checker": "scripts/check_claim_strength.py",
+    "before_fixture": "crypto_strength_low.synthetic.txt",
+    "after_fixture": "crypto_strength_low.synthetic.txt"
+  },
+  "expected": {
+    "schema": "helicon-claim-strength-check-v1",
+    "exit_code": 0,
+    "passed": true,
+    "minimum_count": 0,
+    "crypto_upward_moves_ladders": [],
+    "crypto_downward_moves_ladders": [],
+    "crypto_relocations_ladders": []
+  },
+  "assertion": "Identical synthetic cryptographic tiers produce no move or relocation.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

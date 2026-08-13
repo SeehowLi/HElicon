@@ -5,6 +5,9 @@ Future pass-pipeline contract: call this read-only checker with BEFORE, AFTER,
 and --glossary; consume its single JSON object; continue only on exit 0.
 Exit 1 means at least one immutable category changed, and exit 2 means the
 input or glossary could not be validated.
+The claim_scope category guarantees only a global marker multiset. Its
+claim_scope_relocation warning and V2 are required to audit marker ownership;
+V1 alone is insufficient to cover Iron Rule 3.
 """
 from __future__ import annotations
 
@@ -162,6 +165,33 @@ def claim_counter(text: str) -> Counter[str]:
     return values
 
 
+def claim_scope_relocations(before: str, after: str) -> list[dict[str, Any]]:
+    if claim_counter(before) != claim_counter(after):
+        return []
+    old_scopes = latex_guard.claim_scopes(before)
+    new_scopes = latex_guard.claim_scopes(after)
+    removed: dict[str, list[int]] = {}
+    added: dict[str, list[int]] = {}
+    for old_index, new_index in latex_guard.align_claim_scopes(old_scopes, new_scopes):
+        if old_index is None or new_index is None:
+            continue
+        old_markers = claim_counter(old_scopes[old_index])
+        new_markers = claim_counter(new_scopes[new_index])
+        for marker in expanded(old_markers - new_markers):
+            removed.setdefault(marker, []).append(old_index)
+        for marker in expanded(new_markers - old_markers):
+            added.setdefault(marker, []).append(new_index)
+    return [
+        {
+            "marker": marker,
+            "before_scope_index": old_index,
+            "after_scope_index": new_index,
+        }
+        for marker in sorted(set(removed) & set(added))
+        for old_index, new_index in zip(removed[marker], added[marker])
+    ]
+
+
 def expanded(counter: Counter[str]) -> list[str]:
     return [value for value in sorted(counter) for _ in range(counter[value])]
 
@@ -199,6 +229,7 @@ def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[st
         for name, extractor in extractors.items()
     }
     categories["claim_scope"] = category_report(claim_counter(before), claim_counter(after))
+    relocations = claim_scope_relocations(before, after)
     total = sum(item["violation_count"] for item in categories.values())
     return {
         "schema": "helicon-immutable-set-check-v1",
@@ -206,6 +237,8 @@ def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[st
         "after": str(after_path),
         "glossary": str(glossary_path),
         "categories": categories,
+        "claim_scope_relocation": relocations,
+        "claim_scope_relocation_count": len(relocations),
         "total_violations": total,
         "passed": total == 0,
     }

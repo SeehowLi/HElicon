@@ -4,12 +4,15 @@
 Future pass-pipeline contract: run after a proposed edit and before acceptance;
 consume the single JSON object. Exit 0 means no mechanically observable upward
 move, exit 1 means one or more upward moves, and exit 2 means invalid input.
+V1 checks only the global claim-marker multiset; V2 supplies directional
+strength checks, while V1's relocation report warns when a marker changes scope.
 """
 from __future__ import annotations
 
 import argparse
 from collections import Counter
 from dataclasses import asdict, dataclass
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -29,6 +32,30 @@ STRENGTH_LADDERS: dict[str, tuple[tuple[str, ...], ...]] = {
     "quantity": (("some",), ("many",), ("most",), ("all",)),
     "frequency": (("often",), ("usually",), ("always",)),
 }
+# fhe_lexicon_freeze.md misuse row: adversary model.
+# fhe_lexicon_freeze.md misuse row: selective versus adaptive security.
+# fhe_lexicon_freeze.md misuse row: IND-CPA versus IND-CCA/IND-CCA2.
+# fhe_lexicon_freeze.md misuse row: static versus adaptive corruption.
+# fhe_lexicon_freeze.md misuse row: computational/statistical/perfect privacy.
+# fhe_lexicon_freeze.md misuse row: somewhat/leveled/fully homomorphic scope.
+# fhe_lexicon_freeze.md misuse row: approximate versus exact semantics.
+# fhe_lexicon_freeze.md misuse row: bounded versus no leakage.
+CRYPTO_LADDERS: dict[str, tuple[tuple[str, ...], ...]] = {
+    "adversary_model": (("semi-honest", "honest-but-curious"), ("malicious",)),
+    "security_adaptivity": (("selective",), ("adaptive",)),
+    "security_indistinguishability": (("IND-CPA",), ("IND-CCA",), ("IND-CCA2",)),
+    "corruption": (("static corruption",), ("adaptive corruption",)),
+    "privacy_guarantee": (("computational",), ("statistical",), ("perfect",)),
+    "scheme_scope": (
+        ("somewhat homomorphic encryption",),
+        ("leveled homomorphic encryption",),
+        ("fully homomorphic encryption",),
+    ),
+    "exactness": (("approximate",), ("exact",)),
+    "leakage": (("bounded leakage",), ("no leakage",)),
+}
+CRYPTO_LADDER_COUNT = 8
+CRYPTO_LADDER_MANIFEST_SHA256 = "bd698e056038d59be3c38c9479b94721a33d9f6bfd881eee3ef37a7c73957b3e"
 NEGATION_RE = re.compile(
     r"\b(?:not|no|never|without|neither|nor|none|cannot|can['’]t|"
     r"(?:is|are|was|were|do|does|did|has|have|had|would|should|could|might|must|need)n['’]t)\b",
@@ -67,6 +94,17 @@ class UpwardMove:
     ladder_span: int
 
 
+@dataclass
+class CryptoMove:
+    kind: str
+    ladder: str
+    original: str
+    revised: str
+    original_position: dict[str, int]
+    revised_position: dict[str, int]
+    ladder_span: int
+
+
 def read_text(path: Path) -> str:
     if path.suffix.lower() not in SUPPORTED:
         raise UserError(f"unsupported text file: {path}")
@@ -90,11 +128,114 @@ def position(text: str, offset: int) -> dict[str, int]:
 
 
 def ladder_occurrences(text: str, ladder: tuple[tuple[str, ...], ...]) -> list[tuple[int, str, int]]:
-    lookup = {word: level for level, group in enumerate(ladder) for word in group}
+    lookup = {word.casefold(): level for level, group in enumerate(ladder) for word in group}
     if not lookup:
         return []
     pattern = re.compile(r"\b(?:" + "|".join(sorted(map(re.escape, lookup), key=len, reverse=True)) + r")\b", re.IGNORECASE)
     return [(match.start(), match.group(0), lookup[match.group(0).casefold()]) for match in pattern.finditer(text)]
+
+
+def crypto_ladder_manifest(ladders: dict[str, tuple[tuple[str, ...], ...]]) -> bytes:
+    return json.dumps(
+        ladders, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    ).encode("ascii")
+
+
+def validate_crypto_ladders(
+    ladders: dict[str, tuple[tuple[str, ...], ...]] = CRYPTO_LADDERS,
+    expected_count: int = CRYPTO_LADDER_COUNT,
+    expected_manifest_sha256: str = CRYPTO_LADDER_MANIFEST_SHA256,
+) -> None:
+    if len(ladders) != expected_count or any(
+        len(levels) < 2
+        or any(not group or any(not isinstance(term, str) or not term for term in group) for group in levels)
+        for levels in ladders.values()
+    ):
+        raise UserError("cryptographic strength ladder set missing or malformed")
+    if hashlib.sha256(crypto_ladder_manifest(ladders)).hexdigest() != expected_manifest_sha256:
+        raise UserError("cryptographic strength ladder manifest mismatch")
+
+
+def scope_spans(text: str) -> list[tuple[int, int, str]]:
+    return [
+        (match.start(), match.end(), match.group(0).strip().casefold())
+        for match in re.finditer(r"[^.!?;\n]+", text)
+        if match.group(0).strip()
+    ]
+
+
+def occurrence_scope(spans: list[tuple[int, int, str]], offset: int) -> int | None:
+    return next((index for index, (start, end, _text) in enumerate(spans) if start <= offset < end), None)
+
+
+def crypto_moves(before: str, after: str) -> tuple[list[CryptoMove], list[CryptoMove], list[CryptoMove]]:
+    import latex_guard
+
+    upward: list[CryptoMove] = []
+    downward: list[CryptoMove] = []
+    relocations: list[CryptoMove] = []
+    before_spans = scope_spans(before)
+    after_spans = scope_spans(after)
+    alignment = latex_guard.align_claim_scopes(
+        [scope for _start, _end, scope in before_spans],
+        [scope for _start, _end, scope in after_spans],
+    )
+    old_to_new = {old: new for old, new in alignment if old is not None and new is not None}
+
+    for ladder_name, ladder in CRYPTO_LADDERS.items():
+        old = ladder_occurrences(before, ladder)
+        new = ladder_occurrences(after, ladder)
+        if Counter(level for _offset, _word, level in old) == Counter(
+            level for _offset, _word, level in new
+        ):
+            old_by_level: dict[int, list[tuple[int, str, int]]] = {}
+            new_by_level: dict[int, list[tuple[int, str, int]]] = {}
+            for item in old:
+                old_by_level.setdefault(item[2], []).append(item)
+            for item in new:
+                new_by_level.setdefault(item[2], []).append(item)
+            for level in sorted(set(old_by_level) | set(new_by_level)):
+                old_items = old_by_level.get(level, [])
+                new_items = new_by_level.get(level, [])
+                unmatched_new = list(new_items)
+                for old_offset, old_word, _ in old_items:
+                    old_scope = occurrence_scope(before_spans, old_offset)
+                    expected_scope = old_to_new.get(old_scope) if old_scope is not None else None
+                    match_index = next(
+                        (
+                            index
+                            for index, (new_offset, _new_word, _new_level) in enumerate(unmatched_new)
+                            if occurrence_scope(after_spans, new_offset) == expected_scope
+                        ),
+                        None,
+                    )
+                    if match_index is not None:
+                        unmatched_new.pop(match_index)
+                        continue
+                    if unmatched_new:
+                        new_offset, new_word, _ = unmatched_new.pop(0)
+                        relocations.append(CryptoMove(
+                            "crypto_relocation", ladder_name, old_word, new_word,
+                            position(before, old_offset), position(after, new_offset), 0,
+                        ))
+            continue
+
+        for original, revised in zip(old, new):
+            old_offset, old_word, old_level = original
+            new_offset, new_word, new_level = revised
+            if new_level == old_level:
+                continue
+            target = upward if new_level > old_level else downward
+            target.append(CryptoMove(
+                "crypto_upward_move" if new_level > old_level else "crypto_downward_move",
+                ladder_name,
+                old_word,
+                new_word,
+                position(before, old_offset),
+                position(after, new_offset),
+                new_level - old_level,
+            ))
+    return upward, downward, relocations
 
 
 def removed_occurrences(before: str, after: str, pattern: re.Pattern[str]) -> list[tuple[int, str]]:
@@ -127,6 +268,7 @@ def comparison_occurrences(text: str, positive: set[str], negative: set[str]) ->
 
 
 def compare(before_path: Path, after_path: Path) -> dict[str, Any]:
+    validate_crypto_ladders()
     before = read_text(before_path)
     after = read_text(after_path)
     moves: list[UpwardMove] = []
@@ -166,6 +308,18 @@ def compare(before_path: Path, after_path: Path) -> dict[str, Any]:
     for offset, phrase in removed_occurrences(before, after, QUALIFIER_RE):
         moves.append(UpwardMove("scope_qualifier_removed", phrase, None, position(before, offset), None, 1))
 
+    crypto_upward, crypto_downward, crypto_relocations = crypto_moves(before, after)
+    conservative_no_leakage = sum(
+        item.ladder == "leakage" and item.original.casefold() == "no leakage"
+        for item in crypto_downward
+    )
+    filtered_moves: list[UpwardMove] = []
+    for item in moves:
+        if item.kind == "negation_removed" and item.original.casefold() == "no" and conservative_no_leakage:
+            conservative_no_leakage -= 1
+            continue
+        filtered_moves.append(item)
+    moves = filtered_moves
     payload = [asdict(item) for item in sorted(moves, key=lambda item: item.original_position["offset"])]
     return {
         "schema": "helicon-claim-strength-check-v1",
@@ -173,7 +327,10 @@ def compare(before_path: Path, after_path: Path) -> dict[str, Any]:
         "after": str(after_path),
         "upward_moves": payload,
         "upward_move_count": len(payload),
-        "passed": not payload,
+        "crypto_upward_moves": [asdict(item) for item in crypto_upward],
+        "crypto_downward_moves": [asdict(item) for item in crypto_downward],
+        "crypto_relocations": [asdict(item) for item in crypto_relocations],
+        "passed": not payload and not crypto_upward,
     }
 
 
@@ -182,6 +339,7 @@ def main() -> int:
     parser.add_argument("before")
     parser.add_argument("after")
     try:
+        validate_crypto_ladders()
         args = parser.parse_args()
         result = compare(Path(args.before), Path(args.after))
         print(json.dumps(result, ensure_ascii=False, indent=2))

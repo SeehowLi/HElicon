@@ -20,14 +20,6 @@
       ]
     },
     {
-      "term": "approximate nearest neighbor search",
-      "abbreviation": null,
-      "forbidden_synonyms": [
-        "approximated nearest neighbor search"
-      ],
-      "forbidden_variants": []
-    },
-    {
       "term": "top-k",
       "abbreviation": null,
       "forbidden_synonyms": [],
@@ -96,14 +88,6 @@
       "abbreviation": null,
       "forbidden_synonyms": [
         "ranks selection"
-      ],
-      "forbidden_variants": []
-    },
-    {
-      "term": "homomorphic sorting",
-      "abbreviation": null,
-      "forbidden_synonyms": [
-        "homomorphical sorting"
       ],
       "forbidden_variants": []
     },

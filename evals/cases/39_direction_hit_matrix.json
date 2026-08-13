@@ -1,0 +1,31 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "direction-hit-matrix",
+  "runner": "direction-matrix",
+  "input": {
+    "builder": "scripts/glossary_build.py",
+    "checker": "scripts/check_terminology_freeze.py",
+    "directions": ["encrypted_knn_search", "private_llm_inference"],
+    "texts": {
+      "search": {
+        "before_fixture": "direction_search_clean.synthetic.txt",
+        "after_fixture": "direction_search_seeded.synthetic.txt"
+      },
+      "inference": {
+        "before_fixture": "direction_llm_clean.synthetic.txt",
+        "after_fixture": "direction_llm_seeded.synthetic.txt"
+      }
+    }
+  },
+  "expected": {
+    "matrix": {
+      "search": {"encrypted_knn_search": 7, "private_llm_inference": 0},
+      "inference": {"encrypted_knn_search": 1, "private_llm_inference": 8}
+    },
+    "diagonal_dominates": true
+  },
+  "assertion": "Synthetic direction prose produces a diagonally dominant four-cell forbidden-form hit matrix.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

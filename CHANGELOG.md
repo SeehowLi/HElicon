@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.7
+
+- 删除词表中只会形成拼写错误、数一致错误或病句的禁用形式，并补入经筛选的公共 bilingual Avoid 规则；`precision`→`precision at scale` 与 `portability`→`performance portability` 会误伤独立常用词组，因误报风险未加入。
+- `check_claim_strength.py` 新增带 count 与 manifest 自校验的密码学强度阶梯；密码学语义上移阻断，下移与同一标记跨 claim 搬家仅报告，普通 `upward_move_count` 的既有语义保持不变。
+- `check_immutable_set.py` 在全局 claim-marker 多重集合不变时新增 scope relocation 告警；该告警不计入 immutable violation，并明确 V1 不能单独覆盖 claim 归属。
+- 通用性检验改为两份自行合成方向文本的四格实际命中矩阵，不再用天然为零的 L0/L1 term 交集充当方向性证据。
+- 合成回归覆盖全部密码学阶梯相邻上移与下移、同档不变、阶梯配置篡改、模态搬家和方向矩阵；这些结果只验证机械门禁，不验证真实论文质量或泛化能力。
+
 ## v1.6
 
 - 新增一份公共 FHE 核心词表与五份互不重叠的方向词表，采用 `helicon-lexicon-v1` 结构，并保持项目词表与真实稿件内容在仓库外。

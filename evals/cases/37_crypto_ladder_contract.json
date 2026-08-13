@@ -1,0 +1,15 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "crypto-ladder-contract",
+  "runner": "crypto-contract",
+  "input": {
+    "script": "scripts/check_claim_strength.py",
+    "before_fixture": "crypto_strength_low.synthetic.txt",
+    "after_fixture": "crypto_strength_high.synthetic.txt"
+  },
+  "expected": {"exit_code": 2},
+  "assertion": "Mutating either the cryptographic ladder count or manifest makes the checker process fail closed.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

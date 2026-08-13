@@ -1,0 +1,35 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "crypto-relocation-warning",
+  "runner": "verifiability",
+  "input": {
+    "mode": "claim-strength",
+    "checker": "scripts/check_claim_strength.py",
+    "before_fixture": "crypto_strength_low.synthetic.txt",
+    "after_fixture": "crypto_strength_low.synthetic.txt",
+    "replacements": [
+      [
+        "Guarantee A provides computational privacy.",
+        "Guarantee A provides statistical privacy."
+      ],
+      [
+        "Guarantee B provides statistical privacy.",
+        "Guarantee B provides computational privacy."
+      ]
+    ]
+  },
+  "expected": {
+    "schema": "helicon-claim-strength-check-v1",
+    "exit_code": 0,
+    "passed": true,
+    "minimum_count": 0,
+    "minimum_crypto_relocations_count": 2,
+    "crypto_relocations_ladders": [
+      "privacy_guarantee"
+    ]
+  },
+  "assertion": "Moving cryptographic guarantees between aligned claims warns without blocking when the global tier multiset is unchanged.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

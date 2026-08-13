@@ -12,14 +12,6 @@
       "forbidden_variants": []
     },
     {
-      "term": "FHE compiler",
-      "abbreviation": null,
-      "forbidden_synonyms": [
-        "FHE compile"
-      ],
-      "forbidden_variants": []
-    },
-    {
       "term": "compiler lowering",
       "abbreviation": null,
       "forbidden_synonyms": [

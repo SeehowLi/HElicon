@@ -194,6 +194,119 @@ def main() -> int:
             any(item["kind"] == "scope_qualifier_removed" for item in qualifier_result["upward_moves"]),
         ))
 
+        tests.append((
+            "cryptographic strength ladder manifest is valid",
+            not check_claim_strength.validate_crypto_ladders(),
+        ))
+        missing_crypto_ladder = dict(check_claim_strength.CRYPTO_LADDERS)
+        missing_crypto_ladder.pop("leakage")
+        try:
+            check_claim_strength.validate_crypto_ladders(missing_crypto_ladder)
+            missing_crypto_rejected = False
+        except check_claim_strength.UserError:
+            missing_crypto_rejected = True
+        tests.append((
+            "cryptographic strength ladder count drift is rejected",
+            missing_crypto_rejected,
+        ))
+        mutated_crypto_ladder = dict(check_claim_strength.CRYPTO_LADDERS)
+        mutated_crypto_ladder["leakage"] = (("bounded leakage",), ("unbounded leakage",))
+        try:
+            check_claim_strength.validate_crypto_ladders(mutated_crypto_ladder)
+            mutated_crypto_rejected = False
+        except check_claim_strength.UserError:
+            mutated_crypto_rejected = True
+        tests.append((
+            "cryptographic strength ladder manifest drift is rejected",
+            mutated_crypto_rejected,
+        ))
+
+        crypto_low = (
+            "Adversary A is semi-honest. Adversary B is honest-but-curious. Security is selective. "
+            "Trial A is IND-CPA secure. Trial B is IND-CCA secure. It assumes static corruption. "
+            "Guarantee A is computational. Guarantee B is statistical. Construction A is somewhat "
+            "homomorphic encryption. Construction B is leveled homomorphic encryption. Its result "
+            "is approximate. It permits bounded leakage.\n"
+        )
+        crypto_high = (
+            "Adversary A is malicious. Adversary B is malicious. Security is adaptive. Trial A is "
+            "IND-CCA secure. Trial B is IND-CCA2 secure. It assumes adaptive corruption. Guarantee "
+            "A is statistical. Guarantee B is perfect. Construction A is leveled homomorphic "
+            "encryption. Construction B is fully homomorphic encryption. Its result is exact. It "
+            "permits no leakage.\n"
+        )
+        crypto_low_path = verifier_root / "crypto_low.txt"
+        crypto_high_path = verifier_root / "crypto_high.txt"
+        crypto_low_path.write_text(crypto_low, encoding="utf-8")
+        crypto_high_path.write_text(crypto_high, encoding="utf-8")
+        crypto_up = check_claim_strength.compare(crypto_low_path, crypto_high_path)
+        crypto_down = check_claim_strength.compare(crypto_high_path, crypto_low_path)
+        crypto_same = check_claim_strength.compare(crypto_low_path, crypto_low_path)
+        tests.append((
+            "every cryptographic ladder reports an upward move",
+            not crypto_up["passed"]
+            and len(crypto_up["crypto_upward_moves"]) == 12
+            and {item["ladder"] for item in crypto_up["crypto_upward_moves"]}
+            == set(check_claim_strength.CRYPTO_LADDERS),
+        ))
+        tests.append((
+            "every cryptographic ladder reports a conservative downward move",
+            crypto_down["passed"]
+            and len(crypto_down["crypto_downward_moves"]) == 12
+            and {item["ladder"] for item in crypto_down["crypto_downward_moves"]}
+            == set(check_claim_strength.CRYPTO_LADDERS),
+        ))
+        tests.append((
+            "same-tier cryptographic wording is unchanged",
+            crypto_same["passed"]
+            and not crypto_same["crypto_upward_moves"]
+            and not crypto_same["crypto_downward_moves"]
+            and not crypto_same["crypto_relocations"],
+        ))
+
+        crypto_relocation_before = verifier_root / "crypto_relocation_before.txt"
+        crypto_relocation_after = verifier_root / "crypto_relocation_after.txt"
+        crypto_relocation_before.write_text(
+            "Protocol A provides computational privacy. Protocol B provides perfect privacy.\n",
+            encoding="utf-8",
+        )
+        crypto_relocation_after.write_text(
+            "Protocol A provides perfect privacy. Protocol B provides computational privacy.\n",
+            encoding="utf-8",
+        )
+        crypto_relocation = check_claim_strength.compare(
+            crypto_relocation_before, crypto_relocation_after
+        )
+        tests.append((
+            "cryptographic concept relocation warns without blocking",
+            crypto_relocation["passed"]
+            and len(crypto_relocation["crypto_relocations"]) == 2
+            and not crypto_relocation["crypto_upward_moves"],
+        ))
+
+        modal_relocation_before = verifier_root / "modal_relocation_before.txt"
+        modal_relocation_after = verifier_root / "modal_relocation_after.txt"
+        modal_relocation_before.write_text(
+            "The bound may hold for all inputs. The reduction holds in the semi-honest model.\n",
+            encoding="utf-8",
+        )
+        modal_relocation_after.write_text(
+            "The bound holds for all inputs. The reduction may hold in the semi-honest model.\n",
+            encoding="utf-8",
+        )
+        modal_relocation = check_immutable_set.compare(
+            modal_relocation_before, modal_relocation_after, small_glossary
+        )
+        tests.append((
+            "immutable checker reports modal relocation without a violation",
+            modal_relocation["total_violations"] == 0
+            and modal_relocation["passed"]
+            and any(
+                item["marker"].startswith("modality:")
+                for item in modal_relocation["claim_scope_relocation"]
+            ),
+        ))
+
         term_before = verifier_root / "term_before.txt"
         term_after = verifier_root / "term_after.txt"
         term_before.write_text("The ciphertext scheduler runs.\n", encoding="utf-8")
