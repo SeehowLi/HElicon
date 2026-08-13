@@ -76,6 +76,17 @@ Before each pass:
 4. apply only a triggered pass, or record a deterministic no-op;
 5. compare the immutable set and report any rollback.
 
+### Mechanical verification contract
+
+For every rewriting pass from P3 through P7, generate a candidate and run these checks in order before delivery:
+
+1. Run `python -B scripts/check_immutable_set.py <BEFORE> <AFTER> --glossary <MERGED>`. Exit 0 continues; exit 1 is an immutable-set violation, so roll back the pass under Iron Rule 6 and report the categories and violation count in the trailer; exit 2 is an input or configuration error and must stop with a report rather than count as passing.
+2. Run `python -B scripts/check_claim_strength.py <BEFORE> <AFTER>`. A positive `upward_move_count` or non-empty `crypto_upward_moves` rolls back the pass because claim-scope markers and claim strength are immutable outside an explicit P1 request. Report `crypto_downward_moves`, `crypto_relocations`, `crypto_upward_candidates`, and claim-scope relocation warnings in the trailer without blocking. During P1 only, an author-approved claim-scope adjustment may exempt an upward move from rollback, but every exempted move must be listed in the trailer; this exemption never applies to steps 1 or 3.
+3. Run `python -B scripts/check_terminology_freeze.py <BEFORE> <AFTER> --glossary <MERGED>`. A blocking replacement rolls back P3 as a P3 failure or P4-P7 as downstream contamination and must be reported. A result containing only `case_inconsistency` findings is warning-only; its known capitalization boundary is recorded in `CHANGELOG.md`.
+4. Run `python -B scripts/check_ai_tells.py --json <AFTER>`. Report density without blocking, preserving the existing P5 semantics.
+
+Build `<MERGED>` with `python -B scripts/glossary_build.py --direction <DIRECTION> [--project <PACK>/local_glossary.md] -o <TMP>`. Resolve `<DIRECTION>` from `project.yaml`; when it is missing, omit `--direction` and use L0 only. When `local_glossary.md` is absent, omit `--project`, allowing `project_layer=absent`. Store `<TMP>` only in a temporary directory and delete it after delivery; never write it into the repository or project pack.
+
 ## Anti-drift rule
 
 threshold: when no qualified target profile exists, if the target section's style metrics are already inside the personal baseline band of plus or minus 1.5 standard deviations, P5 and P6 refuse to run. Report: `already within baseline; further editing would create drift rather than improvement`.

@@ -317,6 +317,38 @@ def crypto_moves(before: str, after: str) -> tuple[list[CryptoMove], list[Crypto
     return upward, downward, relocations
 
 
+def crypto_candidate_moves(before: str, after: str) -> list[CryptoMove]:
+    """Report bare-tier upward moves that the blocking anchor gate excludes."""
+    candidates: list[CryptoMove] = []
+    for ladder_name in CRYPTO_LADDER_ANCHORS:
+        ladder = CRYPTO_LADDERS[ladder_name]
+        old = ladder_occurrences(before, ladder)
+        new = ladder_occurrences(after, ladder)
+        anchored_old = {
+            offset for offset, _word, _level in ladder_occurrences(before, ladder, ladder_name)
+        }
+        anchored_new = {
+            offset for offset, _word, _level in ladder_occurrences(after, ladder, ladder_name)
+        }
+        for original, revised in zip(old, new):
+            old_offset, old_word, old_level = original
+            new_offset, new_word, new_level = revised
+            if new_level <= old_level or (
+                old_offset in anchored_old and new_offset in anchored_new
+            ):
+                continue
+            candidates.append(CryptoMove(
+                "crypto_upward_candidate",
+                ladder_name,
+                old_word,
+                new_word,
+                position(before, old_offset),
+                position(after, new_offset),
+                new_level - old_level,
+            ))
+    return candidates
+
+
 def removed_occurrences(before: str, after: str, pattern: re.Pattern[str]) -> list[tuple[int, str]]:
     old = list(pattern.finditer(before))
     remaining = Counter(match.group(0).casefold() for match in pattern.finditer(after))
@@ -388,6 +420,7 @@ def compare(before_path: Path, after_path: Path) -> dict[str, Any]:
         moves.append(UpwardMove("scope_qualifier_removed", phrase, None, position(before, offset), None, 1))
 
     crypto_upward, crypto_downward, crypto_relocations = crypto_moves(before, after)
+    crypto_candidates = crypto_candidate_moves(before, after)
     conservative_no_leakage = sum(
         item.ladder == "leakage" and item.original.casefold() == "no leakage"
         for item in crypto_downward
@@ -407,6 +440,7 @@ def compare(before_path: Path, after_path: Path) -> dict[str, Any]:
         "upward_moves": payload,
         "upward_move_count": len(payload),
         "crypto_upward_moves": [asdict(item) for item in crypto_upward],
+        "crypto_upward_candidates": [asdict(item) for item in crypto_candidates],
         "crypto_downward_moves": [asdict(item) for item in crypto_downward],
         "crypto_relocations": [asdict(item) for item in crypto_relocations],
         "passed": not payload and not crypto_upward,

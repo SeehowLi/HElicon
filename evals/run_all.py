@@ -6,6 +6,7 @@ from collections.abc import Callable
 import hashlib
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -436,7 +437,10 @@ def run_verifiability(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
                 for item in payload["upward_moves"]
             )
         checks["move_count"] = payload["upward_move_count"] >= expected.get("minimum_count", 0)
-        for field in ("crypto_upward_moves", "crypto_downward_moves", "crypto_relocations"):
+        for field in (
+            "crypto_upward_moves", "crypto_upward_candidates",
+            "crypto_downward_moves", "crypto_relocations",
+        ):
             expected_ladders = expected.get(f"{field}_ladders")
             if expected_ladders is not None:
                 checks[field] = {item["ladder"] for item in payload[field]} == set(expected_ladders)
@@ -467,6 +471,7 @@ def run_verifiability(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
         "total_violations": payload.get("total_violations"),
         "upward_move_count": payload.get("upward_move_count"),
         "crypto_upward_move_count": len(payload.get("crypto_upward_moves", [])),
+        "crypto_upward_candidate_count": len(payload.get("crypto_upward_candidates", [])),
         "crypto_downward_move_count": len(payload.get("crypto_downward_moves", [])),
         "crypto_relocation_count": len(payload.get("crypto_relocations", [])),
         "claim_scope_relocation_count": payload.get("claim_scope_relocation_count"),
@@ -608,6 +613,86 @@ def run_direction_matrix(case: dict[str, Any], temp_root: Path) -> dict[str, Any
     })
 
 
+def run_mechanical_contract(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
+    inputs = case["input"]
+    expected = case["expected"]
+    case_root = temp_root / case["id"] / "repository"
+    core_target = case_root / "references" / "fhe_lexicon.json"
+    core_target.parent.mkdir(parents=True)
+    shutil.copyfile(fixture(inputs["core_fixture"]), core_target)
+    project_root = case_root / "project"
+    project_root.mkdir()
+    project_yaml = project_root / "project.yaml"
+    project_yaml.write_text(inputs["project_yaml"], encoding="utf-8")
+    local_glossary = project_root / "local_glossary.md"
+    if "project_glossary_fixture" in inputs:
+        shutil.copyfile(fixture(inputs["project_glossary_fixture"]), local_glossary)
+
+    direction_match = re.search(
+        r"(?m)^direction:\s*([a-z0-9_]+)\s*$", project_yaml.read_text(encoding="utf-8")
+    )
+    direction = direction_match.group(1) if direction_match else None
+    merged = temp_root / case["id"] / "merged.json"
+    build_args = ["--root", str(case_root)]
+    if direction:
+        build_args.extend(["--direction", direction])
+    if local_glossary.is_file():
+        build_args.extend(["--project", str(local_glossary)])
+    build_args.extend(["-o", str(merged)])
+    build = command(repo_path(inputs["builder"]), *build_args)
+    build_payload = json_stdout(build, f"{case['id']}:glossary")
+
+    before = fixture(inputs["before_fixture"])
+    after_source = fixture(inputs["after_fixture"])
+    after_text = after_source.read_text(encoding="utf-8")
+    for old, new in inputs.get("replacements", []):
+        if old not in after_text:
+            raise HarnessError(f"replacement source absent in {case['id']}: {old!r}")
+        after_text = after_text.replace(old, new)
+    after = temp_root / case["id"] / "after.txt"
+    after.write_text(after_text, encoding="utf-8")
+
+    commands = (
+        ("immutable", inputs["immutable_checker"], [str(before), str(after), "--glossary", str(merged)]),
+        ("claim_strength", inputs["claim_checker"], [str(before), str(after)]),
+        ("terminology", inputs["terminology_checker"], [str(before), str(after), "--glossary", str(merged)]),
+        ("ai_tells", inputs["ai_checker"], ["--json", str(after)]),
+    )
+    steps: dict[str, dict[str, Any]] = {}
+    for name, raw_script, args in commands:
+        result = command(repo_path(raw_script), *args)
+        steps[name] = {"exit_code": result.returncode, "payload": json_stdout(result, f"{case['id']}:{name}")}
+
+    terminology_blocking = any(
+        item.get("kind") != "case_inconsistency"
+        for item in steps["terminology"]["payload"].get("replacements", [])
+    )
+    blocking_step = None
+    if steps["immutable"]["exit_code"] != 0:
+        blocking_step = 1
+    elif steps["claim_strength"]["exit_code"] != 0:
+        blocking_step = 2
+    elif steps["terminology"]["exit_code"] == 2 or terminology_blocking:
+        blocking_step = 3
+    elif steps["ai_tells"]["exit_code"] == 2:
+        blocking_step = 4
+    decision = "rollback" if blocking_step is not None else "deliver"
+    details = {
+        "build_exit_code": build.returncode,
+        "builder_direction": direction,
+        "direction_layer_entry_count": build_payload.get("direction_layer_entry_count"),
+        "project_layer": build_payload.get("project_layer"),
+        "step_exit_codes": {name: item["exit_code"] for name, item in steps.items()},
+        "blocking_step": blocking_step,
+        "decision": decision,
+    }
+    checks = {
+        "build_exit_code": build.returncode == expected["build_exit_code"],
+        **{name: details.get(name) == value for name, value in expected["fields"].items()},
+    }
+    return case_result(case, checks, details)
+
+
 RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "selftest": run_selftest,
     "router-contracts": run_router_contracts,
@@ -618,6 +703,7 @@ RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "layered-glossary": run_layered_glossary,
     "crypto-contract": run_crypto_contract,
     "direction-matrix": run_direction_matrix,
+    "mechanical-contract": run_mechanical_contract,
 }
 
 

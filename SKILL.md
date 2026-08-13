@@ -117,6 +117,10 @@ Load `references/pass_pipeline.md` for revision work:
 
 `H-PASS` runs one target pass. `H-POLISH` orchestrates P3 → P4 → P5 → P6 and reports every pass separately. Before P4 or P5, follow `pass_pipeline.md`, resolve the paper-local target, and run `scripts/revision_preflight.py`. On the bare P3 → P4 → P5 route, `preserve` plus no exact P3 glossary mismatch returns the input verbatim with zero changes. In `H-POLISH`, the same decision skips only P4/P5; P6 is resolved and judged separately. Do not infer `target:` from file existence alone. Gates warn but do not block; immutable-set violations roll back.
 
+Before delivering any rewriting pass from P3 through P7, follow the Mechanical verification contract in `references/pass_pipeline.md`.
+Build the merged glossary in a temporary directory, then run immutable-set, claim-strength, terminology-freeze, and AI-tell checks in that order.
+Roll back only the contract's blocking findings; report its warning-only candidate, downward, relocation, case, and density results in the trailer.
+
 ## Activation behavior
 
 When the user invokes HElicon explicitly, or when the task involves paper writing, FHE/security writing, Chinese-to-English research writing, or corpus distillation:

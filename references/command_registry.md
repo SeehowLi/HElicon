@@ -168,6 +168,8 @@ Required behavior:
 
 Reject only an invalid pass name or an immutable-set violation. Do not write source files.
 
+Mechanical verification: after candidate generation and before delivery, follow the Mechanical verification contract in `references/pass_pipeline.md`.
+
 ### H-SPOT
 
 Purpose: make the smallest useful local revision with minimal ceremony.
@@ -271,6 +273,8 @@ Purpose: orchestrate P3, P4, P5, and P6 in order.
 
 Apply the gate once, snapshot immutable content, resolve the private target before P4, run the P4/P5 preservation preflight, and emit four pass-labeled sections with target, changes, skipped items, and frozen-set status. A `preserve` decision is a valid zero-change result for P4/P5, not a reason to manufacture variation; P6 is still judged separately. The single-pass restriction belongs to `H-PASS`, not this orchestrator. A screened target supplies direction; a qualified baseline detects drift only, and a thin baseline neither refuses nor warns. When no target exists, retain the qualified anti-drift refusal defined in `pass_pipeline.md`.
 
+Mechanical verification: apply the Mechanical verification contract in `references/pass_pipeline.md` to each pass candidate before delivery.
+
 ## Legacy v1.2 contracts
 
 ### H-HELP
@@ -338,6 +342,8 @@ Simulate reviewer objections or audit venue fit, evidence gaps, and claim risk u
 ### H-PATCH
 
 Apply confirmed text to an explicit file and exact location. Modify only that location; preserve citations, labels, references, mathematics, figures, tables, algorithms, comments, and formatting unless instructed otherwise. Use the smallest patch, show a diff summary, and run relevant validation. If the target is ambiguous, ask one concise clarification.
+
+Mechanical verification: before writing accepted revised prose, require the applicable Mechanical verification contract result from `references/pass_pipeline.md`.
 
 ```markdown
 Patch target: file; location

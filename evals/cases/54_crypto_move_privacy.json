@@ -1,0 +1,25 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "crypto-move-privacy",
+  "runner": "verifiability",
+  "input": {
+    "mode": "claim-strength",
+    "checker": "scripts/check_claim_strength.py",
+    "before_fixture": "crypto_anchor_true_before.synthetic.txt",
+    "after_fixture": "crypto_anchor_true_before.synthetic.txt",
+    "replacements": [["computational privacy", "statistical privacy"]]
+  },
+  "expected": {
+    "schema": "helicon-claim-strength-check-v1",
+    "exit_code": 1,
+    "passed": false,
+    "minimum_count": 0,
+    "minimum_crypto_upward_moves_count": 1,
+    "crypto_upward_moves_ladders": ["privacy_guarantee"],
+    "crypto_upward_candidates_ladders": []
+  },
+  "assertion": "An anchored computational-to-statistical privacy upgrade remains blocking.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

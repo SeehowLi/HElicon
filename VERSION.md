@@ -1,11 +1,11 @@
 # Version
 
-HElicon v1.7.1
+HElicon v1.8
 
-Status: anchored-lexicon-validation candidate; pass-pipeline integration is deferred.
+Status: mechanical-verifier-wiring candidate; synthetic regression only.
 
 Design principle: long-term personal writing mentor, not project-specific.
 
 Project-specific work stays in external project packs.
 
-v1.7.1 focus: context-anchored bare-word cryptographic ladders and restored immutable-count protection for domain terms, backed by synthetic regression fixtures.
+v1.8 focus: pre-delivery mechanical verification contracts for rewriting passes and nonblocking reporting of unanchored cryptographic upward candidates.

@@ -262,6 +262,46 @@ def main() -> int:
             result = check_claim_strength.compare(before_path, after_path)
             tests.append((label, result["passed"] and not result["crypto_upward_moves"]))
 
+        unanchored_candidates = (
+            (
+                "unanchored selective-to-adaptive wording is a nonblocking candidate",
+                "We now state the security notion. The definition is selective and the reduction is tight.\n",
+                "We now state the security notion. The definition is adaptive and the reduction is tight.\n",
+                "security_adaptivity",
+            ),
+            (
+                "unanchored computational-to-statistical guarantee is a nonblocking candidate",
+                "Our guarantee is computational. The proof appears in Appendix B.\n",
+                "Our guarantee is statistical. The proof appears in Appendix B.\n",
+                "privacy_guarantee",
+            ),
+            (
+                "colon-separated selective-to-adaptive wording is a nonblocking candidate",
+                "Security model: selective.\n",
+                "Security model: adaptive.\n",
+                "security_adaptivity",
+            ),
+            (
+                "distant computational-to-statistical wording is a nonblocking candidate",
+                "The scheme achieves security that is only computational rather than information-theoretic.\n",
+                "The scheme achieves security that is only statistical rather than information-theoretic.\n",
+                "privacy_guarantee",
+            ),
+        )
+        for index, (label, before_text, after_text, ladder) in enumerate(unanchored_candidates, 1):
+            before_path = verifier_root / f"candidate_before_{index}.txt"
+            after_path = verifier_root / f"candidate_after_{index}.txt"
+            before_path.write_text(before_text, encoding="utf-8")
+            after_path.write_text(after_text, encoding="utf-8")
+            result = check_claim_strength.compare(before_path, after_path)
+            tests.append((
+                label,
+                result["passed"]
+                and not result["crypto_upward_moves"]
+                and len(result["crypto_upward_candidates"]) == 1
+                and result["crypto_upward_candidates"][0]["ladder"] == ladder,
+            ))
+
         anchored_upgrades = (
             (
                 "anchored adaptive-security upgrade still blocks",

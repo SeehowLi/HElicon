@@ -1,0 +1,21 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "mechanical-legal-delivery",
+  "runner": "mechanical-contract",
+  "input": {
+    "builder": "scripts/glossary_build.py",
+    "immutable_checker": "scripts/check_immutable_set.py",
+    "claim_checker": "scripts/check_claim_strength.py",
+    "terminology_checker": "scripts/check_terminology_freeze.py",
+    "ai_checker": "scripts/check_ai_tells.py",
+    "core_fixture": "layered_core.synthetic.json",
+    "project_yaml": "schema: synthetic-project-v1\n",
+    "before_fixture": "verifiability_before.txt",
+    "after_fixture": "verifiability_clean.txt"
+  },
+  "expected": {"build_exit_code": 0, "fields": {"blocking_step": null, "decision": "deliver"}},
+  "assertion": "A legal synthetic rewrite passes all four mechanical checks and is deliverable.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

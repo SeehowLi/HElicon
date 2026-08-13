@@ -16,6 +16,8 @@ The router handles ordinary requests when the author does not use an HElicon com
 
 When the author supplies an English paragraph with no other instruction, select P3, then P4, then P5. First check P3 for an exact frozen-glossary mismatch and run the deterministic P4/P5 preservation preflight. If the preflight returns `preserve` and P3 found no mismatch, return the supplied paragraph byte-for-byte and report `0处`; selecting a pass does not require manufacturing an edit. Otherwise, apply only the triggered pass responsibilities. Do not change structure, claim scope, numbers, citations, or other frozen content.
 
+This default P3 → P4 → P5 route is also governed by the Mechanical verification contract in `references/pass_pipeline.md` before delivery.
+
 When the intent is ambiguous, choose the least destructive route and proceed. If sentence editing and structural editing are both plausible, edit sentences only and state in the trailer that the author can request the deeper route. A language-level mismatch is easy to correct; a silent structural rewrite is not.
 
 Direct action means returning revised text, not writing a file. Router output never patches a source file. File writes still require `H-PATCH` or another command contract with an explicit confirmed write target.

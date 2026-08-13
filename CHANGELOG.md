@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.8
+
+- 将 immutable-set、claim-strength、terminology-freeze 与 AI-tell 检查按固定顺序接入 P3-P7 的交付前机械核验契约，并明确临时合并词表的解析、回滚、告警与清理边界；既有 pass 职责与路由语义保持不变。
+- 为 `H-PASS`、`H-POLISH`、`H-PATCH` 和裸英文默认路由追加同一机械契约引用；`SKILL.md` 仅追加短路由提示，description 与既有铁律、pass 定义保持不变。
+- `check_claim_strength.py` 新增 warning-only 的 `crypto_upward_candidates`，报告因两词锚点未命中而未进入阻断轨的潜在密码学上移；既有 `crypto_upward_moves`、退出码与已发布阶梯/锚点常量不变。
+- 合成 eval 覆盖三类回滚、合法交付、缺省 direction/project layer、四个 candidate 与三个 blocking move；这些结果只证明机械契约和回归管道可运行，`capability_validated=false`，不构成论文质量或真实稿件能力证据。
+
 ## v1.7.1
 
 - 为 `security_adaptivity`、`privacy_guarantee` 与 `exactness` 的裸词阶梯增加同一短语内、两词窗口且不跨标点的密码学上下文锚点，消除 batching、statistical analysis、polynomial/index 等普通写作语境的阻断误报。

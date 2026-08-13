@@ -1,0 +1,25 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "crypto-candidate-guarantee",
+  "runner": "verifiability",
+  "input": {
+    "mode": "claim-strength",
+    "checker": "scripts/check_claim_strength.py",
+    "before_fixture": "crypto_candidate_context.synthetic.txt",
+    "after_fixture": "crypto_candidate_context.synthetic.txt",
+    "replacements": [["Our guarantee is computational", "Our guarantee is statistical"]]
+  },
+  "expected": {
+    "schema": "helicon-claim-strength-check-v1",
+    "exit_code": 0,
+    "passed": true,
+    "minimum_count": 0,
+    "minimum_crypto_upward_candidates_count": 1,
+    "crypto_upward_candidates_ladders": ["privacy_guarantee"],
+    "crypto_upward_moves_ladders": []
+  },
+  "assertion": "An unanchored computational-to-statistical guarantee is reported as a nonblocking candidate.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}
