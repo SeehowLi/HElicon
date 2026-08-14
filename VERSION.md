@@ -1,5 +1,15 @@
 # Version
 
+HElicon v2.0.1
+
+Status: residual-differential pass-contract fix; synthetic regression only.
+
+Design principle: long-term personal writing mentor, not project-specific.
+
+Project-specific work stays in external project packs.
+
+v2.0.1 focus: same-ruler residual deltas for P3 terminology decisions.
+
 HElicon v2.0
 
 Status: pass-aware mechanical-contract candidate; synthetic regression only.

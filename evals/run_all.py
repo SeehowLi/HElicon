@@ -857,6 +857,12 @@ def run_pass_aware_contract(case: dict[str, Any], temp_root: Path) -> dict[str, 
             "exempted_categories": payload.get("exempted_categories"),
             "forward_passed": payload.get("terminology_forward_check", {}).get("passed"),
             "residual_passed": payload.get("terminology_residual_check", {}).get("passed"),
+            "residual_blocking": payload.get("terminology_residual_check", {}).get("blocking"),
+            "terminology_residual_before": payload.get("terminology_residual_before"),
+            "terminology_residual_after": payload.get("terminology_residual_after"),
+            "terminology_residual_delta": payload.get("terminology_residual_delta"),
+            "terminology_residual_status": payload.get("terminology_residual_status"),
+            "rollback_reasons": payload.get("rollback_reasons"),
             "p3_glossary_exemption": payload.get("p3_glossary_exemption"),
         }
     elif scenario in {"wiring-deleted", "wiring-softened"}:

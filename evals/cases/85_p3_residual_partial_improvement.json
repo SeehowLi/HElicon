@@ -1,0 +1,18 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "p3-residual-partial-improvement",
+  "runner": "pass-aware-contract",
+  "input": {
+    "scenario": "pass-scope",
+    "script": "scripts/check_pass_scope.py",
+    "pass": "P3",
+    "before": "\\newcommand{\\ciphertext_helper}{Synthetic}\nCiphertext scheduler remains stable. The first reciprocal remains defined. The encrypted scheduler follows the encrypted scheduler.",
+    "after": "\\newcommand{\\ciphertext_helper}{Synthetic}\nCiphertext scheduler remains stable. The first reciprocal remains defined. The ciphertext scheduler follows the encrypted scheduler.",
+    "glossary": {"entries": [{"term": "ciphertext scheduler", "abbreviation": null, "forbidden_synonyms": ["encrypted scheduler"], "forbidden_variants": []}, {"term": "first-reciprocal", "abbreviation": null, "forbidden_synonyms": [], "forbidden_variants": ["first reciprocal"]}, {"term": "ciphertext", "abbreviation": null, "forbidden_synonyms": [], "forbidden_variants": ["cipher-text"]}]}
+  },
+  "expected": {"exit_code": 0, "fields": {"verdict": "proceed", "forward_passed": true, "terminology_residual_delta": -1, "terminology_residual_status": "improved"}},
+  "assertion": "P3 partial repair proceeds when the absolute residual count monotonically improves.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

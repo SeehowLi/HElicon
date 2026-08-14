@@ -710,10 +710,13 @@ def main() -> int:
             "The encrypted payload remains stable.",
         )
         tests.append((
-            "P3 rolls back an unchanged forbidden form left in AFTER",
-            p3_residual["verdict"] == "rollback"
+            "P3 warns but proceeds when the same absolute residual remains unchanged",
+            p3_residual["verdict"] == "proceed"
             and p3_residual["terminology_forward_check"]["passed"]
-            and not p3_residual["terminology_residual_check"]["passed"],
+            and p3_residual["terminology_residual_check"]["passed"]
+            and not p3_residual["terminology_residual_check"]["blocking"]
+            and p3_residual["terminology_residual_delta"] == 0
+            and p3_residual["terminology_residual_status"] == "unchanged",
         ))
         p5_terms = pass_scope_result(
             "p5_terms", "P5",
@@ -725,6 +728,109 @@ def main() -> int:
             p5_terms["verdict"] == "rollback"
             and p5_terms["p3_glossary_exemption"] == "not-applicable"
             and "glossary_terms" in p5_terms["blocking_categories"],
+        ))
+
+        residual_glossary = verifier_root / "pass_scope_residual_glossary.json"
+        residual_glossary.write_text(json.dumps({
+            "entries": [
+                {
+                    "term": "ciphertext scheduler",
+                    "abbreviation": None,
+                    "forbidden_synonyms": ["encrypted scheduler"],
+                    "forbidden_variants": [],
+                },
+                {
+                    "term": "first-reciprocal",
+                    "abbreviation": None,
+                    "forbidden_synonyms": [],
+                    "forbidden_variants": ["first reciprocal"],
+                },
+                {
+                    "term": "ciphertext",
+                    "abbreviation": None,
+                    "forbidden_synonyms": [],
+                    "forbidden_variants": ["cipher-text"],
+                },
+            ]
+        }), encoding="utf-8")
+
+        def residual_scope_result(label: str, pass_name: str, before_text: str, after_text: str) -> dict:
+            before_path = verifier_root / f"residual_scope_{label}_before.txt"
+            after_path = verifier_root / f"residual_scope_{label}_after.txt"
+            before_path.write_text(before_text, encoding="utf-8")
+            after_path.write_text(after_text, encoding="utf-8")
+            return check_pass_scope.evaluate(pass_name, before_path, after_path, residual_glossary)
+
+        residual_prefix = (
+            "\\newcommand{\\ciphertext_helper}{Synthetic}\n"
+            "Ciphertext scheduler remains stable. The first reciprocal remains defined. "
+        )
+        residual_fix = residual_scope_result(
+            "fix", "P3",
+            residual_prefix + "The encrypted scheduler processes $x+1$.",
+            residual_prefix + "The ciphertext scheduler processes $x+1$.",
+        )
+        tests.append((
+            "P3 proceeds when a terminology repair reduces same-ruler residuals despite a nonzero absolute remainder",
+            residual_fix["verdict"] == "proceed"
+            and residual_fix["terminology_residual_after"] > 0
+            and residual_fix["terminology_residual_delta"] < 0
+            and residual_fix["terminology_residual_status"] == "improved",
+        ))
+        residual_unchanged = residual_scope_result(
+            "unchanged", "P3", residual_prefix, residual_prefix,
+        )
+        tests.append((
+            "P3 zero change preserves nonzero absolute residuals without rollback",
+            residual_unchanged["verdict"] == "proceed"
+            and residual_unchanged["terminology_residual_before"] > 0
+            and residual_unchanged["terminology_residual_delta"] == 0
+            and residual_unchanged["terminology_residual_status"] == "unchanged",
+        ))
+        residual_partial = residual_scope_result(
+            "partial", "P3",
+            residual_prefix + "The encrypted scheduler follows the encrypted scheduler.",
+            residual_prefix + "The ciphertext scheduler follows the encrypted scheduler.",
+        )
+        tests.append((
+            "P3 partial repair proceeds when residuals monotonically improve",
+            residual_partial["verdict"] == "proceed"
+            and residual_partial["terminology_residual_delta"] < 0
+            and residual_partial["terminology_residual_status"] == "improved",
+        ))
+        residual_forward = residual_scope_result(
+            "forward", "P3",
+            residual_prefix + "The ciphertext scheduler remains selected.",
+            residual_prefix + "The encrypted scheduler remains selected.",
+        )
+        tests.append((
+            "P3 still rolls back a newly introduced forbidden form under differential residual reporting",
+            residual_forward["verdict"] == "rollback"
+            and not residual_forward["terminology_forward_check"]["passed"],
+        ))
+        tests.append((
+            "P3 reports residual_increased when the same-ruler absolute count rises",
+            residual_forward["terminology_residual_delta"] > 0
+            and "residual_increased" in residual_forward["rollback_reasons"],
+        ))
+        residual_math = residual_scope_result(
+            "math", "P3",
+            residual_prefix + "The encrypted scheduler processes $x+1$.",
+            residual_prefix + "The ciphertext scheduler processes $x+2$.",
+        )
+        tests.append((
+            "P3 terminology repair still rolls back a simultaneous math change",
+            residual_math["verdict"] == "rollback" and "math" in residual_math["blocking_categories"],
+        ))
+        residual_p5 = residual_scope_result(
+            "p5", "P5",
+            residual_prefix + "The ciphertext scheduler remains selected.",
+            residual_prefix + "The encrypted scheduler remains selected.",
+        )
+        tests.append((
+            "P5 still blocks glossary-term changes under the residual differential contract",
+            residual_p5["verdict"] == "rollback"
+            and "glossary_terms" in residual_p5["blocking_categories"],
         ))
 
         graph_root = verifier_root / "graph"

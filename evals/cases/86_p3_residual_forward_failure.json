@@ -1,0 +1,18 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "p3-residual-forward-failure",
+  "runner": "pass-aware-contract",
+  "input": {
+    "scenario": "pass-scope",
+    "script": "scripts/check_pass_scope.py",
+    "pass": "P3",
+    "before": "Ciphertext scheduler remains stable. The first reciprocal remains defined. The ciphertext scheduler is selected.",
+    "after": "Ciphertext scheduler remains stable. The first reciprocal remains defined. The encrypted scheduler is selected.",
+    "glossary": {"entries": [{"term": "ciphertext scheduler", "abbreviation": null, "forbidden_synonyms": ["encrypted scheduler"], "forbidden_variants": []}, {"term": "first-reciprocal", "abbreviation": null, "forbidden_synonyms": [], "forbidden_variants": ["first reciprocal"]}]}
+  },
+  "expected": {"exit_code": 1, "fields": {"verdict": "rollback", "forward_passed": false}},
+  "assertion": "P3 still rolls back when AFTER introduces a forbidden form.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

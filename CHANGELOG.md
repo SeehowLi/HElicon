@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.0.1
+
+- P3 residual evidence now applies the same absolute scanner to BEFORE and AFTER and uses only the resulting delta: decreases and unchanged residuals are nonblocking warnings, while increases roll back with `residual_increased`.
+- The P3 contract reports `terminology_residual_before`, `terminology_residual_after`, and `terminology_residual_delta`; the retained residual-check object is explicitly nonblocking so its absolute count cannot be mistaken for a zero threshold.
+- P4-P7 immutable blocking remains unchanged. Synthetic regressions cover complete and partial repair, zero change, forward introduction, residual increase, simultaneous math change, and unchanged P5 glossary blocking; they validate deterministic checker behavior only and do not establish real-manuscript quality or capability.
+
 ## v2.0
 
 - Mechanical verification step 1 now delegates to a pass-aware checker: P3 may change glossary-term counts only while all other immutable categories remain unchanged and both forward and residual terminology checks pass; P4-P7 continue to treat glossary terms as blocking.

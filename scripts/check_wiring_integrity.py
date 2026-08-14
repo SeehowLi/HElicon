@@ -22,14 +22,14 @@ ANCHOR_SELECTORS = (
 WIRING_ANCHOR_SHA256 = {
     "contract_heading": "8aa70f5974f2ec908fcf1c1b80cda642233b8eb62095706dca2aa9da526f6575",
     "pass_scope_call": "faf2694e08cc0eaa9e9ea5aa0d8c2d7cfa3cc06255be2e4fa46f3573206840a6",
-    "p3_domain": "890ee40d7b64db95874a26fc5108bdafa2e7ad81d08f7da6b453cd2b4961b0af",
+    "p3_domain": "9aa07f3e1489657c5503a1f63ab67e0332b6d543ffe3448b0d22c416a60f1eea",
     "claim_strength_call": "a5de6fd042273c3b3edbc5ddca5c04030dfae058ceccbf54584f9f6af9ecf88d",
     "terminology_call": "63575bd04c8f4ebcd4d9527aaae09d1d18c9cd68d39c7befd74ea0d4eb74b3c9",
     "ai_tells_call": "b4c5b3bfaf5e919dc18f6406ef892ce082fb337b2706f0619974e1ea132a65ae",
     "skill_delivery": "d654504ace25d968b1375ea48264d3af705d95e4e4c09a301ffd3ea5929c9739",
 }
 WIRING_ANCHOR_COUNT = 7
-WIRING_ANCHOR_MANIFEST_SHA256 = "f6c0368522e070f119fd0e64c3f1b03ed839ece766b123068fa6785883f8b4ce"
+WIRING_ANCHOR_MANIFEST_SHA256 = "0c05adf3d1602f356a08fbffac4996d9688305dc505f80b747827886b3464ebb"
 
 
 class WiringError(Exception):

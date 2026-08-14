@@ -32,12 +32,36 @@ def check_summary(payload: dict[str, Any], applicable: bool) -> dict[str, Any]:
     }
 
 
+def residual_summary(before_count: int, after_count: int, applicable: bool) -> dict[str, Any]:
+    delta = after_count - before_count
+    status = "improved" if delta < 0 else "unchanged" if delta == 0 else "increased"
+    return {
+        "applicable": applicable,
+        "passed": delta <= 0,
+        "blocking": False,
+        "replacement_count": after_count,
+        "before_count": before_count,
+        "after_count": after_count,
+        "delta": delta,
+        "status": status,
+    }
+
+
 def evaluate(pass_name: str, before: Path, after: Path, glossary: Path) -> dict[str, Any]:
     if pass_name not in PASSES:
         raise UserError(f"unsupported pass: {pass_name}")
     immutable = check_immutable_set.compare(before, after, glossary)
     forward = check_terminology_freeze.compare(before, after, glossary)
-    residual = check_terminology_freeze.scan_residual(after, glossary)
+    residual_before = check_terminology_freeze.scan_residual(before, glossary)
+    residual_after = check_terminology_freeze.scan_residual(after, glossary)
+    residual_before_count = residual_before["replacement_count"]
+    residual_after_count = residual_after["replacement_count"]
+    residual = residual_summary(
+        residual_before_count,
+        residual_after_count,
+        pass_name == "P3",
+    )
+    residual_delta = residual["delta"]
     counts = {
         name: report["violation_count"]
         for name, report in immutable["categories"].items()
@@ -48,10 +72,16 @@ def evaluate(pass_name: str, before: Path, after: Path, glossary: Path) -> dict[
             if name != P3_EXEMPTION and count
         }
         exempted_counts = {P3_EXEMPTION: counts.get(P3_EXEMPTION, 0)}
-        terminology_ok = forward["replacement_count"] == 0 and residual["replacement_count"] == 0
+        rollback_reasons = []
+        if forward["replacement_count"]:
+            rollback_reasons.append("terminology_forward_check")
+        if residual_delta > 0:
+            rollback_reasons.append("residual_increased")
+        terminology_ok = not rollback_reasons
     else:
         blocking_counts = {name: count for name, count in counts.items() if count}
         exempted_counts = {}
+        rollback_reasons = []
         terminology_ok = True
     verdict = "proceed" if not blocking_counts and terminology_ok else "rollback"
     immutable_raw_exit = 0 if immutable["passed"] else 1
@@ -67,7 +97,12 @@ def evaluate(pass_name: str, before: Path, after: Path, glossary: Path) -> dict[
         "exempted_categories": sorted(exempted_counts),
         "exempted_category_counts": exempted_counts,
         "terminology_forward_check": check_summary(forward, pass_name == "P3"),
-        "terminology_residual_check": check_summary(residual, pass_name == "P3"),
+        "terminology_residual_check": residual,
+        "terminology_residual_before": residual_before_count,
+        "terminology_residual_after": residual_after_count,
+        "terminology_residual_delta": residual_delta,
+        "terminology_residual_status": residual["status"],
+        "rollback_reasons": rollback_reasons,
         "p3_glossary_exemption": "applied" if pass_name == "P3" else "not-applicable",
         "verdict": verdict,
     }

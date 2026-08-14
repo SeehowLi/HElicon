@@ -10,8 +10,8 @@
     "after": "The encrypted payload remains stable.",
     "glossary": {"entries": [{"term": "ciphertext", "abbreviation": null, "forbidden_synonyms": ["encrypted payload"], "forbidden_variants": ["cipher-text"]}]}
   },
-  "expected": {"exit_code": 1, "fields": {"verdict": "rollback", "forward_passed": true, "residual_passed": false}},
-  "assertion": "P3 rolls back when an unchanged forbidden form remains in AFTER.",
+  "expected": {"exit_code": 0, "fields": {"verdict": "proceed", "forward_passed": true, "residual_passed": true, "residual_blocking": false, "terminology_residual_delta": 0, "terminology_residual_status": "unchanged"}},
+  "assertion": "P3 warns but proceeds when the same forbidden-form residual is unchanged under the same absolute ruler.",
   "evidence_class": "self-authored-fixture",
   "provenance": "synthetic",
   "contains_real_manuscript_text": false

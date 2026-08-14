@@ -1,0 +1,18 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "p5-residual-glossary-rollback",
+  "runner": "pass-aware-contract",
+  "input": {
+    "scenario": "pass-scope",
+    "script": "scripts/check_pass_scope.py",
+    "pass": "P5",
+    "before": "Ciphertext scheduler remains stable. The first reciprocal remains defined. The ciphertext scheduler is selected.",
+    "after": "Ciphertext scheduler remains stable. The first reciprocal remains defined. The encrypted scheduler is selected.",
+    "glossary": {"entries": [{"term": "ciphertext scheduler", "abbreviation": null, "forbidden_synonyms": ["encrypted scheduler"], "forbidden_variants": []}, {"term": "first-reciprocal", "abbreviation": null, "forbidden_synonyms": [], "forbidden_variants": ["first reciprocal"]}]}
+  },
+  "expected": {"exit_code": 1, "fields": {"verdict": "rollback", "blocking_categories": ["glossary_terms"], "p3_glossary_exemption": "not-applicable"}},
+  "assertion": "P5 retains glossary_terms as a blocking immutable category under differential residual reporting.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

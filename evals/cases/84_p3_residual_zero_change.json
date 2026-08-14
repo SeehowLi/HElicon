@@ -1,0 +1,18 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "p3-residual-zero-change",
+  "runner": "pass-aware-contract",
+  "input": {
+    "scenario": "pass-scope",
+    "script": "scripts/check_pass_scope.py",
+    "pass": "P3",
+    "before": "\\newcommand{\\ciphertext_helper}{Synthetic}\nCiphertext scheduler remains stable. The first reciprocal remains defined.",
+    "after": "\\newcommand{\\ciphertext_helper}{Synthetic}\nCiphertext scheduler remains stable. The first reciprocal remains defined.",
+    "glossary": {"entries": [{"term": "ciphertext scheduler", "abbreviation": null, "forbidden_synonyms": ["encrypted scheduler"], "forbidden_variants": []}, {"term": "first-reciprocal", "abbreviation": null, "forbidden_synonyms": [], "forbidden_variants": ["first reciprocal"]}, {"term": "ciphertext", "abbreviation": null, "forbidden_synonyms": [], "forbidden_variants": ["cipher-text"]}]}
+  },
+  "expected": {"exit_code": 0, "fields": {"verdict": "proceed", "terminology_residual_before": 1, "terminology_residual_after": 1, "terminology_residual_delta": 0, "terminology_residual_status": "unchanged"}},
+  "assertion": "P3 zero change proceeds when nonzero same-ruler residual evidence is unchanged.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}
