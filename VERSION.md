@@ -1,5 +1,15 @@
 # Version
 
+HElicon v2.0
+
+Status: production-ready; mechanically verified pass pipeline; real-corpus repair test passed.
+
+Design principle: long-term personal writing mentor, not project-specific.
+
+Project-specific work stays in external project packs.
+
+v2.0 release focus: mechanically gated pass delivery, layered terminology, install binding, and bounded real-corpus evidence.
+
 HElicon v2.0.1
 
 Status: residual-differential pass-contract fix; synthetic regression only.

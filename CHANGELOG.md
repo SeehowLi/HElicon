@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.0 formal release
+
+- Packages the layered glossary, pass-aware four-step delivery contract, wiring integrity, installed-payload binding, and residual-differential P3 correction as the v2.0 release surface.
+- Adds a structural `deletion_risk` lint to Markdown conversion and layered glossary builds. Reporting is nonblocking by default; `--fail-on-deletion-risk` rejects a glossary when replacing a longer forbidden form with its embedded shorter term would necessarily delete words.
+- Adds only synthetic regression evidence for the new lint. Real-corpus observations remain bounded to one technical subsection and do not establish generalized writing quality, review outcome, or acceptance likelihood.
+
 ## v2.0.1
 
 - P3 residual evidence now applies the same absolute scanner to BEFORE and AFTER and uses only the resulting delta: decreases and unchanged residuals are nonblocking warnings, while increases roll back with `residual_increased`.

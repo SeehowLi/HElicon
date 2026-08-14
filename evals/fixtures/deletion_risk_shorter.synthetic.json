@@ -1,0 +1,13 @@
+{
+  "schema": "helicon-lexicon-v1",
+  "layer": "L0",
+  "direction": null,
+  "entries": [
+    {
+      "term": "synthetic token",
+      "abbreviation": null,
+      "forbidden_synonyms": ["token"],
+      "forbidden_variants": []
+    }
+  ]
+}

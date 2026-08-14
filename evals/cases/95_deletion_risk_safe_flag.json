@@ -1,0 +1,15 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "deletion-risk-explicit-safe",
+  "runner": "layered-glossary",
+  "input": {
+    "script": "scripts/glossary_build.py",
+    "layer_files": [{"source": "evals/fixtures/deletion_risk_shorter.synthetic.json", "target": "references/fhe_lexicon.json"}],
+    "args": ["--root", "{root}", "-o", "{output}", "--fail-on-deletion-risk"]
+  },
+  "expected": {"exit_code": 0, "fields": {"deletion_risk_count": 0, "deletion_risk": []}},
+  "assertion": "The explicit deletion-risk gate exits zero when no structural deletion risk exists.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "deletion-risk-two-extra-words",
+  "runner": "layered-glossary",
+  "input": {
+    "script": "scripts/glossary_build.py",
+    "layer_files": [{"source": "evals/fixtures/deletion_risk_two.synthetic.json", "target": "references/fhe_lexicon.json"}],
+    "args": ["--root", "{root}", "-o", "{output}"]
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "deletion_risk_count": 1,
+      "deletion_risk": [{"term": "SYNTHETICTOKEN", "kind": "forbidden_synonym", "forbidden_form": "legacy SYNTHETICTOKEN style", "extra_word_count": 2}]
+    }
+  },
+  "assertion": "The layered builder reports two extra words while preserving its default success exit.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

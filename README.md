@@ -166,3 +166,11 @@ Selected paper provenance is listed in `provenance/distilled_sources.bib`. Exter
 - A thin personal baseline is descriptive and cannot emit a drift warning; the target profile supplies direction but never activates drift detection.
 
 See `VERSION.md`, `CHANGELOG.md`, and `INSTALL_AND_WORKFLOW.md` for release and workflow details.
+
+## Quick start
+
+1. `powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1 --target codex`
+2. `python -B scripts/bootstrap_project_pack.py --paper-dir "<PAPER_DIR>" --direction private_llm_inference`
+3. `notepad "<PAPER_DIR>\.helicon\local_glossary.md"; python -B scripts/glossary_md_to_json.py "<PAPER_DIR>\.helicon\local_glossary.md" -o "$env:TEMP\helicon-local-glossary.json" --fail-on-deletion-risk`
+4. `python -B scripts/glossary_build.py --direction private_llm_inference --project "<PAPER_DIR>\.helicon\local_glossary.md" -o "$env:TEMP\helicon-merged-glossary.json" --fail-on-deletion-risk`
+5. `H-POLISH`

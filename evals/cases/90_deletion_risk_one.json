@@ -1,0 +1,20 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "deletion-risk-one-extra-word",
+  "runner": "layered-glossary",
+  "input": {
+    "script": "scripts/glossary_md_to_json.py",
+    "args": ["repo:evals/fixtures/deletion_risk_one.synthetic.md", "-o", "{output}"]
+  },
+  "expected": {
+    "exit_code": 0,
+    "fields": {
+      "deletion_risk_count": 1,
+      "deletion_risk": [{"term": "SYNTHETICTOKEN", "kind": "forbidden_synonym", "forbidden_form": "SYNTHETICTOKEN style", "extra_word_count": 1}]
+    }
+  },
+  "assertion": "A one-word term embedded in a two-word forbidden form reports one deletion-risk word without changing the default exit code.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

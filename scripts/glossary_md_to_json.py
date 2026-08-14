@@ -4,6 +4,7 @@
 This is the project-layer adapter for the terminology-freeze contract. Future
 pass-pipeline integration may call ``convert_markdown`` before glossary_build;
 empty Avoid rows are reported and skipped, while malformed input exits 2.
+Deletion-risk lint is reported by default and may be made blocking explicitly.
 """
 from __future__ import annotations
 
@@ -20,6 +21,7 @@ LAYOUT_TERM = ("term", "preferred english", "avoid", "notes")
 LAYOUT_BILINGUAL = (
     "chinese", "recommended english", "acceptable alternatives", "avoid", "notes"
 )
+ALNUM_WORD_RE = re.compile(r"[A-Za-z0-9]+")
 
 
 class UserError(Exception):
@@ -57,6 +59,27 @@ def variants(term: str) -> list[str]:
     if " " in term:
         derived.append(re.sub(r"\s+", "-", term.strip()))
     return unique([item for item in derived if item != term])
+
+
+def deletion_risks(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    risks: list[dict[str, Any]] = []
+    for entry in entries:
+        term = entry["term"]
+        term_word_count = len(ALNUM_WORD_RE.findall(term))
+        for field, kind in (
+            ("forbidden_synonyms", "forbidden_synonym"),
+            ("forbidden_variants", "forbidden_variant"),
+        ):
+            for forbidden_form in entry[field]:
+                form_word_count = len(ALNUM_WORD_RE.findall(forbidden_form))
+                if form_word_count > term_word_count and term.casefold() in forbidden_form.casefold():
+                    risks.append({
+                        "term": term,
+                        "kind": kind,
+                        "forbidden_form": forbidden_form,
+                        "extra_word_count": form_word_count - term_word_count,
+                    })
+    return risks
 
 
 def convert_markdown(path: Path, direction: str | None = None) -> dict[str, Any]:
@@ -115,7 +138,15 @@ def convert_markdown(path: Path, direction: str | None = None) -> dict[str, Any]
         })
     if not entries:
         raise UserError("glossary table produced no active entries")
-    return {"schema": SCHEMA, "layer": "L2", "direction": direction, "entries": entries}
+    risks = deletion_risks(entries)
+    return {
+        "schema": SCHEMA,
+        "layer": "L2",
+        "direction": direction,
+        "deletion_risk_count": len(risks),
+        "deletion_risk": risks,
+        "entries": entries,
+    }
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -132,12 +163,13 @@ def main() -> int:
     parser = JsonArgumentParser(description=__doc__)
     parser.add_argument("markdown", type=Path)
     parser.add_argument("-o", "--output", required=True, type=Path)
+    parser.add_argument("--fail-on-deletion-risk", action="store_true")
     try:
         args = parser.parse_args()
         payload = convert_markdown(args.markdown)
         write_json(args.output, payload)
         print(json.dumps(payload, ensure_ascii=False))
-        return 0
+        return 1 if args.fail_on_deletion_risk and payload["deletion_risk_count"] else 0
     except (UserError, OSError, UnicodeError, ValueError, KeyError, TypeError) as exc:
         print(json.dumps({"schema": SCHEMA, "error": str(exc)}, ensure_ascii=False))
         return 2

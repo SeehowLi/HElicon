@@ -23,6 +23,8 @@ import check_reference_reachability
 import check_terminology_freeze
 import check_wiring_integrity
 import extract_revision_direction
+import glossary_build
+import glossary_md_to_json
 import latex_guard
 import resolve_target_profile
 import revision_preflight
@@ -653,6 +655,86 @@ def main() -> int:
                 encoding="utf-8",
             )
             tests.append((label, invalid_result.returncode == 2))
+
+        risk_entries = [{
+            "term": "SYNTHETICTOKEN",
+            "abbreviation": None,
+            "forbidden_synonyms": ["SYNTHETICTOKEN legacy style"],
+            "forbidden_variants": [],
+        }]
+        risks = glossary_md_to_json.deletion_risks(risk_entries)
+        tests.append((
+            "deletion-risk lint reports the exact number of words a replacement would remove",
+            len(risks) == 1 and risks[0]["extra_word_count"] == 2,
+        ))
+        tests.append((
+            "deletion-risk lint ignores equal-word-count hyphen and space forms",
+            not glossary_md_to_json.deletion_risks([{
+                "term": "synthetic token",
+                "abbreviation": None,
+                "forbidden_synonyms": [],
+                "forbidden_variants": ["synthetic-token"],
+            }]),
+        ))
+        tests.append((
+            "deletion-risk lint ignores a shorter forbidden form",
+            not glossary_md_to_json.deletion_risks([{
+                "term": "synthetic token",
+                "abbreviation": None,
+                "forbidden_synonyms": ["token"],
+                "forbidden_variants": [],
+            }]),
+        ))
+
+        risk_markdown = verifier_root / "deletion_risk.md"
+        risk_markdown.write_text(
+            "| Term | Preferred English | Avoid | Notes |\n"
+            "|---|---|---|---|\n"
+            "| SYNTHETICTOKEN | SYNTHETICTOKEN | SYNTHETICTOKEN style | synthetic |\n",
+            encoding="utf-8",
+        )
+        converter_script = Path(__file__).resolve().parent / "glossary_md_to_json.py"
+        converter_default = subprocess.run(
+            [sys.executable, "-B", str(converter_script), str(risk_markdown), "-o", str(verifier_root / "risk_default.json")],
+            capture_output=True, text=True, encoding="utf-8",
+        )
+        converter_blocking = subprocess.run(
+            [sys.executable, "-B", str(converter_script), str(risk_markdown), "-o", str(verifier_root / "risk_blocking.json"), "--fail-on-deletion-risk"],
+            capture_output=True, text=True, encoding="utf-8",
+        )
+        tests.append((
+            "Markdown deletion-risk lint is warning-only by default",
+            converter_default.returncode == 0
+            and json.loads(converter_default.stdout)["deletion_risk_count"] == 1,
+        ))
+        tests.append((
+            "Markdown deletion-risk lint fails only when explicitly requested",
+            converter_blocking.returncode == 1
+            and json.loads(converter_blocking.stdout)["deletion_risk_count"] == 1,
+        ))
+
+        risk_repository = verifier_root / "deletion_risk_repository"
+        risk_core = risk_repository / "references" / "fhe_lexicon.json"
+        risk_core.parent.mkdir(parents=True)
+        risk_core.write_text(json.dumps({
+            "schema": "helicon-lexicon-v1",
+            "layer": "L0",
+            "direction": None,
+            "entries": risk_entries,
+        }), encoding="utf-8")
+        builder_script = Path(__file__).resolve().parent / "glossary_build.py"
+        builder_blocking = subprocess.run(
+            [
+                sys.executable, "-B", str(builder_script), "--root", str(risk_repository),
+                "-o", str(verifier_root / "risk_build.json"), "--fail-on-deletion-risk",
+            ],
+            capture_output=True, text=True, encoding="utf-8",
+        )
+        tests.append((
+            "layered glossary deletion-risk lint fails closed on explicit request",
+            builder_blocking.returncode == 1
+            and json.loads(builder_blocking.stdout)["deletion_risk"][0]["kind"] == "forbidden_synonym",
+        ))
 
         pass_glossary = verifier_root / "pass_scope_glossary.json"
         pass_glossary.write_text(json.dumps({

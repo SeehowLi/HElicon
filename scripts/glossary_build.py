@@ -3,7 +3,8 @@
 
 Future pass-pipeline contract: load the public L0 core, optionally overlay one
 L1 direction and an L2 project Markdown glossary, then pass the emitted JSON to
-check_terminology_freeze.py. Configuration errors exit 2.
+check_terminology_freeze.py. Deletion-risk lint is warning-only unless the
+explicit fail flag is supplied. Configuration errors exit 2.
 """
 from __future__ import annotations
 
@@ -16,7 +17,7 @@ from typing import Any
 from check_terminology_freeze import UserError as GlossaryUserError
 from check_terminology_freeze import load_glossary
 from glossary_md_to_json import UserError as MarkdownUserError
-from glossary_md_to_json import convert_markdown, write_json
+from glossary_md_to_json import convert_markdown, deletion_risks, write_json
 
 
 SCHEMA = "helicon-glossary-build-v1"
@@ -108,6 +109,7 @@ def build(root: Path, direction: str | None, project: Path | None) -> dict[str, 
             origins[key] = (layer, label)
 
     entries = [merged[key] for key in order]
+    risks = deletion_risks(entries)
     return {
         "schema": SCHEMA,
         "direction": direction,
@@ -119,6 +121,8 @@ def build(root: Path, direction: str | None, project: Path | None) -> dict[str, 
         "active_rule_count": active_rules(entries),
         "conflict_count": len(conflicts),
         "conflicts": conflicts,
+        "deletion_risk_count": len(risks),
+        "deletion_risk": risks,
         "entries": entries,
     }
 
@@ -128,13 +132,14 @@ def main() -> int:
     parser.add_argument("--direction")
     parser.add_argument("--project", type=Path)
     parser.add_argument("-o", "--output", required=True, type=Path)
+    parser.add_argument("--fail-on-deletion-risk", action="store_true")
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1], help=argparse.SUPPRESS)
     try:
         args = parser.parse_args()
         payload = build(args.root, args.direction, args.project)
         write_json(args.output, payload)
         print(json.dumps(payload, ensure_ascii=False))
-        return 0
+        return 1 if args.fail_on_deletion_risk and payload["deletion_risk_count"] else 0
     except (
         UserError,
         GlossaryUserError,
