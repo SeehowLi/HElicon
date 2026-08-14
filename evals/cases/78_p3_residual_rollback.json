@@ -1,0 +1,18 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "p3-residual-rollback",
+  "runner": "pass-aware-contract",
+  "input": {
+    "scenario": "pass-scope",
+    "script": "scripts/check_pass_scope.py",
+    "pass": "P3",
+    "before": "The encrypted payload remains stable.",
+    "after": "The encrypted payload remains stable.",
+    "glossary": {"entries": [{"term": "ciphertext", "abbreviation": null, "forbidden_synonyms": ["encrypted payload"], "forbidden_variants": ["cipher-text"]}]}
+  },
+  "expected": {"exit_code": 1, "fields": {"verdict": "rollback", "forward_passed": true, "residual_passed": false}},
+  "assertion": "P3 rolls back when an unchanged forbidden form remains in AFTER.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.0
+
+- Mechanical verification step 1 now delegates to a pass-aware checker: P3 may change glossary-term counts only while all other immutable categories remain unchanged and both forward and residual terminology checks pass; P4-P7 continue to treat glossary terms as blocking.
+- Trailer evidence exposes the effective immutable exit, the P3 glossary-term exemption count, and an explicit `p3_glossary_exemption` state; machine JSON also retains the raw immutable exit instead of hiding authorized changes.
+- Fixed-digest wiring integrity binds the mandatory SKILL-to-pipeline handoff, contract heading, pass-aware domain rule, and four checker invocations; the same gate runs in source and installed payload shapes.
+- Synthetic regressions cover permitted P3 repair, non-term rollback, forward and residual failures, unchanged P5 blocking, independent anchor deletion/softening, and installed-payload wiring. They validate deterministic code paths only and do not establish real-manuscript quality or capability.
+
 ## v1.9.2
 
 - `case_inconsistency` 改为精确大小写形式的前后差分：零改动与数量不变的既有形式不再重复报告，新引入的句中大小写漂移仍保持阻断，句首首字母大写豁免保持不变。

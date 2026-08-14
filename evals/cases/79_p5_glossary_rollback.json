@@ -1,0 +1,18 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "p5-glossary-rollback",
+  "runner": "pass-aware-contract",
+  "input": {
+    "scenario": "pass-scope",
+    "script": "scripts/check_pass_scope.py",
+    "pass": "P5",
+    "before": "The ciphertext remains stable.",
+    "after": "The encrypted payload remains stable.",
+    "glossary": {"entries": [{"term": "ciphertext", "abbreviation": null, "forbidden_synonyms": ["encrypted payload"], "forbidden_variants": ["cipher-text"]}]}
+  },
+  "expected": {"exit_code": 1, "fields": {"verdict": "rollback", "blocking_categories": ["glossary_terms"], "p3_glossary_exemption": "not-applicable"}},
+  "assertion": "P5 retains glossary_terms as a blocking immutable category.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

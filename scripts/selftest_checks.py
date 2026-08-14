@@ -18,8 +18,10 @@ import check_claim_strength
 import check_command_coverage
 import check_immutable_set
 import check_live_skill_binding
+import check_pass_scope
 import check_reference_reachability
 import check_terminology_freeze
+import check_wiring_integrity
 import extract_revision_direction
 import latex_guard
 import resolve_target_profile
@@ -652,6 +654,79 @@ def main() -> int:
             )
             tests.append((label, invalid_result.returncode == 2))
 
+        pass_glossary = verifier_root / "pass_scope_glossary.json"
+        pass_glossary.write_text(json.dumps({
+            "entries": [{
+                "term": "ciphertext",
+                "abbreviation": None,
+                "forbidden_synonyms": ["encrypted payload"],
+                "forbidden_variants": ["cipher-text"],
+            }]
+        }), encoding="utf-8")
+
+        def pass_scope_result(label: str, pass_name: str, before_text: str, after_text: str) -> dict:
+            before_path = verifier_root / f"pass_scope_{label}_before.txt"
+            after_path = verifier_root / f"pass_scope_{label}_after.txt"
+            before_path.write_text(before_text, encoding="utf-8")
+            after_path.write_text(after_text, encoding="utf-8")
+            return check_pass_scope.evaluate(pass_name, before_path, after_path, pass_glossary)
+
+        p3_fix = pass_scope_result(
+            "p3_fix", "P3",
+            "The encrypted payload contains $x+1$.",
+            "The ciphertext contains $x+1$.",
+        )
+        tests.append((
+            "P3 exempts only glossary-term count changes after a complete terminology repair",
+            p3_fix["verdict"] == "proceed"
+            and p3_fix["immutable_exit_code"] == 0
+            and p3_fix["immutable_raw_exit_code"] == 1
+            and p3_fix["exempted_category_counts"] == {"glossary_terms": 1}
+            and p3_fix["terminology_forward_check"]["passed"]
+            and p3_fix["terminology_residual_check"]["passed"],
+        ))
+        p3_math = pass_scope_result(
+            "p3_math", "P3",
+            "The encrypted payload contains $x+1$.",
+            "The ciphertext contains $x+2$.",
+        )
+        tests.append((
+            "P3 still rolls back a math change outside its authorized terminology domain",
+            p3_math["verdict"] == "rollback" and "math" in p3_math["blocking_categories"],
+        ))
+        p3_forward = pass_scope_result(
+            "p3_forward", "P3",
+            "The ciphertext remains stable.",
+            "The encrypted payload remains stable.",
+        )
+        tests.append((
+            "P3 rolls back a newly introduced forbidden form",
+            p3_forward["verdict"] == "rollback"
+            and not p3_forward["terminology_forward_check"]["passed"],
+        ))
+        p3_residual = pass_scope_result(
+            "p3_residual", "P3",
+            "The encrypted payload remains stable.",
+            "The encrypted payload remains stable.",
+        )
+        tests.append((
+            "P3 rolls back an unchanged forbidden form left in AFTER",
+            p3_residual["verdict"] == "rollback"
+            and p3_residual["terminology_forward_check"]["passed"]
+            and not p3_residual["terminology_residual_check"]["passed"],
+        ))
+        p5_terms = pass_scope_result(
+            "p5_terms", "P5",
+            "The ciphertext remains stable.",
+            "The encrypted payload remains stable.",
+        )
+        tests.append((
+            "P5 retains glossary_terms as an immutable blocking category",
+            p5_terms["verdict"] == "rollback"
+            and p5_terms["p3_glossary_exemption"] == "not-applicable"
+            and "glossary_terms" in p5_terms["blocking_categories"],
+        ))
+
         graph_root = verifier_root / "graph"
         (graph_root / "references").mkdir(parents=True)
         (graph_root / "templates").mkdir()
@@ -997,6 +1072,62 @@ def main() -> int:
 
         scripts_dir = Path(__file__).resolve().parent
         repository_root = scripts_dir.parent
+        wiring_current = check_wiring_integrity.validate(repository_root)
+        tests.append((
+            "mandatory pass wiring matches every fixed source anchor",
+            wiring_current["passed"]
+            and wiring_current["anchor_count"] == check_wiring_integrity.WIRING_ANCHOR_COUNT,
+        ))
+        wiring_config_mutations = {
+            "count": dict(list(check_wiring_integrity.WIRING_ANCHOR_SHA256.items())[:-1]),
+            "format": {
+                **check_wiring_integrity.WIRING_ANCHOR_SHA256,
+                "contract_heading": "not-a-sha256",
+            },
+            "manifest": dict(check_wiring_integrity.WIRING_ANCHOR_SHA256),
+        }
+        for label, values in wiring_config_mutations.items():
+            rejected = False
+            try:
+                check_wiring_integrity.validate_anchor_config(
+                    values,
+                    check_wiring_integrity.WIRING_ANCHOR_COUNT,
+                    "0" * 64 if label == "manifest" else check_wiring_integrity.WIRING_ANCHOR_MANIFEST_SHA256,
+                )
+            except check_wiring_integrity.WiringError:
+                rejected = True
+            tests.append((f"wiring anchor {label} drift fails closed", rejected))
+
+        skill_wiring_text = (repository_root / "SKILL.md").read_text(encoding="utf-8")
+        pipeline_wiring_text = (repository_root / "references/pass_pipeline.md").read_text(encoding="utf-8")
+        for anchor_name, relative, fragments in check_wiring_integrity.ANCHOR_SELECTORS:
+            original = skill_wiring_text if relative == "SKILL.md" else pipeline_wiring_text
+            lines = original.splitlines(keepends=True)
+            indexes = [
+                index for index, line in enumerate(lines)
+                if all(fragment in line for fragment in fragments)
+            ]
+            tests.append((f"wiring fixture uniquely locates {anchor_name}", len(indexes) == 1))
+            if len(indexes) != 1:
+                continue
+            index = indexes[0]
+            deleted = "".join(lines[:index] + lines[index + 1:])
+            softened_lines = lines.copy()
+            softened_lines[index] = "Optionally consider " + softened_lines[index]
+            softened = "".join(softened_lines)
+            for mutation, changed in (("deletion", deleted), ("soft wording", softened)):
+                try:
+                    result = check_wiring_integrity.validate_texts(
+                        changed if relative == "SKILL.md" else skill_wiring_text,
+                        changed if relative != "SKILL.md" else pipeline_wiring_text,
+                    )
+                    rejected = not result["passed"]
+                except check_wiring_integrity.WiringError:
+                    rejected = True
+                tests.append((
+                    f"{anchor_name} {mutation} fails wiring integrity",
+                    rejected,
+                ))
         exclusion_source = (scripts_dir / "check_live_skill_binding.py").read_text(encoding="utf-8")
         parsed_source_exclusions = check_live_skill_binding.parse_python_exclusions(exclusion_source)
         install_ps1 = (scripts_dir / "install.ps1").read_text(encoding="utf-8")
@@ -1072,6 +1203,19 @@ def main() -> int:
             all(not (simulated_payload / name).exists() for name in check_live_skill_binding.SOURCE_EXCLUSIONS)
             and not any(simulated_payload.rglob("__pycache__"))
             and not any(simulated_payload.rglob("*.pyc")),
+        ))
+        installed_wiring = subprocess.run(
+            [sys.executable, "-B", str(scripts_dir / "check_wiring_integrity.py"), str(simulated_payload)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        tests.append((
+            "simulated installed payload passes mandatory wiring integrity",
+            installed_wiring.returncode == 0
+            and json.loads(installed_wiring.stdout).get("passed") is True,
         ))
 
         source_integrity = subprocess.run(

@@ -186,29 +186,32 @@ def added_case_inconsistencies(before: str, after: str, term: str) -> list[re.Ma
     return added
 
 
-def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[str, Any]:
-    before = read_text(before_path)
-    after = read_text(after_path)
-    before_prose = mask_latex_regions(before)
-    after_prose = mask_latex_regions(after)
-    entries, active_rule_count = load_glossary(glossary_path)
+def collect_replacements(
+    before_prose: str,
+    after_prose: str,
+    entries: list[dict[str, Any]],
+    *,
+    residual: bool = False,
+) -> list[dict[str, Any]]:
+    """Return differential findings, or every remaining finding in residual mode."""
     replacements: list[Replacement] = []
+    comparison_before = "" if residual else before_prose
     for entry in entries:
         term = entry["term"]
         for synonym in entry["forbidden_synonyms"]:
             replacements.extend(
-                Replacement(term, "forbidden_synonym", match.group(0), location(after, match.start()))
-                for match in added_matches(before_prose, after_prose, synonym)
+                Replacement(term, "forbidden_synonym", match.group(0), location(after_prose, match.start()))
+                for match in added_matches(comparison_before, after_prose, synonym)
             )
         for variant in entry["forbidden_variants"]:
             replacements.extend(
-                Replacement(term, "plural_or_hyphen_variant", match.group(0), location(after, match.start()))
-                for match in added_matches(before_prose, after_prose, variant)
+                Replacement(term, "plural_or_hyphen_variant", match.group(0), location(after_prose, match.start()))
+                for match in added_matches(comparison_before, after_prose, variant)
             )
 
         replacements.extend(
-            Replacement(term, "case_inconsistency", match.group(0), location(after, match.start()))
-            for match in added_case_inconsistencies(before_prose, after_prose, term)
+            Replacement(term, "case_inconsistency", match.group(0), location(after_prose, match.start()))
+            for match in added_case_inconsistencies(comparison_before, after_prose, term)
         )
 
         abbreviation = entry["abbreviation"]
@@ -217,14 +220,19 @@ def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[st
             before_short = bool(matches(before_prose, abbreviation, ignore_case=False))
             after_full = bool(matches(after_prose, term))
             after_short_matches = matches(after_prose, abbreviation, ignore_case=False)
-            if before_full and not before_short and after_short_matches:
+            if residual and after_full and after_short_matches:
                 replacements.extend(
-                    Replacement(term, "abbreviation_full_name_mix", match.group(0), location(after, match.start()))
+                    Replacement(term, "abbreviation_full_name_mix", match.group(0), location(after_prose, match.start()))
+                    for match in after_short_matches
+                )
+            elif before_full and not before_short and after_short_matches:
+                replacements.extend(
+                    Replacement(term, "abbreviation_full_name_mix", match.group(0), location(after_prose, match.start()))
                     for match in after_short_matches
                 )
             elif before_short and not before_full and after_full:
                 replacements.extend(
-                    Replacement(term, "abbreviation_full_name_mix", match.group(0), location(after, match.start()))
+                    Replacement(term, "abbreviation_full_name_mix", match.group(0), location(after_prose, match.start()))
                     for match in matches(after_prose, term)
                 )
 
@@ -232,12 +240,42 @@ def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[st
         (item.term, item.kind, item.observed, item.position["offset"]): item
         for item in replacements
     }
-    payload = [asdict(unique[key]) for key in sorted(unique, key=lambda item: item[3])]
+    return [asdict(unique[key]) for key in sorted(unique, key=lambda item: item[3])]
+
+
+def compare(before_path: Path, after_path: Path, glossary_path: Path) -> dict[str, Any]:
+    before = read_text(before_path)
+    after = read_text(after_path)
+    entries, active_rule_count = load_glossary(glossary_path)
+    payload = collect_replacements(
+        mask_latex_regions(before),
+        mask_latex_regions(after),
+        entries,
+    )
     return {
         "schema": "helicon-terminology-freeze-check-v1",
         "before": str(before_path),
         "after": str(after_path),
         "glossary": str(glossary_path),
+        "active_rule_count": active_rule_count,
+        "replacements": payload,
+        "replacement_count": len(payload),
+        "passed": not payload,
+    }
+
+
+def scan_residual(after_path: Path, glossary_path: Path) -> dict[str, Any]:
+    """Report every forbidden form still present in AFTER without changing CLI semantics."""
+    after = read_text(after_path)
+    entries, active_rule_count = load_glossary(glossary_path)
+    after_prose = mask_latex_regions(after)
+    payload = collect_replacements("", after_prose, entries, residual=True)
+    return {
+        "schema": "helicon-terminology-freeze-check-v1",
+        "before": str(after_path),
+        "after": str(after_path),
+        "glossary": str(glossary_path),
+        "mode": "residual",
         "active_rule_count": active_rule_count,
         "replacements": payload,
         "replacement_count": len(payload),

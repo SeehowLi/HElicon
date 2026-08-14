@@ -11,6 +11,7 @@ import sys
 from typing import Any, Callable
 
 import check_ai_tells
+import check_wiring_integrity
 
 RULE_RE = re.compile(r"(?m)^(\d+)\.\s+\*\*")
 COMMAND_RE = re.compile(r"\bH-[A-Z][A-Z0-9-]*\b")
@@ -309,6 +310,14 @@ def round6_target_semantics_errors(handoff_validator: Path) -> list[str]:
 
 def validate_contracts(root: Path) -> dict[str, Any]:
     errors: list[str] = []
+    try:
+        wiring_integrity = check_wiring_integrity.validate(root)
+    except (check_wiring_integrity.WiringError, OSError, UnicodeError, ValueError, KeyError, TypeError) as exc:
+        wiring_integrity = {"passed": False, "errors": [str(exc)]}
+    errors.extend(
+        f"wiring integrity: {error}"
+        for error in wiring_integrity.get("errors", [])
+    )
     polish = read_utf8(root / "references/language_polish.md")
     documented_rules = {int(value) for value in RULE_RE.findall(polish)}
     emitted_rules = emitted_rule_numbers(root / "scripts/check_ai_tells.py")
@@ -429,6 +438,7 @@ def validate_contracts(root: Path) -> dict[str, Any]:
         "builder_target_fields": sorted(builder_dimensions),
         "routed_target_fields": sorted(routed_target_fields),
         "structural_target_fields": sorted(resolver_structural_fields),
+        "wiring_integrity": wiring_integrity,
         "errors": errors,
     }
 

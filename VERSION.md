@@ -1,5 +1,15 @@
 # Version
 
+HElicon v2.0
+
+Status: pass-aware mechanical-contract candidate; synthetic regression only.
+
+Design principle: long-term personal writing mentor, not project-specific.
+
+Project-specific work stays in external project packs.
+
+v2.0 focus: P3 terminology-domain exemption with residual checks and fail-closed wiring integrity.
+
 HElicon v1.9.2
 
 Status: terminology-diff regression fix; synthetic regression only.

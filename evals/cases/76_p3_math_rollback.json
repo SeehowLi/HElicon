@@ -1,0 +1,18 @@
+{
+  "schema": "helicon-eval-case-v1",
+  "id": "p3-math-rollback",
+  "runner": "pass-aware-contract",
+  "input": {
+    "scenario": "pass-scope",
+    "script": "scripts/check_pass_scope.py",
+    "pass": "P3",
+    "before": "The encrypted payload contains $x+1$.",
+    "after": "The ciphertext contains $x+2$.",
+    "glossary": {"entries": [{"term": "ciphertext", "abbreviation": null, "forbidden_synonyms": ["encrypted payload"], "forbidden_variants": ["cipher-text"]}]}
+  },
+  "expected": {"exit_code": 1, "fields": {"verdict": "rollback", "blocking_categories": ["math"], "exempted_categories": ["glossary_terms"]}},
+  "assertion": "P3 rolls back a math change even when the terminology repair itself is valid.",
+  "evidence_class": "self-authored-fixture",
+  "provenance": "synthetic",
+  "contains_real_manuscript_text": false
+}

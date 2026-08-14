@@ -29,8 +29,10 @@ try:
     import check_command_coverage  # noqa: E402
     import check_immutable_set  # noqa: E402
     import check_live_skill_binding  # noqa: E402
+    import check_pass_scope  # noqa: E402
     import check_reference_reachability  # noqa: E402
     import check_terminology_freeze  # noqa: E402
+    import check_wiring_integrity  # noqa: E402
     import latex_guard  # noqa: E402
     import target_eval  # noqa: E402
 except ImportError as exc:
@@ -829,6 +831,91 @@ def run_installed_payload(case: dict[str, Any], temp_root: Path) -> dict[str, An
     return case_result(case, checks, details)
 
 
+def run_pass_aware_contract(case: dict[str, Any], temp_root: Path) -> dict[str, Any]:
+    inputs = case["input"]
+    expected = case["expected"]
+    scenario = inputs["scenario"]
+    case_root = temp_root / case["id"]
+    case_root.mkdir()
+
+    if scenario == "pass-scope":
+        before = case_root / "before.txt"
+        after = case_root / "after.txt"
+        glossary = case_root / "glossary.json"
+        before.write_text(inputs["before"], encoding="utf-8")
+        after.write_text(inputs["after"], encoding="utf-8")
+        glossary.write_text(json.dumps(inputs["glossary"]), encoding="utf-8")
+        result = command(
+            repo_path(inputs["script"]),
+            "--pass", inputs["pass"], str(before), str(after), "--glossary", str(glossary),
+        )
+        payload = json_stdout(result, case["id"])
+        details = {
+            "exit_code": result.returncode,
+            "verdict": payload.get("verdict"),
+            "blocking_categories": payload.get("blocking_categories"),
+            "exempted_categories": payload.get("exempted_categories"),
+            "forward_passed": payload.get("terminology_forward_check", {}).get("passed"),
+            "residual_passed": payload.get("terminology_residual_check", {}).get("passed"),
+            "p3_glossary_exemption": payload.get("p3_glossary_exemption"),
+        }
+    elif scenario in {"wiring-deleted", "wiring-softened"}:
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        pipeline_text = (ROOT / "references/pass_pipeline.md").read_text(encoding="utf-8")
+        mutation_codes: list[int] = []
+        for index, (_name, relative, fragments) in enumerate(check_wiring_integrity.ANCHOR_SELECTORS):
+            mutation_root = case_root / str(index)
+            (mutation_root / "references").mkdir(parents=True)
+            source = skill_text if relative == "SKILL.md" else pipeline_text
+            lines = source.splitlines(keepends=True)
+            matches = [
+                line_index for line_index, line in enumerate(lines)
+                if all(fragment in line for fragment in fragments)
+            ]
+            if len(matches) != 1:
+                raise HarnessError(f"{case['id']} cannot uniquely locate wiring anchor {index}")
+            line_index = matches[0]
+            if scenario == "wiring-deleted":
+                changed = "".join(lines[:line_index] + lines[line_index + 1:])
+            else:
+                lines[line_index] = "Optionally consider " + lines[line_index]
+                changed = "".join(lines)
+            (mutation_root / "SKILL.md").write_text(
+                changed if relative == "SKILL.md" else skill_text,
+                encoding="utf-8",
+            )
+            (mutation_root / "references/pass_pipeline.md").write_text(
+                changed if relative != "SKILL.md" else pipeline_text,
+                encoding="utf-8",
+            )
+            mutation = command(repo_path(inputs["script"]), str(mutation_root))
+            mutation_codes.append(mutation.returncode)
+        details = {
+            "exit_code": 2 if all(code != 0 for code in mutation_codes) else 0,
+            "mutation_exit_codes": mutation_codes,
+            "mutation_count": len(mutation_codes),
+            "all_rejected": all(code != 0 for code in mutation_codes),
+        }
+    elif scenario == "wiring-installed":
+        payload_root = case_root / "payload"
+        check_live_skill_binding.copy_source_payload(ROOT, payload_root)
+        result = command(repo_path(inputs["script"]), str(payload_root))
+        payload = json_stdout(result, case["id"])
+        details = {
+            "exit_code": result.returncode,
+            "passed": payload.get("passed"),
+            "anchor_count": payload.get("anchor_count"),
+        }
+    else:
+        raise HarnessError(f"unsupported pass-aware scenario: {scenario}")
+
+    checks = {
+        "exit_code": details["exit_code"] == expected["exit_code"],
+        **{name: details.get(name) == value for name, value in expected.get("fields", {}).items()},
+    }
+    return case_result(case, checks, details)
+
+
 RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "selftest": run_selftest,
     "router-contracts": run_router_contracts,
@@ -842,6 +929,7 @@ RUNNERS: dict[str, Callable[[dict[str, Any], Path], dict[str, Any]]] = {
     "mechanical-contract": run_mechanical_contract,
     "direction-binding": run_direction_binding,
     "installed-payload": run_installed_payload,
+    "pass-aware-contract": run_pass_aware_contract,
 }
 
 
